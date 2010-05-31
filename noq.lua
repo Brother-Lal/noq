@@ -1,5 +1,5 @@
 -- .
--- The NOQ - No Quarter Lua game manager
+-- The NOQ - No Quarter Lua next generation game manager
 --
 -- noq.lua - A Shrubbot replacement and also kind of new game manager and tracking system based on dbms
 -- mysql or sqlite3. Both are supported and in case of sqlite there is no extra sqlite installation needed.
@@ -338,7 +338,13 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	-- valid client
 	
 	checkMute( _clientNum )
-	-- server greetings ?
+
+	-- personal game start message / server greetings	
+	if firstTime == 0 or isBot == 1 or getConfig("persgamestartmessage") == "" then 
+		return nil
+	end
+	et.trap_SendServerCommand(clientNum, string.format("%s \"%s %s", getConfig("persgamestartmessage") , getConfig("persgamestartmessage") , et.Info_ValueForKey( userInfo, "name" )))
+
 	return nil
 end
 
@@ -351,7 +357,6 @@ end
 -- IRATA: check et_ClientSpawn()
 -- TODO/NOTE: Afaik we only need to check if ClientBegin is called once to keep 1.2.7 compatinility
 function et_ClientBegin( _clientNum )
-
 	-- TODO Move this functionality in an own function
 	
 	-- Get the player name if its not set
@@ -389,7 +394,6 @@ function et_ClientBegin( _clientNum )
 	
 	updateTeam(_clientNum)
 end
-
 
 -- Possible values are :
 --	- slot[_clientNum].team == nil -> the player connected and disconnected without join the gameworld = not-valid session
@@ -689,13 +693,10 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	end
 	
     return nil
-
 end
-
 
 -- Updates the Playerinformation out of the Database (IF POSSIBLE!)
 function updatePlayerInfo ( _clientNum )
-
 	--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
 	cur = assert (con:execute("SELECT * FROM player WHERE pkey='".. slot[_clientNum]["pkey"] .."' LIMIT 1"))
 	row = cur:fetch ({}, "a")
@@ -747,14 +748,11 @@ function updatePlayerInfo ( _clientNum )
 		-- We just don't do anything, we let him go to Clientbegin and say hes new
 		slot[_clientNum]["new"] = true
 	end
-
 end
-
 
 -- Update a players xp from the values in his !TABLE!
 -- just a g_xp_setfunction for all values
 function  updatePlayerXP( _clientNum )
-
 	et.G_XP_Set ( _clientNum , slot[_clientNum]["xp0"], 0, 0 ) -- battle
 	et.G_XP_Set ( _clientNum , slot[_clientNum]["xp1"], 1, 0 ) -- engi
 	et.G_XP_Set ( _clientNum , slot[_clientNum]["xp2"], 2, 0 ) -- medic
@@ -763,9 +761,7 @@ function  updatePlayerXP( _clientNum )
 	et.G_XP_Set ( _clientNum , slot[_clientNum]["xp5"], 5, 0 ) -- heavy
 	et.G_XP_Set ( _clientNum , slot[_clientNum]["xp6"], 6, 0 ) -- covert
 	slot[_clientNum]["xpset"] = true
-
 end
-
 
 -- Check if player is banned 
 function checkBan ( _clientNum )
@@ -787,9 +783,7 @@ function checkBan ( _clientNum )
 		end
 	end
 	return nil
-
 end
-
 
 -- Check if player is muted
 function checkMute ( _clientNum )
@@ -811,9 +805,7 @@ function checkMute ( _clientNum )
 	end
 	
 	return nil
-	
 end
-
 
 --Create a new Player: write to Database, set Xp 0
 --maybe could also be used to reset Player, as pkey is unique
@@ -844,9 +836,7 @@ function createNewPlayer ( _clientNum )
 	
 	-- And now we will get all our default values 
 	updatePlayerInfo (_clientNum)
-
 end
-
 
 -- Function to handle times
 -- TODO : check if the time returned with option 'D' is in the right format we need
@@ -930,7 +920,6 @@ function timehandle ( op, time1, time2)
 	return nil
 end
 
-
 -- Dumps Client into Dbase at Disconnect or end of round
 -- This function really dumps everything!
 function WriteClientDisconnect( _clientNum, _now, _timediff )
@@ -975,8 +964,7 @@ function WriteClientDisconnect( _clientNum, _now, _timediff )
 		-- Write to session if player was in game
 		saveSession ( _clientNum )
 		savePlayer ( _clientNum )
-		 et.G_LogPrint( "Noq: saved player and session ".._clientNum.." to Database\n" )
-
+		et.G_LogPrint( "Noq: saved player and session ".._clientNum.." to Database\n" )
 	end		
 end
 
@@ -992,49 +980,48 @@ function savePlayer ( _clientNum )
 		s,e,slot[_clientNum]["ip"] = string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
 	end 
 	
-	  if slot[_clientNum]["xpset"] == false and xprestore == 1 then
+	if slot[_clientNum]["xpset"] == false and xprestore == 1 then
+		et.G_LogPrint("NOQ: ERROR while setting xp in database: XP not properly restored!\n")
+      	return
+    end
 
-        et.G_LogPrint("NOQ: ERROR while setting xp in database: XP not properly restored!\n")
-        return
-        end
 
-	
-		local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
-		local engi	=	et.gentity_get(_clientNum,"sess.skillpoints",1)
-		local medic	=	et.gentity_get(_clientNum,"sess.skillpoints",2)
-		local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
-		local light	=	et.gentity_get(_clientNum,"sess.skillpoints",4)
-		local heavy	=	et.gentity_get(_clientNum,"sess.skillpoints",5)
-		local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
-	
-		-- We also write to player, for our actual data
-		-- TODO
-		-- slot[_clientNum]["user"] 
-		-- slot[_clientNum]["password"] 
-		-- slot[_clientNum]["email"] 
-		-- slot[_clientNum]["netname"] ????
+	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
+	local engi	=	et.gentity_get(_clientNum,"sess.skillpoints",1)
+	local medic	=	et.gentity_get(_clientNum,"sess.skillpoints",2)
+	local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
+	local light	=	et.gentity_get(_clientNum,"sess.skillpoints",4)
+	local heavy	=	et.gentity_get(_clientNum,"sess.skillpoints",5)
+	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
 
-		 local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
+	-- We also write to player, for our actual data
+	-- TODO
+	-- slot[_clientNum]["user"] 
+	-- slot[_clientNum]["password"] 
+	-- slot[_clientNum]["email"] 
+	-- slot[_clientNum]["netname"] ????
 
-                -- FIXME getting attempt to concatenate field 'muteexpire' (a nil value) (sqlite
-                res = assert (con:execute("UPDATE player SET clan='".. slot[_clientNum]["clan"] .."',           \
-                                                     netname='".. name  .."',\
-													 xp0='".. battle .."', 	\
-													 xp1='".. engi .."', 	\
-													 xp2='".. medic .."', 	\
-													 xp3='".. signals .."',	\
-													 xp4='".. light .."', 	\
-													 xp5='".. heavy .."',	\
-													 xp6='".. covert .."',	\
-													 xptot='".. battle + engi + medic + signals + light + heavy + covert .. "',\
-													 level='".. slot[_clientNum]["level"] .."',				\
-													 banreason='".. slot[_clientNum]["banreason"]  .."',	\
-													 bannedby='".. slot[_clientNum]["bannedby"]  .."',		\
-													 mutedreason='".. slot[_clientNum]["mutedreason"] .."',	\
-													 mutedby='".. slot[_clientNum]["mutedby"] .."',			\
-													 warnings='".. slot[_clientNum]["warnings"] .."',		\
-													 suspect='".. slot[_clientNum]["suspect"] .."'			\
-													 WHERE pkey='".. slot[_clientNum]["pkey"] .."'"))
+	 local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
+
+	-- FIXME getting attempt to concatenate field 'muteexpire' (a nil value) (sqlite
+	res = assert (con:execute("UPDATE player SET clan='".. slot[_clientNum]["clan"] .."',           \
+										 netname='".. name  .."',\
+										 xp0='".. battle .."', 	\
+										 xp1='".. engi .."', 	\
+										 xp2='".. medic .."', 	\
+										 xp3='".. signals .."',	\
+										 xp4='".. light .."', 	\
+										 xp5='".. heavy .."',	\
+										 xp6='".. covert .."',	\
+										 xptot='".. battle + engi + medic + signals + light + heavy + covert .. "',\
+										 level='".. slot[_clientNum]["level"] .."',				\
+										 banreason='".. slot[_clientNum]["banreason"]  .."',	\
+										 bannedby='".. slot[_clientNum]["bannedby"]  .."',		\
+										 mutedreason='".. slot[_clientNum]["mutedreason"] .."',	\
+										 mutedby='".. slot[_clientNum]["mutedby"] .."',			\
+										 warnings='".. slot[_clientNum]["warnings"] .."',		\
+										 suspect='".. slot[_clientNum]["suspect"] .."'			\
+										 WHERE pkey='".. slot[_clientNum]["pkey"] .."'"))
 
 --													 muteexpire='".. slot[_clientNum]["muteexpire"] .."',	\
 --													 banexpire='".. slot[_clientNum]["banexpire"] .."',		\
@@ -1043,10 +1030,8 @@ end
 -- Dumps the sessiondata
 -- should only be used on sessionend to not falsify sessions
 function saveSession ( _clientNum )
-
 	if recordbots == 0 and slot[_clientNum]["isBot"] == 1 then
-		 et.G_LogPrint( "Noq: not saved bot session ".._clientNum.." to Database" )
-
+		et.G_LogPrint( "Noq: not saved bot session ".._clientNum.." to Database" )
 		return
 	end
 
@@ -1063,23 +1048,23 @@ function saveSession ( _clientNum )
 		s,e,slot[_clientNum]["ip"] = string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
 	end 
 
-		-- If player was ingame, we really should save his XP to!
-		local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
-		local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
-		local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
-		local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
-		local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
-		local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
-		local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
-			
-		local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
-		local deaths = et.gentity_get(_clientNum,"sess.deaths")
-		local kills = et.gentity_get(_clientNum,"sess.kills")
-		local tkills = et.gentity_get(_clientNum,"sess.team_kills")
-		-- Write to session if player was in game
+	-- If player was ingame, we really should save his XP to!
+	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
+	local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
+	local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
+	local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
+	local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
+	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
+	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
+		
+	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
+	local deaths = et.gentity_get(_clientNum,"sess.deaths")
+	local kills = et.gentity_get(_clientNum,"sess.kills")
+	local tkills = et.gentity_get(_clientNum,"sess.team_kills")
+	-- Write to session if player was in game
 		
 
-local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
+	local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
 			..slot[_clientNum]["pkey"].."', '"
 			.._clientNum .."', '"
 			..map.."', '"
@@ -1105,17 +1090,15 @@ local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, valid, sta
 			..kills.."', '"
 			..tkills.."', '"
 			..deaths.. "' )"
-		res = assert (con:execute(sessquery))
-		--et.G_LogPrint( "\n\n".. sessquery .. "\n\n" ) 
+	res = assert (con:execute(sessquery))
+	--et.G_LogPrint( "\n\n".. sessquery .. "\n\n" ) 
 end
 
 -- From KWmod: Custom Commands Helper functions
 function gotCmd( _clientNum, _command, _vsay)
-
 	local arg0 = string.lower(et.trap_Argv(0))
 	local arg1 = string.lower(et.trap_Argv(1))
 	local arg2 = string.lower(et.trap_Argv(2))
-
 	local cmd
 	local lvl = tonumber(et.G_shrubbot_level( _clientNum ) )
 	local realcmd
@@ -1143,7 +1126,6 @@ function gotCmd( _clientNum, _command, _vsay)
 		break
 		end
 	end
-
 end
 
 --Splits a string into a table on occurence of Whitespaces
@@ -1155,111 +1137,109 @@ end
 
 -- The real work to exec a cmd is done here
 function execCmd (clientNum , _cmd, _argw)
-		local str = _cmd
-		--[[
-		local lastkilled = et.gentity_get(clientNum, "pers.lastkilled_client")
-		local lastkiller = et.gentity_get(clientNum, "pers.lastkiller_client")
-		]]
-		local lastkilled = slot[clientNum]["victim"]
-		local lastkiller = slot[clientNum]["killer"] 
-		
-		if lastkilled == 1023 then
-			lastkilled = clientNum
-			slot[clientNum]["killwep"] = "World"
-		end
-		if lastkiller == 1023 then 
-			lastkiller = clientNum
-			slot[clientNum]["deadwep"] = "World"
-		end
-		
-		local otherplayer = _argw
-		--if vsay == false then
-		--otherplayer = string.lower(et.trap_Argv(2))
-		--else
-		--otherplayer = string.lower(et.trap_Argv(3))
-		--end		
-		
-		otherplayer = getPlayerId(otherplayer)
-		--remember! if nobody else is meant, is falls back to you! TODO: Implement other way	
-		if otherplayer == nil then otherplayer = clientNum end  
-		
+	local str = _cmd
+	--[[
+	local lastkilled = et.gentity_get(clientNum, "pers.lastkilled_client")
+	local lastkiller = et.gentity_get(clientNum, "pers.lastkiller_client")
+	]]
+	local lastkilled = slot[clientNum]["victim"]
+	local lastkiller = slot[clientNum]["killer"] 
+	
+	if lastkilled == 1023 then
+		lastkilled = clientNum
+		slot[clientNum]["killwep"] = "World"
+	end
+	if lastkiller == 1023 then 
+		lastkiller = clientNum
+		slot[clientNum]["deadwep"] = "World"
+	end
+	
+	local otherplayer = _argw
+	--if vsay == false then
+	--otherplayer = string.lower(et.trap_Argv(2))
+	--else
+	--otherplayer = string.lower(et.trap_Argv(3))
+	--end		
+	
+	otherplayer = getPlayerId(otherplayer)
+	--remember! if nobody else is meant, is falls back to you! TODO: Implement other way	
+	if otherplayer == nil then otherplayer = clientNum end  
+	
 
-		local t = tonumber(et.gentity_get(clientNum,"sess.sessionTeam"))
-		local c = tonumber(et.gentity_get(clientNum,"sess.latchPlayerType"))
-		local str = string.gsub(str, "<CLIENT_ID>", clientNum)
-		local str = string.gsub(str, "<GUID>", et.Info_ValueForKey( et.trap_GetUserinfo( clientNum ), "cl_guid" ))
-		local str = string.gsub(str, "<COLOR_PLAYER>", et.gentity_get(clientNum,"pers.netname"))
-		local str = string.gsub(str, "<ADMINLEVEL>", slot[clientnum]["level"] )
-		local str = string.gsub(str, "<PLAYER>", et.Q_CleanStr(et.gentity_get(clientNum,"pers.netname")))
-		local str = string.gsub(str, "<PLAYER_CLASS>", class[c])
-		local str = string.gsub(str, "<PLAYER_TEAM>", team[t])
-		local str = string.gsub(str, "<PARAMETER>", et.ConcatArgs( 2 ) )
-		local str = string.gsub(str, "<PLAYER_LAST_KILLER_ID>", lastkiller )
-		local str = string.gsub(str, "<PLAYER_LAST_KILLER_NAME>", et.Q_CleanStr( et.gentity_get(lastkiller, "pers.netname") ))
-		local str = string.gsub(str, "<PLAYER_LAST_KILLER_CNAME>", et.gentity_get(lastkiller, "pers.netname"))
-		local str = string.gsub(str, "<PLAYER_LAST_KILLER_WEAPON>", slot[clientNum]["deadwep"])
-		local str = string.gsub(str, "<PLAYER_LAST_VICTIM_ID>", lastkilled )
-		local str = string.gsub(str, "<PLAYER_LAST_VICTIM_NAME>", et.Q_CleanStr( et.gentity_get(lastkilled, "pers.netname")))
-		local str = string.gsub(str, "<PLAYER_LAST_VICTIM_CNAME>", et.gentity_get(lastkilled, "pers.netname"))
-		local str = string.gsub(str, "<PLAYER_LAST_VICTIM_WEAPON>", slot[clientNum]["killwep"])
-		--TODO
-		-- local str = string.gsub(str, "<PLAYER_LAST_KILL_DISTANCE>", calculate! )
+	local t = tonumber(et.gentity_get(clientNum,"sess.sessionTeam"))
+	local c = tonumber(et.gentity_get(clientNum,"sess.latchPlayerType"))
+	local str = string.gsub(str, "<CLIENT_ID>", clientNum)
+	local str = string.gsub(str, "<GUID>", et.Info_ValueForKey( et.trap_GetUserinfo( clientNum ), "cl_guid" ))
+	local str = string.gsub(str, "<COLOR_PLAYER>", et.gentity_get(clientNum,"pers.netname"))
+	local str = string.gsub(str, "<ADMINLEVEL>", slot[clientnum]["level"] )
+	local str = string.gsub(str, "<PLAYER>", et.Q_CleanStr(et.gentity_get(clientNum,"pers.netname")))
+	local str = string.gsub(str, "<PLAYER_CLASS>", class[c])
+	local str = string.gsub(str, "<PLAYER_TEAM>", team[t])
+	local str = string.gsub(str, "<PARAMETER>", et.ConcatArgs( 2 ) )
+	local str = string.gsub(str, "<PLAYER_LAST_KILLER_ID>", lastkiller )
+	local str = string.gsub(str, "<PLAYER_LAST_KILLER_NAME>", et.Q_CleanStr( et.gentity_get(lastkiller, "pers.netname") ))
+	local str = string.gsub(str, "<PLAYER_LAST_KILLER_CNAME>", et.gentity_get(lastkiller, "pers.netname"))
+	local str = string.gsub(str, "<PLAYER_LAST_KILLER_WEAPON>", slot[clientNum]["deadwep"])
+	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_ID>", lastkilled )
+	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_NAME>", et.Q_CleanStr( et.gentity_get(lastkilled, "pers.netname")))
+	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_CNAME>", et.gentity_get(lastkilled, "pers.netname"))
+	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_WEAPON>", slot[clientNum]["killwep"])
+	--TODO
+	-- local str = string.gsub(str, "<PLAYER_LAST_KILL_DISTANCE>", calculate! )
+	
+	--TODO Implement them
+	--  Other possible Variables: <CVAR_XXX> <????>
+	--local str = string.gsub(str, "<PNAME2ID>", pnameID)
+	--local str = string.gsub(str, "<PBPNAME2ID>", PBpnameID)
+	--local str = string.gsub(str, "<PB_ID>", PBID)
+	--local str = string.gsub(str, "<RANDOM_ID>", randomC) 
+	--local str = string.gsub(str, "<RANDOM_CNAME>", randomCName)
+	--local str = string.gsub(str, "<RANDOM_NAME>", randomName)
+	--local str = string.gsub(str, "<RANDOM_CLASS>", randomClass)
+	--local str = string.gsub(str, "<RANDOM_TEAM>", randomTeam)
+	--local teamnumber = tonumber(et.gentity_get(PlayerID,"sess.sessionTeam"))
+	--local classnumber = tonumber(et.gentity_get(PlayerID,"sess.latchPlayerType"))
+	
+	
+	if otherplayer == clientNum then -- "light security" to not ban or kick yourself (use only ids to ban or kick, then its safe)
+		str = string.gsub(str, "<PART2PBID>", "65" )
+		str = string.gsub(str, "<PART2ID>", "65" ) 
+	end
 		
-		--TODO Implement them
-		--  Other possible Variables: <CVAR_XXX> <????>
-		--local str = string.gsub(str, "<PNAME2ID>", pnameID)
-		--local str = string.gsub(str, "<PBPNAME2ID>", PBpnameID)
-		--local str = string.gsub(str, "<PB_ID>", PBID)
-		--local str = string.gsub(str, "<RANDOM_ID>", randomC) 
-		--local str = string.gsub(str, "<RANDOM_CNAME>", randomCName)
-		--local str = string.gsub(str, "<RANDOM_NAME>", randomName)
-		--local str = string.gsub(str, "<RANDOM_CLASS>", randomClass)
-		--local str = string.gsub(str, "<RANDOM_TEAM>", randomTeam)
-		--local teamnumber = tonumber(et.gentity_get(PlayerID,"sess.sessionTeam"))
-		--local classnumber = tonumber(et.gentity_get(PlayerID,"sess.latchPlayerType"))
-		
-		
-		if otherplayer == clientNum then -- "light security" to not ban or kick yourself (use only ids to ban or kick, then its safe)
-			str = string.gsub(str, "<PART2PBID>", "65" )
-			str = string.gsub(str, "<PART2ID>", "65" ) 
-		end
-			
-		--else
-		local t = tonumber(et.gentity_get(otherplayer,"sess.sessionTeam"))
-		local c = tonumber(et.gentity_get(otherplayer,"sess.latchPlayerType"))
-		str = string.gsub(str, "<PART2_CLASS>", class[c])
-		str = string.gsub(str, "<PART2_TEAM>", team[t])
-		str = string.gsub(str, "<PART2CNAME>", et.gentity_get(otherplayer, "pers.netname" ))
-		str = string.gsub(str, "<PART2CNAME>", et.gentity_get(otherplayer, "pers.netname" ))
-		str = string.gsub(str, "<PART2ID>", otherplayer )
-		str = string.gsub(str, "<PART2PBID>", otherplayer + 1 ) 
-		str = string.gsub(str, "<PART2GUID>", et.Info_ValueForKey( et.trap_GetUserinfo( otherplayer ), "cl_guid" ))
-		str = string.gsub(str, "<PART2LEVEL>", et.G_shrubbot_level (otherplayer) )
-		str = string.gsub(str, "<PART2NAME>", et.Q_CleanStr(et.gentity_get(otherplayer,"pers.netname")))
-		--end
-		
-		-- This allows execution of lua-code in a normal Command. 
-		if string.sub(str, 1,5) == "$LUA$" then
-			local f = loadstring(string.sub(str,6))
-			f()
-			return	
-		end
-		
-		-- This allows Shell commands. WARNING: As long as lua waits for the command to complete, NQ+ET arent responding to anything, they are HALTED!
-		-- Response of the Script is piped into NQ-Console(via print, so no commands)
-		if string.sub(str, 1,5) == "$SHL$" then
-			execthis = io.popen(string.sub(str,6))
-			readshit = execthis:read("*a")
-			execthis:close()
-			readshit = string.gsub(readshit, "\n","\"\nqsay \"")
-			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")
-			return	
-		end
-		-- well, at the end we send the command to the console
-		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
-
+	--else
+	local t = tonumber(et.gentity_get(otherplayer,"sess.sessionTeam"))
+	local c = tonumber(et.gentity_get(otherplayer,"sess.latchPlayerType"))
+	str = string.gsub(str, "<PART2_CLASS>", class[c])
+	str = string.gsub(str, "<PART2_TEAM>", team[t])
+	str = string.gsub(str, "<PART2CNAME>", et.gentity_get(otherplayer, "pers.netname" ))
+	str = string.gsub(str, "<PART2CNAME>", et.gentity_get(otherplayer, "pers.netname" ))
+	str = string.gsub(str, "<PART2ID>", otherplayer )
+	str = string.gsub(str, "<PART2PBID>", otherplayer + 1 ) 
+	str = string.gsub(str, "<PART2GUID>", et.Info_ValueForKey( et.trap_GetUserinfo( otherplayer ), "cl_guid" ))
+	str = string.gsub(str, "<PART2LEVEL>", et.G_shrubbot_level (otherplayer) )
+	str = string.gsub(str, "<PART2NAME>", et.Q_CleanStr(et.gentity_get(otherplayer,"pers.netname")))
+	--end
+	
+	-- This allows execution of lua-code in a normal Command. 
+	if string.sub(str, 1,5) == "$LUA$" then
+		local f = loadstring(string.sub(str,6))
+		f()
+		return	
+	end
+	
+	-- This allows Shell commands. WARNING: As long as lua waits for the command to complete, NQ+ET arent responding to anything, they are HALTED!
+	-- Response of the Script is piped into NQ-Console(via print, so no commands)
+	if string.sub(str, 1,5) == "$SHL$" then
+		execthis = io.popen(string.sub(str,6))
+		readshit = execthis:read("*a")
+		execthis:close()
+		readshit = string.gsub(readshit, "\n","\"\nqsay \"")
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")
+		return	
+	end
+	-- well, at the end we send the command to the console
+	et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
 end
-
 
 function getPlayerId( _name )
     -- if it's nil, return nil
@@ -1283,9 +1263,7 @@ function getPlayerId( _name )
 	else
 		return test
 	end
-	
 end
-
 
 -------------------------------------------------------------------------------
 -- Parse commandos from commandofile function
@@ -1322,13 +1300,11 @@ end
 -- Init NOQ function
 -------------------------------------------------------------------------------
 function initNOQ ()
-
 	-- get all we need at gamestart from game
 	gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
 	map = tostring(et.trap_Cvar_Get("mapname"))
 	maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 -- add 1 again if used in view    
 	timelimit = tonumber(et.trap_Cvar_Get("timelimit")) -- update this on frame (if changed during game?)
-	
 end
 
 -- Checks for correct DBVersion
@@ -1348,7 +1324,6 @@ function getDBVersion ()
 		con:close()
 		env:close()
 	end
-	
 end
 
 -------------------------------------------------------------------------------
@@ -1359,7 +1334,6 @@ function updateTeam(_clientNum )
 	local teamTemp = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
 	
 	if teamTemp ~= tonumber(slot[_clientNum]["team"]) then -- now we have teamchange!!!
-		
 		if debug == 1 then
 			et.SendConsoleCommand(et.EXEC_APPEND, "chat \" TEAMCHANGE: " ..team[tonumber(slot[_clientNum]["team"])] .." to " .. team[teamTemp] .. "  \"  ")
 		end
@@ -1369,7 +1343,6 @@ function updateTeam(_clientNum )
 		slot[_clientNum]["lastTeamChange"] = (et.trap_Milliseconds() / 1000 )
 		slot[_clientNum]["team"] = teamTemp
 	end
-	
 end
 
 -------------------------------------------------------------------------------
@@ -1390,26 +1363,24 @@ function closeTeam ( _clientNum )
 end	
 
 -------------------------------------------------------------------------------
---Displays the Pussyfactor for Player _ClientNum
+-- Displays the Pussyfactor for Player _ClientNum
 -------------------------------------------------------------------------------
 function pussyout ( _clientNum )
--------------------------------------------------------------------------------
-local pf = slot[tonumber(_clientNum)]["pf"]
-local kills = tonumber(et.gentity_get(_clientNum,"sess.kills"))
-local realpf = 1
+	local pf = slot[tonumber(_clientNum)]["pf"]
+	local kills = tonumber(et.gentity_get(_clientNum,"sess.kills"))
+	local realpf = 1
 
-if pf == 0 or kills == 0 then
-et.trap_SendServerCommand(-1, "chat \"^1Do some kills first...\"")
-return
-else
-realpf = string.format("%.1f", ( pf / (100 * kills) ) )
+	if pf == 0 or kills == 0 then
+		et.trap_SendServerCommand(-1, "chat \"^1Do some kills first...\"")
+		return
+	else
+		realpf = string.format("%.1f", ( pf / (100 * kills) ) )
+	end
+
+	local name = slot[tonumber(_clientNum)]["netname"]
+	et.trap_SendServerCommand(-1,"chat \""..name.."^3's pussyfactor is at: ".. realpf ..".Higher is worse. \"" ) 
+	et.G_LogPrint("NOQ: PUSSY:"..name.." at ".. realpf .."\n")
 end
-
-local name = slot[tonumber(_clientNum)]["netname"]
-et.trap_SendServerCommand(-1,"chat \""..name.."^3's pussyfactor is at: ".. realpf ..".Higher is worse. \"" ) 
-et.G_LogPrint("NOQ: PUSSY:"..name.." at ".. realpf .."\n")
-end
-
 
 -------------------------------------------------------------------------------
 -- mail functions
@@ -1461,7 +1432,4 @@ function sendMail(_to, _subject, _text)
 	if (e) then
 	   et.G_LogPrint("Could not send email: "..e.. "\n")
 	end
-	
 end
-
-
