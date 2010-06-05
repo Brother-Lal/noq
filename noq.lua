@@ -3,37 +3,29 @@
 --
 -- noq.lua - A Shrubbot replacement and also kind of new game manager and tracking system based on dbms
 -- mysql or sqlite3. Both are supported and in case of sqlite there is no extra sqlite installation needed.
-
-
--- Setup:
--- - Make sure needed Lua SQL libs are on server and run properly. You only need the lib for the selected dbms.
--- - Copy the content of this path to fs_homepath/nq 
--- - NOQ is set up to sqlite by default make sure your server instance has write permissions in fs_homepath. 
---   SQLite will create a file "noquarter.sqlite" at this location.
--- - Make the config to your own and edit the script if you you want to use the mysql.
--- - Restart the server and check if all lua_modules install.lua, console.lua and noq.lua are registered.
--- - Call /rcon !sqlcreate - Done. Your system is set up.
---
--- noq_i.lua - Install script remove after install
---
--- noq_c.lua - Additional tool to enter sql cmds on the ET console
---
--- noq_config.cfg - Stores all data to run & control the NOQ. Make this file your own!
---
--- noq_commands.cfg - Commands definition file - Make this file your own! 
---
--- noq_mods.cfg - Methods of death enum file - never touch!
--- noq_weapons.cfg - Weapon enum config file - never touch!
---
--- nqconst.lua - No Quarter constants
 --
 -- NQ team 2009-2010 - No warrenty :)
 -- NOTE: Use with NQ 1.2.8 and later only	
 
-
-homepath = et.trap_Cvar_Get("fs_homepath")
-pbpath = homepath .. "/pb/"
-scriptpath = homepath .. "/nq/" -- full qualified path for the NOQ scripts
+-- Setup:
+-- - Make sure needed Lua SQL libs are on server and run properly. For mysql dbms you need the additional lib in the path.
+-- - Copy the content of this path to fs_homepath/nq 
+-- - NOQ is set up to sqlite by default make sure your server instance has write permissions in fs_homepath. 
+--   SQLite will create a file "noquarter.sqlite" at this location.
+-- - Make the config your own. There is no need to change code in the NOQ. If you want to see changes use the forum
+-- - Restart the server and check if all lua_modules noq_i.lua, noq_c.lua and noq.lua are registered.
+-- - Call /rcon !sqlcreate - Done. Your system is set up - you should remove noq_i.lua now.
+--
+-- Files:
+-- noq_i.lua 		- Install script remove after install
+-- noq_c.lua 		- Additional tool to enter sql cmds on the ET console
+-- noq_config.cfg 	- Stores all data to run & control the NOQ. Make this file your own!
+-- noq_commands.cfg - Commands definition file - Make this file your own! 
+-- noq_mods.cfg 	- Methods of death enum file - never touch!
+-- noq_weapons.cfg 	- Weapon enum config file - never touch!
+--
+-- nqconst.lua - No Quarter constants
+--
 
 -------------------------------------------------------------------------------
 
@@ -44,6 +36,10 @@ scriptpath = homepath .. "/nq/" -- full qualified path for the NOQ scripts
 -- LUA module version
 version = "1" -- see version table
 databasecheck = 1
+
+homepath = et.trap_Cvar_Get("fs_homepath")
+pbpath = homepath .. "/pb/"
+scriptpath = homepath .. "/nq/" -- full qualified path for the NOQ scripts
 
 -------------------------------------------------------------------------------
 -- table functions - don't move down!
@@ -258,11 +254,11 @@ maxSelfKills = tonumber(getConfig("maxSelfKills")) -- -1 to disable
 -------------------------------------------------------------------------------
 
 -- Handle different dbms
-if dbms == "mySQL" then
+if getConfig("dbms") == "mySQL" then
   require "luasql.mysql"
   env = assert( luasql.mysql() )
   con = assert( env:connect(getConfig("dbname"), getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
-elseif dbms == "SQLite" then
+elseif getConfig("dbms") == "SQLite" then
 	require "luasql.sqlite3" 
 	env = assert( luasql.sqlite3() )
 	-- this opens OR creates a sqlite db - if this file is loaded db is created -fix this?
