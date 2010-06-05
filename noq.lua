@@ -28,7 +28,7 @@
 -- nqconst.lua - No Quarter constants
 --
 -- NQ team 2009-2010 - No warrenty :)
--- NOTE: use with NQ 1.2.8 and later only	
+-- NOTE: Use with NQ 1.2.8 and later only	
 
 
 homepath = et.trap_Cvar_Get("fs_homepath")
@@ -124,22 +124,22 @@ mailserv = getConfig("mailserv")
 mailport = getConfig("mailport")
 mailfrom = getConfig("mailfrom")
 
-recordbots = tonumber(getConfig("recordbots")) -- don't write session for bots
+-- common
+recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
+color 			= getConfig("color")
+commandprefix 	= getConfig("commandprefix")
+debug 			= tonumber(getConfig("debug")) -- debug 0/1
+usecommands 	= tonumber(getConfig("usecommands"))
+xprestore 		= tonumber(getConfig("xprestore"))
+pussyfact 		= tonumber(getConfig("pussyfactor"))
 
-color = getConfig("color")
-commandprefix = getConfig("commandprefix")
-debug = tonumber(getConfig("debug")) -- debug 0/1
-usecommands = tonumber(getConfig("usecommands"))
+if pussyfact == 1 then pussyfact = true else pussyfact = false end
 
 if debug == 1 then
 	et.G_Print("************************\n")
 	getInfoFromTable(noqvartable)
 	et.G_Print("************************\n")
 end
-
-xprestore = tonumber(getConfig("xprestore"))
-pussyfact = tonumber(getConfig("pussyfactor"))
-if pussyfact == 1 then pussyfact = true else pussyfact = false end
 
 --[[-----------------------------------------------------------------------------
 -- DOCU of Datastructurs in this script
@@ -247,7 +247,7 @@ maxclients = 0
 -- for the evener, an perhaps if you want a nifty message a total of bla persons where killed in this game.
 evener = 0
 killcount = 0
-evenerdist = tonumber(getConfig("EvenerCheckallSec"))
+evenerdist = tonumber(getConfig("evenerCheckallSec"))
 lastevener = 0 
 -- Poll restriction
 lastpoll = 0
@@ -1554,7 +1554,7 @@ end
 -- Action is taken if its true.
 -------------------------------------------------------------------------------
 
-function checkBalance( force )
+function checkBalance( _force )
 	local axis = {}
 	local allies = {}
 	local numclients = 0
@@ -1596,7 +1596,7 @@ function checkBalance( force )
 	if math.abs(numaxis - numallies) >= 5 then
 		
 		evener = evener +1
-		if force == true and evener >= 2  then
+		if _force == true and evener >= 2  then
 			et.trap_SendConsoleCommand( et.EXEC_NOW, "!shuffle " )
 			et.trap_SendConsoleCommand( et.EXEC_APPEND, "cpm \"^2EVENER: ^1TEAMS SHUFFLED \" " )
 		else
@@ -1608,7 +1608,7 @@ function checkBalance( force )
 	if math.abs(numaxis - numallies) >= 2 then
 		
 		evener = evener +1
-		if force == true and evener >= 3  then
+		if _force == true and evener >= 3  then
 			local rand = math.random(# gtable)
 			local cmd =  "!put ".. gtable[rand] .." "..teamchar[smallerteam].." \n"  
 			--et.G_Print( "CMD: ".. cmd .. "\n") 
@@ -1676,18 +1676,18 @@ end
 -- removes all your aliases from the pbalias.dat
 -- thks to hose!
 -------------------------------------------------------------------------------
-function rm_pbalias ( myClient, hisClient )
+function rm_pbalias ( _myClient, _hisClient )
 	et.trap_SendServerCommand(-1, "print \"function pbalias entered\n\"")
 	
 	local file_name = "pbalias.dat"
 	local inFile = pbpath .. file_name
 	local outFile = pbpath .. file_name
 
-	local hisGuid = slot[hisClient]["pkey"]
+	local hisGuid = slot[_hisClient]["pkey"]
 	local arg1 = string.lower(hisGuid:sub(25, 32))
 
 	-- all input is evil! check for length!
-	et.trap_SendServerCommand(myClient, "print \"\nSearching for Guid: " .. arg1 .. "\"")
+	et.trap_SendServerCommand(_myClient, "print \"\nSearching for Guid: " .. arg1 .. "\"")
 	local file = assert(io.open( inFile , "r"))
 	local lineCounter = 0
 	local lineTable = {}
@@ -1748,17 +1748,17 @@ function teamdamage( myclient, slotnumber )
 
 	-- notorische teambleeder ab ins cp!!!
 	if teamdamage == 0 then
-		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^7You do ^1love your mates!!\"") 
+		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1".. getConfig("teamdamageMessage1") .. "\"") 
 	elseif teamdamage < damage/10 then
-		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1you hit your mates from time to time!\"") 
+		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1".. getConfig("teamdamageMessage2").. "\"") 
 	elseif teamdamage < damage/5 then
-		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1you don't care about teambleeding very much!\"") 
+		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1".. getConfig("teamdamageMessage3").. "\"") 
 	elseif teamdamage < damage/2 then
-		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1your nickname is collateral damage!!\"") 
+		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1".. getConfig("teamdamageMessage4").. "\"") 
 	elseif teamdamage < damage then
-		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1you don't care about teams, everybody is your enemy!1\"") 
+		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1".. getConfig("teamdamageMessage5").. "\"") 
 	else 
-		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1you are a counteragent killing more of your own team. how much does the enamy pay you!!1!\"") 
+		et.trap_SendServerCommand( slotnumber, "cp \" ^7You got ^1"..teamdamage.." teamdamage ^7and ^2" .. damage .. " damage given! ^1".. getConfig("teamdamageMessage6").. "\"") 
 	end
 end
 

@@ -1,9 +1,11 @@
 --  
--- NOQ install.lua
+-- NOQ installer noq_i.lua - as part of the NOQ
 --
 
--- TODO
--- add table weaponstat afaik we get weapon stats at end ... (or get from cvar) 
+--
+-- Remove this script from game server path after installation
+--
+
 
 --------------------------------------------------------------------------------
 color = "^5"
@@ -41,16 +43,13 @@ res = {}
 --------------------------------------------------------------------------------
 
 function et_InitGame( levelTime, randomSeed, restart )
-
-	et.RegisterModname( "NOQ install " .. version .. " " .. et.FindSelf() )
-
 	if debug == 1 then
 	  et.trap_SendServerCommand( -1 ,"chat \"" .. color .. "NOQ install " .. version )
 	end
+	et.RegisterModname( "NOQ install " .. version .. " " .. et.FindSelf() )
 end
 
 function et_ConsoleCommand( command )
-	
 	if debug == 1 then
 	  et.trap_SendServerCommand( -1 ,"chat \"" .. color .. "ConsoleCommand - command: " .. command )
 	end
@@ -66,7 +65,6 @@ function et_ConsoleCommand( command )
 		cleanTablesDBMS()
 	end
 	-- add more cmds here ...
-	
 end
 
 -- 
@@ -90,11 +88,10 @@ function dropTablesDBMS()
 end
 
 function createTablesDBMS()
-
 		-- IMPORTANT NOTES for default field values:
 		-- Mandatory fields to create a table are set as NOT NULL
 		-- A non existing time is NULL
-		-- If you add more fileds create usefull default values ...
+		-- If you add more fields create usefull default values ...
 
 		et.G_Print(color .. commandprefix.."sqlcreate for ".. dbms .." started\n") 
 	
@@ -286,7 +283,6 @@ function createTablesDBMS()
 end
 
 function shuttdownDBMS()
-    
 	if dbms == "mySQL" or dbms == "SQLite" then
 		con:close()
 		env:close()

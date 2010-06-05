@@ -1,5 +1,5 @@
 --  
--- ET Lua SQL console - console.lua (p) 2010 IRATA [*]
+-- ET Lua SQL console - noq_c.lua (p) 2010 IRATA [*] as part of the NOQ
 --
 
 --
@@ -14,9 +14,6 @@
 -- Notes:
 -- There are limits by the buffer of ET. Avoid very long statements and don't expect you always get the full result printed.
 -- Keep it short
-
--- TODO
--- test all 
 
 --------------------------------------------------------------------------------
 color = "^5"
@@ -54,16 +51,13 @@ row = {}
 --------------------------------------------------------------------------------
 
 function et_InitGame( levelTime, randomSeed, restart )
-
-	et.RegisterModname( "ET SQL console " .. version .. " " .. et.FindSelf() )
-
 	if debug == 1 then
 	  et.trap_SendServerCommand( -1 ,"chat \"" .. color .. "ET Lua SQL console " .. version )
 	end
+	et.RegisterModname( "ET SQL console " .. version .. " " .. et.FindSelf() )
 end
 
 function et_ConsoleCommand( command )
-	
 	if debug == 1 then
 	  et.trap_SendServerCommand( -1 ,"chat \"" .. color .. "ConsoleCommand - command: " .. command )
 	end
@@ -135,7 +129,6 @@ function et_ConsoleCommand( command )
 					-- create a row of data
 					res = assert (con:execute(et.trap_Argv(1)))
 					cur:close()
-				
 				-- untested (only mysql atm)	
 				elseif cmd == "show" then
 					cur = assert (con:execute(et.trap_Argv(1)))
@@ -161,11 +154,9 @@ function et_ConsoleCommand( command )
 		end
 	end
 	-- add more cmds here ...
-
 end
 
 function shuttdownDBMS()
-    
 	if dbms == "mySQL" or dbms == "SQLite" then
 		con:close()
 		env:close()

@@ -1,4 +1,5 @@
 -- IRATA [*] - based on etconst.lua from ETPro but slightly modified to fit for NQ
+-- never change values here unless you exactly know what you are doing
 
 -- misc q_shared.h 
 et.MAX_CLIENTS 						= 64
@@ -64,7 +65,7 @@ et.CS_SVCVAR 						= 40
 et.CS_CONFIGNAME 					= 41
 et.CS_CSMETHODINFO 					= 42
 
-et.CS_MODELS 						=      64
+et.CS_MODELS 						= 64
 et.CS_SOUNDS 						= ( et.CS_MODELS + et.MAX_MODELS     )
 et.CS_SHADERS 						= ( et.CS_SOUNDS + et.MAX_SOUNDS     )
 et.CS_SHADERSTATE 					= ( et.CS_SHADERS + et.MAX_CS_SHADERS    )
