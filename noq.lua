@@ -538,6 +538,10 @@ function et_RunFrame( _levelTime )
 		end
 
 		gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
+		
+		-- Added last kill of the round
+		execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , lastkill)
+		--TODO: Should we call the save to the DB right here?
 	end
 end
 
