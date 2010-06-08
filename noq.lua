@@ -128,7 +128,7 @@ debug 			= tonumber(getConfig("debug")) -- debug 0/1
 usecommands 	= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
-
+nextmapVoteTime = tonumber(getConfig("nextmapVoteSec"))
 if pussyfact == 1 then pussyfact = true else pussyfact = false end
 
 if debug == 1 then
@@ -294,6 +294,7 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	et.RegisterModname( "NOQ version " .. version .. " " .. et.FindSelf() )
     initNOQ()
 	getDBVersion()
+	mapStartTime = et.trap_Milliseconds()
 	if usecommands ~= 0 then
 		parseconf () 
 	end
@@ -447,20 +448,44 @@ function et_ClientCommand (_clientNum, _command)
 	
 	-- Voting restriction
 	if arg0 == "callvote" then
-		
+	   -- restriction is enabled	
 		if polldist ~= -1 then
-			-- checks for shrubbot flag "7" -> check shrubbot wiki for explanation
-			if et.G_shrubbot_permission( _clientNum, "7" ) == 1 then
-				return 0
-			end
 
 			milliseconds = et.trap_Milliseconds() 
 			seconds = milliseconds / 1000
 
-			if (seconds - lastpoll) < polldist then
-				et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(_clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll." )
+			-- checks for shrubbot flag "7" -> check shrubbot wiki for explanation 
+			if et.G_shrubbot_permission( _clientNum, "7" ) == 1 then
+				return 0
+			elseif (seconds - lastpoll) < polldist then
+				et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(_clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll.\"" )
 				return 1
-			end		
+			end
+			
+			if arg1 == "nextmap" then
+				if debug == 1 then
+				et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"vote is nextmap!\"")
+				end
+				--check the time that the map is running already / don t forget warmup!!!
+				mapTime = et.trap_Milliseconds() - mapStartTime
+				if debug == 1 then
+					et.G_Print("maptime = " .. mapTime .."\n")
+					et.G_Print("maptime in seconds = " .. mapTime/1000 .."\n")
+					et.G_Print("mapstarttime = " .. mapStartTime .."\n")
+					et.G_Print("mapstarttime in seconds = " .. mapStartTime/1000 .."\n")
+				end
+				--compare to the value that is given in config where nextmap votes are allowed
+				if nextmapVoteTime == 0 then
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote limiter is disabled!")
+					return 0
+				elseif mapTime / 1000 > nextmapVoteTime then
+					--if not allowed send error msg and return 1	
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime/1000 .. " seconds!\"")
+					return 1
+				end
+				
+			end
+				
 			lastpoll = seconds
 		end
 	end
