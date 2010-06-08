@@ -463,10 +463,8 @@ function et_ClientCommand (_clientNum, _command)
 			end
 			
 			if arg1 == "nextmap" then
-				if debug == 1 then
-				et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"vote is nextmap!\"")
-				end
-				--check the time that the map is running already / don t forget warmup!!!
+
+				--check the time that the map is running already
 				mapTime = et.trap_Milliseconds() - mapStartTime
 				if debug == 1 then
 					et.G_Print("maptime = " .. mapTime .."\n")
