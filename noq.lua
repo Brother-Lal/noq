@@ -474,7 +474,8 @@ function et_ClientCommand (_clientNum, _command)
 				end
 				--compare to the value that is given in config where nextmap votes are allowed
 				if nextmapVoteTime == 0 then
-					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote limiter is disabled!")
+					if debug == 1 then
+						et.G_Print("Nextmap vote limiter is disabled!")
 					return 0
 				elseif mapTime / 1000 > nextmapVoteTime then
 					--if not allowed send error msg and return 1	
