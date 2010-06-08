@@ -205,7 +205,7 @@ end
 slot = {}
 
 -- We do this for accessing the table with [][] syntax, dirty but it works
-for i=0, et.trap_Cvar_Get( "sv_maxclients" ), 1 do				
+for i=0, et.trap_Cvar_Get( "sv_maxclients" )-1, 1 do				
 	slot[i] = {}	
 end
 -- command table
@@ -239,6 +239,7 @@ mapStartTime = 0;
 gstate = nil
 
 -- Maxclients TODO: Check if we can init here ... (move up in case of)
+-- Note: Players are ents 0 - (sv_maxclients-1)
 maxclients = 0
 
 -- for the evener, an perhaps if you want a nifty message a total of bla persons where killed in this game.
@@ -333,13 +334,8 @@ end
 -- IRATA: check et_ClientSpawn()
 -- TODO/NOTE: Afaik we only need to check if ClientBegin is called once to keep 1.2.7 compatinility
 function et_ClientBegin( _clientNum )
-	-- greeting functionality
-	if slot[_clientNum]["ntg"] == true then
-		greetClient(_clientNum)
-	end
 
 	-- TODO Move this functionality in an own function
-	
 	-- Get the player name if its not set
 	if slot[_clientNum]["netname"] == false then
 		slot[_clientNum]["netname"] = et.gentity_get( _clientNum ,"pers.netname")
@@ -347,6 +343,12 @@ function et_ClientBegin( _clientNum )
 		slot[_clientNum]["team"] = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
 		slot[_clientNum]["lastTeamChange"] = (et.trap_Milliseconds() / 1000) -- Hossa! We needa seconds
 	end
+
+	-- greeting functionality after netname is set
+	if slot[_clientNum]["ntg"] == true then
+		greetClient(_clientNum)
+	end
+	
 	
 	if databasecheck == 1 then
 		-- If we have Dbaccess, then we will create new Playerentry if necessary
@@ -1347,7 +1349,6 @@ function execCmd (_clientNum , _cmd, _argw)
 	
 --		if otherplayer == _clientNum then -- "light security" to not ban or kick yourself (use only ids to ban or kick, then its safe)
 	if assume == true then
-
 		str = string.gsub(str, "<PART2PBID>", "65" )
 		str = string.gsub(str, "<PART2ID>", "65" ) 
 	end
@@ -1407,7 +1408,7 @@ function getPlayerId( _name )
     -- if it's a number, interpret as slot number
     local clientnum = tonumber(_name)
     if clientnum then
-        if (clientnum <= tonumber(et.trap_Cvar_Get("sv_maxclients"))) and et.gentity_get(clientnum,"inuse") then
+        if (clientnum <= maxclients) and et.gentity_get(clientnum,"inuse") then
             return clientnum
         else
             return nil
@@ -1584,24 +1585,26 @@ end
 -------------------------------------------------------------------------------
 
 function checkBalance( _force )
-	local axis = {}
-	local allies = {}
-	local numclients = 0
 
-	for i=0, et.trap_Cvar_Get( "sv_maxclients" ), 1 do				
-		
-		if et.gentity_get(i,"classname") == "player" then
+	-- TODO: rework this, actually we can access the needed data from the player table: "team" etc
+	-- would save a bit performance .. 
+	local axis = {} -- is this a field required?
+	local allies = {} -- is this a field required?
+	--local numclients = 0 -- current clients in game
+
+	for i=0, maxclients, 1 do				
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
-			if team == 1 then
+			if team == 0 then
 				table.insert(axis,i)
+				--numclients = numclients +1
 			end 
-			if team == 2 then
+			if team == 1 then
 				table.insert(allies,i)
-				numclients = numclients +1
+				--numclients = numclients +1
 			end
-		end
+			-- team == 3 -- spec
 	end
-
+    
 
 	local numaxis   = # axis
 	local numallies = # allies
@@ -1655,17 +1658,12 @@ end
 
 -------------------------------------------------------------------------------
 -- greetClient - greets a client after his first clientbegin
+-- only call after netname is set!
 -------------------------------------------------------------------------------
 function greetClient(_clientNum)
 	local lvl = slot[_clientNum]["level"]
 	if greetings[lvl] ~= nil then
-		et.CS_PLAYERS = 689
-		local cs = et.trap_GetConfigstring(et.CS_PLAYERS + _clientNum)
-		local myname = et.Info_ValueForKey(cs, "n")
-		local cmd = greetings[lvl]
-		local cmd = string.gsub(cmd, "<COLOR_PLAYER>", myname)
-		local cmd = "cpm " .. cmd
-		et.trap_SendConsoleCommand(et.EXEC_NOW, cmd)
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "cpm " .. string.gsub(greetings[lvl], "<COLOR_PLAYER>", slot[_clientNum]["netname"]))
 	end
 end
 
@@ -1761,14 +1759,14 @@ end
 -- thks to hose!
 -------------------------------------------------------------------------------
 function teamdamage( myclient, slotnumber )
-	local teamdamage = et.gentity_get (slotnumber, "sess.team_damage")		
-	local damage =  et.gentity_get(slotnumber, "sess.damage_given")
+	local teamdamage 	= et.gentity_get (slotnumber, "sess.team_damage")		
+	local damage 		= et.gentity_get(slotnumber, "sess.damage_given")
 
-	local classnumber = et.gentity_get(slotnumber, "sess.playerType")
-	local classname = class[classnumber]
+	local classnumber 	= et.gentity_get(slotnumber, "sess.playerType")
+	local classname 	= class[classnumber]
 
-	local teamnumber = et.gentity_get(slotnumber, "sess.sessionTeam")
-	local teamname = team[teamnumber]		
+	local teamnumber 	= et.gentity_get(slotnumber, "sess.sessionTeam")
+	local teamname 		= team[teamnumber]		
 
 	et.trap_SendServerCommand( myclient, "print \" ^7:" .. et.gentity_get(slotnumber, "pers.netname") .. "^w | Slot: ".. slotnumber ..
 		"\n" .. 		classname .. " | " .. teamname .. " | " .. weapons[et.gentity_get(slotnumber, "sess.latchPlayerWeapon")] .. " | " ..  weapons[et.gentity_get(slotnumber, "sess.latchPlayerWeapon2")] .. 
