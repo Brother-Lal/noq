@@ -234,6 +234,7 @@ commands[0]['noqban'] = "$LUA$ ban(<PART2ID>)" --TODO The BANFUNCTION...
 
 -- current map
 map = ""
+mapStartTime = 0;
 --Gamestate 1 ,2 , 3 = End of Map 
 gstate = nil
 
@@ -1460,7 +1461,7 @@ function initNOQ ()
 	gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
 	map = tostring(et.trap_Cvar_Get("mapname"))
 	maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 -- add 1 again if used in view    
-	timelimit = tonumber(et.trap_Cvar_Get("timelimit")) -- update this on frame (if changed during game?)
+	-- timelimit = tonumber(et.trap_Cvar_Get("timelimit")) -- update this on frame (if changed during game?) -- use it if you need it :) 
 end
 
 -------------------------------------------------------------------------------
@@ -1837,4 +1838,9 @@ function showmaps()
 	for i,v in ipairs(tat34) do addit(i,v) end
 
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"".. ent2 .. "\"")
+end
+
+-- retuns rest of time to play
+function timeLeft()
+	return  tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
 end
