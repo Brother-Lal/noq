@@ -457,11 +457,14 @@ function et_ClientCommand (_clientNum, _command)
 			-- checks for shrubbot flag "7" -> check shrubbot wiki for explanation 
 			if et.G_shrubbot_permission( _clientNum, "7" ) == 1 then
 				return 0
+
+			-- checks time betw. last vote and this one
 			elseif (seconds - lastpoll) < polldist then
 				et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(_clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll.\"" )
 				return 1
 			end
 			
+			-- handles nextmap vote restriction
 			if arg1 == "nextmap" then
 
 				--check the time that the map is running already
@@ -476,6 +479,7 @@ function et_ClientCommand (_clientNum, _command)
 				if nextmapVoteTime == 0 then
 					if debug == 1 then
 						et.G_Print("Nextmap vote limiter is disabled!")
+					end
 					return 0
 				elseif mapTime / 1000 > nextmapVoteTime then
 					--if not allowed send error msg and return 1	
