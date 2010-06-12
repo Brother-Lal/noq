@@ -125,6 +125,7 @@ recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
 commandprefix 	= getConfig("commandprefix")
 debug 			= tonumber(getConfig("debug")) -- debug 0/1
+debugquerries   = 0
 usecommands 	= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
@@ -307,7 +308,6 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	initClient( _clientNum, _firstTime, _isBot )
 	
 	local ban = checkBan ( _clientNum )
-	
 	if ban ~= nil then
 		return ban
 	end
@@ -577,9 +577,9 @@ function et_RunFrame( _levelTime )
 end
 
 function et_Obituary( _victim, _killer, _mod )
-		if debug == 1 then
-			et.G_LogPrint ("MOD: ".._victim .. " wurd kill " .._killer .."Index:".. _Deaththingie .."  ;".. meansofdeath[_mod].."\n")
-		end
+	if debug == 1 then
+		et.G_LogPrint ("MOD: ".._victim .. " wurd kill " .._killer .."Index:".. _Deaththingie .."  ;".. meansofdeath[_mod].."\n")
+	end
 	
 	if _killer == 1022 then
 		-- this is for a kill by falling or similar trough the world. Mapmortar etc also.
@@ -587,8 +587,11 @@ function et_Obituary( _victim, _killer, _mod )
 		slot[_victim]["killer"] = _killer
 		slot[_victim]["deadwep"] = string.sub(meansofdeath[_mod], 5)
 		
-	else -- normal killer
+		-- update kill vars (victim only)
+		
+	else -- all not world kills
 		 
+		-- TODO: Put that pussy code into a single function 
 		if pussyfact == true then
 			-- determine teamkill or not
 			
@@ -605,7 +608,7 @@ function et_Obituary( _victim, _killer, _mod )
 				else
 					-- no teamkill
 				
-					--Knivekill
+					--Knivekill -- why this? knife is cool!
 					if _mod == 5 or _mod == 65 then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 70
 					
@@ -617,19 +620,19 @@ function et_Obituary( _victim, _killer, _mod )
 					elseif _mod == 17  then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 115
 					
-					--poison
+					--poison -- why this? poison is cool!
 					elseif _mod == 61 then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 65
 					
-					-- goomba
+					-- goomba -- why this? goomba is cool!
 					elseif _mod == 60  then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 60
 					
-					-- kick
+					-- kick -- also cool
 					elseif _mod == 21 then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 40
 					
-					-- sniper
+					-- sniper -- hhmmmmm
 					elseif _mod == 51 or _mod == 14 or _mod == 46 then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 90
 					else
@@ -650,7 +653,28 @@ function et_Obituary( _victim, _killer, _mod )
 
 		lastkiller = _killer
 		
-	end
+		
+		-- update client vars ...
+		
+		-- Self kill (restriction)
+		if _killer == _victim then
+			if _mod == 33 then
+				slot[_killer]["selfkills"] = slot[_killer]["selfkills"] + 1 -- what about if they use nades?
+			end
+			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
+			-- slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills")) -- TODO ????
+		else -- _killer <> _victim
+			-- we assume client[team] is always updated
+			if slot[_killer]["team"] == slot[_victim]["team"] then -- Team kill
+				-- TODO: check if death/kills need an update here
+				slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills"))			
+			else -- cool kill
+				slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
+				slot[_killer]["kills"] = tonumber(et.gentity_get(_killer,"sess.kills"))		
+			end
+		end
+			
+	end -- end of 'all not world kills'
 
 	-- uneven teams solution - the evener
 	if evenerdist ~= -1 then
@@ -659,13 +683,6 @@ function et_Obituary( _victim, _killer, _mod )
 		if killcount % 2 == 0 and (seconds - lastevener ) >= evenerdist then
 			checkBalance( true )
 			lastevener = seconds
-		end
-	end
-	
-	-- Selfkill restriction
-	if _killer == _victim then
-		if _mod == 33 then
-		slot[_killer]["selfkills"] = slot[_killer]["selfkills"] + 1
 		end
 	end
 
@@ -840,7 +857,7 @@ end
 -- Update a players xp from the values in his previously set Xptable
 -- just a g_xp_setfunction for all values
 -------------------------------------------------------------------------------
-function  updatePlayerXP( _clientNum )
+function updatePlayerXP( _clientNum )
 	
 	if tonumber(slot[_clientNum]["xp0"]) < 0 then
 		slot[_clientNum]["xp0"] = 0
@@ -1107,11 +1124,11 @@ function savePlayer ( _clientNum )
     end
 
 	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
-	local engi	=	et.gentity_get(_clientNum,"sess.skillpoints",1)
-	local medic	=	et.gentity_get(_clientNum,"sess.skillpoints",2)
+	local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
+	local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
 	local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
-	local light	=	et.gentity_get(_clientNum,"sess.skillpoints",4)
-	local heavy	=	et.gentity_get(_clientNum,"sess.skillpoints",5)
+	local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
+	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
 	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
 
 	-- We also write to player, for our actual data
@@ -1159,6 +1176,7 @@ function saveSession ( _clientNum )
 	end
 
 	-- TODO: fixme sqlite only ?
+	-- TODO: think about moving these vars into client structure earlier ...
 	slot[_clientNum]["sptime"] = "0"
 	slot[_clientNum]["uci"] = et.gentity_get( _clientNum ,"sess.uci")
 	slot[_clientNum]["ip"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
@@ -1171,6 +1189,7 @@ function saveSession ( _clientNum )
 	end 
 
 	-- If player was ingame, we really should save his XP to!
+	-- TODO: think about updating this into client structure
 	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
 	local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
 	local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
@@ -1178,11 +1197,10 @@ function saveSession ( _clientNum )
 	local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
 	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
 	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
-		
+	
+	-- TODO: Think about using this earlier, is this the injection check ?		
 	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
-	local deaths = et.gentity_get(_clientNum,"sess.deaths")
-	local kills = et.gentity_get(_clientNum,"sess.kills")
-	local tkills = et.gentity_get(_clientNum,"sess.team_kills")
+	
 	-- Write to session if player was in game
 		
 	local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
@@ -1208,11 +1226,14 @@ function saveSession ( _clientNum )
 			..covert.."','"
 			..(battle + engi + medic + signals + light + heavy + covert ).."','"
 			.."0".."', '"
-			..kills.."', '"
-			..tkills.."', '"
-			..deaths.. "' )"
+			..slot[_clientNum]["kills"].."', '"
+			..slot[_clientNum]["tkills"].."', '"
+			..slot[_clientNum]["death"].. "' )"
 		res = assert (con:execute(sessquery))
-		--et.G_LogPrint( "\n\n".. sessquery .. "\n\n" ) 
+	
+	if debugquerries == 1 then	
+		et.G_LogPrint( "\n\n".. sessquery .. "\n\n" ) 
+	end
 end
 
 -------------------------------------------------------------------------------
@@ -1226,6 +1247,7 @@ function gotCmd( _clientNum, _command, _vsay)
 	local arg2 = string.lower(et.trap_Argv(2))
 
 	local cmd
+	-- TODO: we should use level from Lua client model
 	local lvl = tonumber(et.G_shrubbot_level( _clientNum ) )
 	local realcmd
 	
@@ -1585,7 +1607,7 @@ end
 
 function checkBalance( _force )
 
-	-- TODO: rework this, actually we can access the needed data from the player table: "team" etc
+	-- TODO: rework this, actually we can access the needed data from the slot table: "team" etc
 	-- would save a bit performance .. 
 	local axis = {} -- is this a field required?
 	local allies = {} -- is this a field required?
@@ -1682,6 +1704,7 @@ end
 -------------------------------------------------------------------------------
 function pussyout ( _clientNum )
 	local pf = slot[tonumber(_clientNum)]["pf"]
+	-- TODO: use client structure slot[tonumber(_clientNum)]["kills"] -- it should be up to date!
 	local kills = tonumber(et.gentity_get(_clientNum,"sess.kills"))
 	local realpf = 1
 
@@ -1692,15 +1715,15 @@ function pussyout ( _clientNum )
 		realpf = string.format("%.1f", ( pf / (100 * kills) ) )
 	end
 
-	local name = slot[tonumber(_clientNum)]["netname"]
-	et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \""..name.."^3's pussyfactor is at: ".. realpf ..".Higher is worse. \"" ) 
-	et.G_LogPrint("NOQ: PUSSY:"..name.." at ".. realpf .."\n")
+	-- TODO: do we need to number here =
+	et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \""..slot[tonumber(_clientNum)]["netname"].."^3's pussyfactor is at: ".. realpf ..".Higher is worse. \"" ) 
+	et.G_LogPrint("NOQ: PUSSY:"..slot[tonumber(_clientNum)]["netname"].." at ".. realpf .."\n")
 end
 
 -------------------------------------------------------------------------------
 -- rm_pbalias
 -- removes all your aliases from the pbalias.dat
--- thks to hose!
+-- thks to hose! (yeah, this is cool!)
 -------------------------------------------------------------------------------
 function rm_pbalias ( _myClient, _hisClient )
 	et.trap_SendServerCommand(-1, "print \"function pbalias entered\n\"")
@@ -1764,6 +1787,7 @@ function teamdamage( myclient, slotnumber )
 	local classnumber 	= et.gentity_get(slotnumber, "sess.playerType")
 	local classname 	= class[classnumber]
 
+	-- TODO: use slottable 
 	local teamnumber 	= et.gentity_get(slotnumber, "sess.sessionTeam")
 	local teamname 		= team[teamnumber]		
 
@@ -1839,5 +1863,5 @@ end
 
 -- retuns rest of time to play
 function timeLeft()
-	return  tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
+	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
 end
