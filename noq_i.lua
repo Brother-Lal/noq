@@ -17,7 +17,7 @@ tablespacer = " " -- use something like " " or "|"
 -- db connection data
 dbms	= "SQLite" -- possible values "mySQL", "postgreSQL" and "SQLite"
 dbname  = "noquarter.sqlite" -- database name, also name for SQLite file
-dbuser  = "SA" 
+dbuser  = "SA"
 dbpassword = ""
 --------------------------------------------------------------------------------
 env = nil
@@ -181,17 +181,17 @@ function createTablesDBMS()
 			et.G_Print(res .. "\n")
 			res = assert(con:execute"CREATE INDEX s_ip ON session ( ip)" )
 			et.G_Print(res .. "\n")
-		
-[[			
+
+--[[
 			-- TODO create trigger for updatedate
 			res = assert(con:execute"CREATE TRIGGER insert_player_updatedate AFTER  INSERT ON player \
      			BEGIN																		\
       				UPDATE player SET updatedate = DATETIME('NOW')  WHERE id = new.id;		\
      			END;")
 			et.G_Print(res .. "\n")
-]]		
+]]--
 			-- insert data
-			res = assert(con:execute"INSERT INTO version VALUES ( 1, ".. version ..")")	
+   			res = assert(con:execute("INSERT INTO version VALUES ( '1', '" .. version .. "' )"))
 			et.G_Print(res .. "\n")
 			
 		-- mySQL	
