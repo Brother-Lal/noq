@@ -514,11 +514,7 @@ function et_ClientCommand (_clientNum, _command)
 	if usecommands ~= 0 then
 		if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
 			if arg0 == "readthefile" then 
-				if callershrublvl >= 15 then -- we need a adminlevel TODO: create a flag for this
 					parseconf()
-				else 
-					return 0
-				end
 				return 1
 			end
 		end
@@ -608,7 +604,7 @@ function et_Obituary( _victim, _killer, _mod )
 				else
 					-- no teamkill
 				
-					--Knivekill -- why this? knife is cool!
+					--Knivekill -- why this? knife is cool! .... therefore it adds a value under 100. 
 					if _mod == 5 or _mod == 65 then
 					slot[_killer]["pf"] = slot[_killer]["pf"] + 70
 					
@@ -661,6 +657,7 @@ function et_Obituary( _victim, _killer, _mod )
 			if _mod == 33 then
 				slot[_killer]["selfkills"] = slot[_killer]["selfkills"] + 1 -- what about if they use nades?
 			end
+			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 			-- slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills")) -- TODO ????
 		else -- _killer <> _victim
@@ -1198,7 +1195,7 @@ function saveSession ( _clientNum )
 	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
 	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
 	
-	-- TODO: Think about using this earlier, is this the injection check ?		
+	-- TODO: Think about using this earlier, is this the injection check ?		Yes, its an escape function for ' (wich should be the only character allowed by et and with a special meaning for SQL)
 	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
 	
 	-- Write to session if player was in game
@@ -1702,6 +1699,21 @@ end
 -- pussyout
 -- Displays the Pussyfactor for Player _ClientNum
 -------------------------------------------------------------------------------
+--[[
+-- Some Documentation for Pussyfactor:
+-- For every kill, we add a value to the clients number, and to determine the the Pussyfactor, we 
+-- divide that number trough the number of his kills multiplicated with 100.
+-- If we add 100 for an mp40/thompsonkill, if makes only those kills , he will stay at pussyfactor 1
+-- if we add more or less(as 100) to the number, his pf will rise or decline.
+-- 
+-- Pussyfactor < 1 		means he made "cool kills" = poison, goomba, knive
+-- Pussyfactor = 1 		means he makes normal kills
+-- Pussyfactor > 1      means he does uncool kills (Panzerfaust, teamkills, arty?)
+--
+-- As we add 100 for every normal kill, the pussyfactor approaches 1 after some time with "normal" kills
+-- 
+--]]
+
 function pussyout ( _clientNum )
 	local pf = slot[tonumber(_clientNum)]["pf"]
 	-- TODO: use client structure slot[tonumber(_clientNum)]["kills"] -- it should be up to date!
