@@ -21,6 +21,7 @@
 -- noq_c.lua 		- Additional tool to enter sql cmds on the ET console
 -- noq_config.cfg 	- Stores all data to run & control the NOQ. Make this file your own!
 -- noq_commands.cfg - Commands definition file - Make this file your own! 
+-- 
 -- noq_mods.cfg 	- Methods of death enum file - never touch!
 -- noq_weapons.cfg 	- Weapon enum config file - never touch!
 --
@@ -91,8 +92,12 @@ end
 
 et.G_LogPrint ("Loading NOQ config from ".. scriptpath.."\n")
 noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
+-- TODO: check if we can do this in 2 tables 
 meansofdeath 	= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
-weapons 		= assert(table.load( scriptpath .. "noq_weapons.cfg")) -- all weapons 
+weapons 		= assert(table.load( scriptpath .. "noq_weapons.cfg")) -- all weapons
+mod				= assert(table.load( scriptpath .. "noq_mods_name.cfg")) -- mods by name
+w				= assert(table.load( scriptpath .. "noq_weapons_name.cfg")) -- waepons by name
+-- end TODO
 greetings		= assert(table.load( scriptpath .. "noq_greetings.cfg")) -- all greetings, customize as wished
 
 -- Gets varvalue else null
@@ -942,22 +947,27 @@ end
 
 -------------------------------------------------------------------------------
 -- checkMute
--- Check if player is muted and TODO: mute him
+-- TODO: check this, functions is prepared to work w/o using the shrubbot.cfg
+-- We need a function, which checks if bans/mutes are still valid and updates the database (delete old values of non connected players)
 -------------------------------------------------------------------------------
 function checkMute ( _clientNum )
-	-- TODO give hint and mute player ...
-	if slot[_clientNum]["mutedby"] then
-		if slot[_clientNum]["mutedreason"] then
-			if slot[_clientNum]["muteexpire"] then
-				--return "You are muted by "..slot[_clientNum][mutedby].." until "..row.muteexpire..". Reason: "..slot[_clientNum][mutedreason]
+	-- give hint and mute player ...
+	if slot[_clientNum]["mutedby"] ~= "" then
+		et.gentity_set(_clientNum,"sess.muted", 1) 
+		if slot[_clientNum]["mutedreason"] ~= "" then
+			et.gentity_set(_clientNum,"sess.muted_by", slot[_clientNum]["mutedreason"])
+			if slot[_clientNum]["muteexpire"] ~= "1000-01-01 00:00:00" then
+				et.gentity_set(_clientNum,"sess.auto_mute_time", slot[_clientNum]["muteexpire"])
+				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are muted by "..slot[_clientNum][mutedby].." until "..row.muteexpire..". Reason: "..slot[_clientNum][mutedreason])
 			else
-				--return "You are permanently muted by "..slot[_clientNum][mutedby]..". Reason: "..slot[_clientNum][mutedreason]
+				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are permanently muted by "..slot[_clientNum][mutedby]..". Reason: "..slot[_clientNum][mutedreason])
 			end
 		else
-			if slot[_clientNum]["muteexpire"] then
-				-- return "You are muted by "..slot[_clientNum][mutedby].." until "..slot[_clientNum][muteexpire}
+			if slot[_clientNum]["muteexpire"] ~= "1000-01-01 00:00:00" then
+				et.gentity_set(_clientNum,"sess.auto_mute_time", slot[_clientNum]["muteexpire"])
+				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are muted by "..slot[_clientNum][mutedby].." until "..slot[_clientNum][muteexpire])
 			else
-				-- return "You are permanently muted by "..slot[_clientNum][mutedby]
+				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are permanently muted by "..slot[_clientNum][mutedby])
 			end
 		end
 	end
