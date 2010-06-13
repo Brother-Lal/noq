@@ -844,7 +844,15 @@ function updatePlayerInfo ( _clientNum )
 		if debug == 1 then
 			et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT CLIENT NO ROW -> NEW \n \"" )
 		end
-		-- We just don't do anything, we let him go to Clientbegin and say hes new
+		-- Since he is new, he isn't banned or muted: let him pass those check
+		slot[_clientNum]["banreason"] = ""
+		slot[_clientNum]["bannedby"] = ""
+		slot[_clientNum]["banexpire"] = "1000-01-01 00:00:00"
+		slot[_clientNum]["mutedreason"] = ""
+		slot[_clientNum]["mutedby"] = ""
+		slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
+		
+		-- Go to Clientbegin and say hes new
 		slot[_clientNum]["new"] = true
 	end
 end
@@ -891,18 +899,38 @@ end
 -------------------------------------------------------------------------------
 -- checkBan
 -- Check if player is banned and kick him
+-- TODO : would be cool to inform admins about bans through mail
+-- TODO : add something that track a just-unbanned player ( for time bans )
+--        in order to warn online admins and maybe the player himself
 ------------------------------------------------------------------------------- 
 function checkBan ( _clientNum )
+		
 	if slot[_clientNum]["bannedby"] ~= "" then
 		if  slot[_clientNum]["banreason"] ~= "" then
 			if  slot[_clientNum]["banexpire"] ~= "1000-01-01 00:00:00" then
-				-- TODO check for expired ban
+				-- Check for expired ban
+				if timehandle( 'DS', 'N', slot[_clientNum]["banexpire"] ) > 0 then
+				    -- The ban is expired: clear the ban fields and continue
+				    slot[_clientNum]["bannedby"] = ""
+				    slot[_clientNum]["banreason"] = ""
+				    slot[_clientNum]["banexpire"] = "1000-01-01 00:00:00"
+				    
+				    return nil
+				end
 				return "You are banned by "..slot[_clientNum]["bannedby"].." until "..slot[_clientNum]["banexpire"]..". Reason: "..slot[_clientNum]["banreason"]
 			else
 				return "You are permanently banned by "..slot[_clientNum]["bannedby"]..". Reason: "..slot[_clientNum]["banreason"]
 			end
 		else
-			if  slot[_clientNum]["banexpire"] then
+			if  slot[_clientNum]["banexpire"] ~= "1000-01-01 00:00:00" then
+				-- Check for expired ban	
+			    if timehandle( 'DS', 'N', slot[_clientNum]["banexpire"] ) > 0 then
+				    -- The ban is expired: clear the ban fields and continue
+				    slot[_clientNum]["bannedby"] = ""
+				    slot[_clientNum]["banexpire"] = "1000-01-01 00:00:00"
+
+				    return nil
+				end
 				return "You are banned by "..slot[_clientNum]["bannedby"].." until "..slot[_clientNum]["banexpire"]
 			else
 				return "You are permanently banned by "..slot[_clientNum]["bannedby"]
@@ -975,6 +1003,7 @@ end
 --timehandle
 -- Function to handle times
 -- TODO : check if the time returned with option 'D' is in the right format we need
+-- TODO : actually, 'D' and 'DS' are almost equal: save some lines mergin them!!
 -- NOTE ABOUT TIME IN LUA: the function os.difftime works only with arguments passed in seconds, so
 --						   before pass anything to that functions we have to convert the date in seconds
 --						   with the function os.time, then convert back the result with os.date
@@ -1013,6 +1042,25 @@ function timehandle ( op, time1, time2)
 	    if string.len(time1) == 19 and string.len(time2) == 19 then
       		timed = os.difftime(os.time{year=tonumber(string.sub(time1,1,4)), month=tonumber(string.sub(time1,6,7)), day=tonumber(string.sub(time1,9,10)), hour=tonumber(string.sub(time1,12,13)), min=tonumber(string.sub(time1,15,16)), sec=tonumber(string.sub(time1,18,19))},os.time{year=tonumber(string.sub(time2,1,4)), month=tonumber(string.sub(time2,6,7)), day=tonumber(string.sub(time2,9,10)), hour=tonumber(string.sub(time2,12,13)), min=tonumber(string.sub(time2,15,16)), sec=tonumber(string.sub(time2,18,19))})
 	    end
+	elseif op == 'DS' then
+	    -- DS -> compute time difference time1-time2 and return result in seconds
+	    if time1==nil or time2==nil then
+	        error("You must to input 2 arguments to use the 'DS' option.")
+	    end
+
+	    -- Check if time1 is 'N' ( NOW )
+	    if time1 == 'N' then
+	    	-- Check if time2 is in the right format
+	    	if string.len(time2) == 19 then
+	    		timed = os.difftime(os.time(),os.time{year=tonumber(string.sub(time2,1,4)), month=tonumber(string.sub(time2,6,7)), day=tonumber(string.sub(time2,9,10)), hour=tonumber(string.sub(time2,12,13)), min=tonumber(string.sub(time2,15,16)), sec=tonumber(string.sub(time2,18,19))})
+				return timed
+			end
+	    end
+	    -- Check if time1 and time2 are in the right format
+	    if string.len(time1) == 19 and string.len(time2) == 19 then
+      		timed = os.difftime(os.time{year=tonumber(string.sub(time1,1,4)), month=tonumber(string.sub(time1,6,7)), day=tonumber(string.sub(time1,9,10)), hour=tonumber(string.sub(time1,12,13)), min=tonumber(string.sub(time1,15,16)), sec=tonumber(string.sub(time1,18,19))},os.time{year=tonumber(string.sub(time2,1,4)), month=tonumber(string.sub(time2,6,7)), day=tonumber(string.sub(time2,9,10)), hour=tonumber(string.sub(time2,12,13)), min=tonumber(string.sub(time2,15,16)), sec=tonumber(string.sub(time2,18,19))})
+			return timed
+		end
 	end
 
  	if timed then
@@ -1138,6 +1186,7 @@ function savePlayer ( _clientNum )
 	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
 
 	-- FIXME getting attempt to concatenate field 'muteexpire' (a nil value) (sqlite
+	-- IlDuca : done for banexpire
 	res = assert (con:execute("UPDATE player SET clan='".. slot[_clientNum]["clan"] .."',           \
 		 netname='".. name  .."',\
 		 xp0='".. battle .."', 	\
@@ -1151,6 +1200,7 @@ function savePlayer ( _clientNum )
 		 level='".. slot[_clientNum]["level"] .."',				\
 		 banreason='".. slot[_clientNum]["banreason"]  .."',	\
 		 bannedby='".. slot[_clientNum]["bannedby"]  .."',		\
+		 banexpire='".. slot[_clientNum]["banexpire"] .."',		\
 		 mutedreason='".. slot[_clientNum]["mutedreason"] .."',	\
 		 mutedby='".. slot[_clientNum]["mutedby"] .."',			\
 		 warnings='".. slot[_clientNum]["warnings"] .."',		\
@@ -1158,7 +1208,6 @@ function savePlayer ( _clientNum )
 		 WHERE pkey='".. slot[_clientNum]["pkey"] .."'"))
 
 --		muteexpire='".. slot[_clientNum]["muteexpire"] .."',	\
---		banexpire='".. slot[_clientNum]["banexpire"] .."',		\
 end
 
 -------------------------------------------------------------------------------
