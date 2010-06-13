@@ -95,8 +95,8 @@ noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 -- TODO: check if we can do this in 2 tables 
 meansofdeath 	= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
 weapons 		= assert(table.load( scriptpath .. "noq_weapons.cfg")) -- all weapons
-mod				= assert(table.load( scriptpath .. "noq_mods_name.cfg")) -- mods by name
-w				= assert(table.load( scriptpath .. "noq_weapons_name.cfg")) -- waepons by name
+mod				= assert(table.load( scriptpath .. "noq_mods_names.cfg")) -- mods by name
+w				= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- waepons by name
 -- end TODO
 greetings		= assert(table.load( scriptpath .. "noq_greetings.cfg")) -- all greetings, customize as wished
 
