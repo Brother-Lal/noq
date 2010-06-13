@@ -287,8 +287,6 @@ row1 = {} -- To manipulate the outputs of SQL command in case we need more than 
 -- mail setup
 if mail == "1" then -- does anybody know core.so/core.lua? This lib is needed & I can't find it
 	smtp = require("socket.smtp")
-	mime = require("mime")
-	ltn12 = require("ltn12")
 end
 
 team = { "AXIS" , "ALLIES" , "SPECTATOR" }
@@ -307,6 +305,9 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 		parseconf () 
 	end
 	lastpoll = (et.trap_Milliseconds() / 1000) - 110
+	
+	-- IlDuca : TEST for mail function
+	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo è un test, speriamo funzioni!!")
 end
 
 function et_ClientConnect( _clientNum, _firstTime, _isBot )
@@ -344,10 +345,11 @@ function et_ClientBegin( _clientNum )
 	-- Get the player name if its not set
 	if slot[_clientNum]["netname"] == false then
 		slot[_clientNum]["netname"] = et.gentity_get( _clientNum ,"pers.netname")
-		-- Well, if he has no name, he first connected - so we set his team.
-		slot[_clientNum]["team"] = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
-		slot[_clientNum]["lastTeamChange"] = (et.trap_Milliseconds() / 1000) -- Hossa! We needa seconds
 	end
+	
+	-- He first connected - so we set his team.
+	slot[_clientNum]["team"] = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
+	slot[_clientNum]["lastTeamChange"] = (et.trap_Milliseconds() / 1000) -- Hossa! We needa seconds
 
 	-- greeting functionality after netname is set
 	if slot[_clientNum]["ntg"] == true then
@@ -379,8 +381,6 @@ function et_ClientBegin( _clientNum )
 			slot[_clientNum]["setxp"] = nil
 		end
 	end -- end databasecheck
-	
-	updateTeam(_clientNum)
 end
 
 -- Possible values are :
@@ -1233,7 +1233,6 @@ function saveSession ( _clientNum )
 
 	-- TODO: fixme sqlite only ?
 	-- TODO: think about moving these vars into client structure earlier ...
-	slot[_clientNum]["sptime"] = "0"
 	slot[_clientNum]["uci"] = et.gentity_get( _clientNum ,"sess.uci")
 	slot[_clientNum]["ip"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
 	
@@ -1591,14 +1590,14 @@ end
 -- closes a time session for a player
 -------------------------------------------------------------------------------
 function closeTeam ( _clientNum )
-	if slot[_clientNum]["team"] == 1 then -- axis
+	if tonumber(slot[_clientNum]["team"]) == 1 then -- axis
 		slot[_clientNum]["axtime"] = slot[_clientNum]["axtime"] +( (et.trap_Milliseconds() / 1000) - slot[_clientNum]["lastTeamChange"]  )
-	elseif slot[_clientNum]["team"] == 2 then -- allies
+	elseif tonumber(slot[_clientNum]["team"]) == 2 then -- allies
 		slot[_clientNum]["altime"] = slot[_clientNum]["altime"] +( (et.trap_Milliseconds() / 1000) - slot[_clientNum]["lastTeamChange"]  )
-	elseif slot[_clientNum]["team"] == 3 then -- Spec
+	elseif tonumber(slot[_clientNum]["team"]) == 3 then -- Spec
 		slot[_clientNum]["sptime"] = slot[_clientNum]["sptime"] +( (et.trap_Milliseconds() / 1000) - slot[_clientNum]["lastTeamChange"]  )
 	end
-	
+		
 	-- Set the player team to -1 so we know he cannot to change team anymore
 	slot[_clientNum]["team"] = -1
 end	
@@ -1607,44 +1606,24 @@ end
 -- mail functions
 -------------------------------------------------------------------------------
 function sendMail(_to, _subject, _text)
-	rcpt = { "<XXX>", "<XXX>" }
+	
+	rcpt = _to
 
-	local mesgt =  smtp.message {
-	   headers = {
-		  to = _to,
-		  subject = _subject
-	   },
-	   body = {
-		  preable = "This email contains attachments.",
-		  [1] = {
-		 body = mime.eol(0, [[
-					   "With any luck, we are able to see a Lua-sent
-					   email here."
-				 ]])
-		  },
-		  [2] = {
-		 headers = {
-			["content-type"] = 'text/plain; name="smtp-test.lua"',
-			["content-disposition"] = 'attachment; filename="smtp-test.lua"',
-			["content-description"] = 'the send script\'s source',
-			["content-transfer-encoding"] = "BASE64"
-		 },
-		 body = ltn12.source.chain(
-					   ltn12.source.file(io.open("smtp-test.lua", "r")), 
-					   ltn12.filter.chain(
-								  mime.encode("base64"),
-								  mime.wrap()
-							   )
-					)
-		  },
-		  epilogue = "A few words at the end..."
-	   }
-	}
+	mesgt = {
+  				headers = 	{
+    						to = _to,
+    						subject = _subject
+  							},
+  				body = _text
+			}
+
 
 	r, e = smtp.send {
 	   from = mailfrom,
 	   rcpt = rcpt, 
-	   source = mesgt,
+	   source = smtp.message(mesgt),
+	   --user = "",
+	   --password = "",
 	   server = mailserv,
 	   port = mailport
 	}
