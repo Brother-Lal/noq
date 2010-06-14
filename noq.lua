@@ -1124,7 +1124,7 @@ function WriteClientDisconnect( _clientNum, _now, _timediff )
 			.._clientNum.."', '"
 			..map.."', '"
 			..slot[_clientNum]["ip"].."', '" 
-			.."1".."', '"
+			.."0".."', '"
 			..slot[_clientNum]["start"].."', '"
 			..timehandle('N').."' , '"
             -- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
