@@ -1,10 +1,18 @@
--- .
+
 -- The NOQ - No Quarter Lua next generation game manager
 --
--- noq.lua - A Shrubbot replacement and also kind of new game manager and tracking system based on dbms
--- mysql or sqlite3. Both are supported and in case of sqlite there is no extra sqlite installation needed.
+-- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
+-- Both are supported and in case of sqlite there is no extra sqlite installation needed.
 --
--- NQ team 2009-2010 - No warrenty :)
+-- NQ Lua team 2009-2010 - No warrenty :)
+ 
+-- NQ Lua team is:
+-- IlDuca
+-- Luborg
+-- Hose
+-- IRATA [*]
+
+
 -- NOTE: Use with NQ 1.2.8 and later only	
 
 -- Setup:
@@ -21,7 +29,7 @@
 -- noq_c.lua 		- Additional tool to enter sql cmds on the ET console
 -- noq_config.cfg 	- Stores all data to run & control the NOQ. Make this file your own!
 -- noq_commands.cfg - Commands definition file - Make this file your own! 
--- 
+-- TODO - we have more files now
 -- noq_mods.cfg 	- Methods of death enum file - never touch!
 -- noq_weapons.cfg 	- Weapon enum config file - never touch!
 --
@@ -81,16 +89,16 @@ end
 
 
 -- table helper
-function getInfoFromTable( table )
+function getInfoFromTable( _table )
 	-- table.sort(cvartable)
-	for k,v in pairs(table) do et.G_Print(k .. "=" .. v .. "\n") end
+	for k,v in pairs(_table) do et.G_Print(k .. "=" .. v .. "\n") end
 	-- setn not set so empty
 	-- et.G_Print("size:" .. table.getn(cvartable) .. "\n")
 end
 -- table functions end
 
 
-et.G_LogPrint ("Loading NOQ config from ".. scriptpath.."\n")
+et.G_LogPrint("Loading NOQ config from ".. scriptpath.."\n")
 noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 -- TODO: check if we can do this in 2 tables 
 meansofdeath 	= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
@@ -200,25 +208,29 @@ end
 -- slot[clientNum]["killwep"] = meansofdeathbumber
 -- slot[clientNum]["killer"] = last person who killed clientNum(ID)
 -- slot[clientNum]["deadwep"] =  meansfdeathnumber
--- slot[_clientNum]["lastTeamChange"]
+-- slot[_clientNum]["lastTeamChange"] -- in seconds
 -- slot[_clientNum]["selfkills"]
 --
 --]]
 
--- This is above meantinoed table
+-- This is above meantinoned table
 slot = {}
 
+-- Note: Players are ents 0 - (sv_maxclients-1)
+maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 -- add 1 again if used in view
+
 -- We do this for accessing the table with [][] syntax, dirty but it works
-for i=0, et.trap_Cvar_Get( "sv_maxclients" )-1, 1 do				
+for i=0, maxclients, 1 do				
 	slot[i] = {}	
 end
+
 -- command table
 commands = {}
 -- Shrub uses only 31 Levels. at least wiki says TODO: VERIFY
 for i=0, 31, 1 do				
 	commands[i] = {}
 end
-
+ 
 --[[ 
 --For testing, the !owned known from ETadmin
 commands[0]['owned'] = "print ^1Ha^3ha^5ha^3, i owned ^7<PLAYER_LAST_VICTIM_CNAME>^3 with my ^7<PLAYER_LAST_VICTIM_WEAPON>^7!!!"
@@ -242,10 +254,6 @@ mapStartTime = 0;
 --Gamestate 1 ,2 , 3 = End of Map 
 gstate = nil
 
--- Maxclients TODO: Check if we can init here ... (move up in case of)
--- Note: Players are ents 0 - (sv_maxclients-1)
-maxclients = 0
-
 -- for the evener, an perhaps if you want a nifty message a total of bla persons where killed in this game.
 evener = 0
 killcount = 0
@@ -258,9 +266,9 @@ lastpoll = 0
 
 -- Handle different dbms
 if getConfig("dbms") == "mySQL" then
-  require "luasql.mysql"
-  env = assert( luasql.mysql() )
-  con = assert( env:connect(getConfig("dbname"), getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
+	require "luasql.mysql"
+	env = assert( luasql.mysql() )
+	con = assert( env:connect(getConfig("dbname"), getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
 elseif getConfig("dbms") == "SQLite" then
 	require "luasql.sqlite3" 
 	env = assert( luasql.sqlite3() )
@@ -280,7 +288,7 @@ row = {}  -- To manipulate the outputs of SQL command
 row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
 
 -- mail setup
-if mail == "1" then -- does anybody know core.so/core.lua? This lib is needed & I can't find it
+if mail == "1" then
 	smtp = require("socket.smtp")
 end
 
@@ -351,7 +359,6 @@ function et_ClientBegin( _clientNum )
 		greetClient(_clientNum)
 	end
 	
-	
 	if databasecheck == 1 then
 		-- If we have Dbaccess, then we will create new Playerentry if necessary
 		if slot[_clientNum]["new"] == true then
@@ -378,7 +385,7 @@ end
 
 function et_ClientDisconnect( _clientNum )
 	if databasecheck == 1 then
-		local endtime = timehandle ('N');
+		local endtime = timehandle ('N')
 		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
 		local timediff = timehandle('D','N', slot[_clientNum]["start"])
 		
@@ -388,7 +395,7 @@ function et_ClientDisconnect( _clientNum )
 	slot[_clientNum]["ntg"] = false
 end
 
-function et_ClientCommand (_clientNum, _command)
+function et_ClientCommand( _clientNum, _command )
 	local arg0 = string.lower(et.trap_Argv(0))
 	local arg1 = string.lower(et.trap_Argv(1))
 	local arg2 = string.lower(et.trap_Argv(2))
@@ -519,7 +526,7 @@ function et_ShutdownGame( _restart )
 			-- This is when the map ends: we have to close all opened sessions
 			-- Cycle between all possible clients
 			
-			local endgametime = timehandle('N');
+			local endgametime = timehandle('N')
 			
 			for i=0, maxclients, 1 do
 				if et.gentity_get(i,"classname") == "player" then
@@ -578,57 +585,8 @@ function et_Obituary( _victim, _killer, _mod )
 		
 	else -- all non world kills
 		 
-		-- TODO: Put that pussy code into a single function 
-		if pussyfact == 1
-			-- determine teamkill or not
-			
-				-- TODO: More wtf !-) - use client structure, we have the teams set!
-				if tonumber(et.gentity_get(_killer,"sess.sessionTeam")) == tonumber(et.gentity_get(_victim,"sess.sessionTeam")) then
-					-- here it is teamkill
-					-- NOTE: teamkill is not counted as a kill, wich means all added here is even stronger in its weight
-					if _mod == 15 or _mod == 69 then
-						slot[_killer]["pf"] = slot[_killer]["pf"] + 170
-					else
-						slot[_killer]["pf"] = slot[_killer]["pf"] + 110
-					end
-					
-				else
-					-- no teamkill
-				
-					--Knivekill -- why this? knife is cool! .... therefore it adds a value under 100. 
-					if _mod == 5 or _mod == 65 then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 70
-					
-					-- PF
-					elseif _mod == 15 or _mod == 69 then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 140
-					
-					-- Flamer
-					elseif _mod == 17  then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 115
-					
-					--poison -- why this? poison is cool!
-					elseif _mod == 61 then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 65
-					
-					-- goomba -- why this? goomba is cool!
-					elseif _mod == 60  then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 60
-					
-					-- kick -- also cool
-					elseif _mod == 21 then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 40
-					
-					-- sniper -- hhmmmmm
-					elseif _mod == 51 or _mod == 14 or _mod == 46 then
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 90
-					else
-					-- if we count 100 up, nothing changes. at least it should 
-					slot[_killer]["pf"] = slot[_killer]["pf"] + 100
-					end
-				end -- teamkill end
-
-		end -- pussy end
+		pussyFactCheck( _victim, _killer, _mod )
+		
 		
 
 		slot[_killer]["victim"] = _victim
@@ -1212,7 +1170,7 @@ end
 -- Dumps the sessiondata
 -- should only be used on session-end to not falsify sessions
 -------------------------------------------------------------------------------
-function saveSession ( _clientNum )
+function saveSession( _clientNum )
 	if recordbots == 0 and slot[_clientNum]["isBot"] == 1 then
 		 et.G_LogPrint( "Noq: not saved bot session ".._clientNum.." to Database" )
 		return
@@ -1339,7 +1297,7 @@ end
 -- The real work to exec a cmd is done here, all substitutions and the switch for
 -- Lua and shellcommands are done here
 -------------------------------------------------------------------------------
-function execCmd (_clientNum , _cmd, _argw)
+function execCmd(_clientNum , _cmd, _argw)
 	local str = _cmd
 	local lastkilled = slot[_clientNum]["victim"]
 	local lastkiller = slot[_clientNum]["killer"] 
@@ -1490,7 +1448,7 @@ end
 -- parseconf
 -- Parses commandos from commandofile function
 -------------------------------------------------------------------------------
-function parseconf ()
+function parseconf()
 	local	datei = io.open ( (scriptpath .. "commands.cfg" ) ,"r") 
 	
 	for i=0, 31, 1 do				
@@ -1524,7 +1482,7 @@ function initNOQ ()
 	-- get all we need at gamestart from game
 	gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
 	map = tostring(et.trap_Cvar_Get("mapname"))
-	maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 -- add 1 again if used in view    
+	    
 	-- timelimit = tonumber(et.trap_Cvar_Get("timelimit")) -- update this on frame (if changed during game?) -- use it if you need it :) 
 end
 
@@ -1533,7 +1491,7 @@ end
 -- Checks for correct DBVersion
 -- Disables DBaccess on wrong version!
 -------------------------------------------------------------------------------
-function getDBVersion ()
+function getDBVersion()
 	-- Check the database version
 	cur = assert (con:execute("SELECT version FROM version ORDER BY id DESC LIMIT 1"))
 	row = cur:fetch ({}, "a")
@@ -1554,14 +1512,14 @@ end
 -- updateTeam
 -- set times accordingly when the player changes team
 -------------------------------------------------------------------------------
-function updateTeam(_clientNum )
+function updateTeam( _clientNum )
 	local teamTemp = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
 	
 	if teamTemp ~= tonumber(slot[_clientNum]["team"]) then -- now we have teamchange!!!
 		
 		if debug == 1 then
 			if slot[_clientNum]["team"] ~= nil and teamTemp ~= nil then
-			--et.SendConsoleCommand(et.EXEC_APPEND, "chat \" TEAMCHANGE: " ..team[tonumber(slot[_clientNum]["team"])] .." to " .. team[teamTemp] .. "  \"  ")
+			  et.SendConsoleCommand(et.EXEC_APPEND, "chat \" TEAMCHANGE: " ..team[tonumber(slot[_clientNum]["team"])] .." to " .. team[teamTemp] .. "  \"  ")
 			end
 		end
 		
@@ -1576,7 +1534,7 @@ end
 -- closeTeam
 -- closes a time session for a player
 -------------------------------------------------------------------------------
-function closeTeam ( _clientNum )
+function closeTeam( _clientNum )
 	if tonumber(slot[_clientNum]["team"]) == 1 then -- axis
 		slot[_clientNum]["axtime"] = slot[_clientNum]["axtime"] +( (et.trap_Milliseconds() / 1000) - slot[_clientNum]["lastTeamChange"]  )
 	elseif tonumber(slot[_clientNum]["team"]) == 2 then -- allies
@@ -1592,7 +1550,7 @@ end
 -------------------------------------------------------------------------------
 -- mail functions
 -------------------------------------------------------------------------------
-function sendMail(_to, _subject, _text)
+function sendMail( _to, _subject, _text )
 	if mail == "1" then
 		-- TODO: clean up
 		local mailserv = getConfig("mailserv")
@@ -1711,7 +1669,7 @@ end
 -- greetClient - greets a client after his first clientbegin
 -- only call after netname is set!
 -------------------------------------------------------------------------------
-function greetClient(_clientNum)
+function greetClient( _clientNum )
 	local lvl = slot[_clientNum]["level"]
 	if greetings[lvl] ~= nil then
 		et.trap_SendConsoleCommand(et.EXEC_NOW, "cpm " .. string.gsub(greetings[lvl], "<COLOR_PLAYER>", slot[_clientNum]["netname"]))
@@ -1747,7 +1705,7 @@ end
 -- 
 --]]
 
-function pussyout ( _clientNum )
+function pussyout( _clientNum )
 	local pf = slot[tonumber(_clientNum)]["pf"]
 	-- TODO: use client structure slot[tonumber(_clientNum)]["kills"] -- it should be up to date!
 	local kills = tonumber(et.gentity_get(_clientNum,"sess.kills"))
@@ -1770,7 +1728,7 @@ end
 -- removes all your aliases from the pbalias.dat
 -- thks to hose! (yeah, this is cool!)
 -------------------------------------------------------------------------------
-function rm_pbalias ( _myClient, _hisClient )
+function rm_pbalias( _myClient, _hisClient )
 	et.trap_SendServerCommand(-1, "print \"function pbalias entered\n\"")
 	
 	local file_name = "pbalias.dat"
@@ -1825,19 +1783,19 @@ end
 -- Displays information about teamdamage to the caller and a small line for all
 -- thks to hose!
 -------------------------------------------------------------------------------
-function teamdamage( myclient, slotnumber )
+function teamdamage( myclient, slotnumber ) -- TODO: change this to (_myclient, _slotnumber) 
+	
 	local teamdamage 	= et.gentity_get (slotnumber, "sess.team_damage")		
 	local damage 		= et.gentity_get(slotnumber, "sess.damage_given")
 
 	local classnumber 	= et.gentity_get(slotnumber, "sess.playerType")
-	local classname 	= class[classnumber]
 
 	-- TODO: use slottable 
 	local teamnumber 	= et.gentity_get(slotnumber, "sess.sessionTeam")
 	local teamname 		= team[teamnumber]		
 
 	et.trap_SendServerCommand( myclient, "print \" ^7:" .. et.gentity_get(slotnumber, "pers.netname") .. "^w | Slot: ".. slotnumber ..
-		"\n" .. 		classname .. " | " .. teamname .. " | " .. weapons[et.gentity_get(slotnumber, "sess.latchPlayerWeapon")] .. " | " ..  weapons[et.gentity_get(slotnumber, "sess.latchPlayerWeapon2")] .. 
+		"\n" .. 		class[classnumber] .. " | " .. teamname .. " | " .. weapons[et.gentity_get(slotnumber, "sess.latchPlayerWeapon")] .. " | " ..  weapons[et.gentity_get(slotnumber, "sess.latchPlayerWeapon2")] .. 
 		"\nkills:        " .. et.gentity_get(slotnumber, "sess.kills") ..   	" | damage:       " .. damage .. 
 		"\nteamkills:    " .. et.gentity_get(slotnumber, "sess.team_kills") ..  " | teamdamage:   " .. teamdamage .. "\n\"")
 
@@ -1906,7 +1864,59 @@ function showmaps()
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"".. ent2 .. "\"")
 end
 
--- retuns rest of time to play
+-- Retuns rest of time to play
 function timeLeft()
 	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
+end
+
+-- Does the check for our pussy detection -- called in et_Obituary for non world kills
+function pussyFactCheck( _victim, _killer, _mod )
+	if pussyfact == 1
+		-- determine teamkill or not
+		if slot[_killer]["team"] == slot[_victim]["team"] then
+			-- here it is teamkill
+			-- NOTE: teamkill is not counted as a kill, wich means all added here is even stronger in its weight
+			if _mod == 15 or _mod == 69 then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 170
+			else
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 110
+			end
+			
+		else
+			-- no teamkill -- TODO: use names ...
+		
+			--Knivekill -- why this? knife is cool! .... therefore it adds a value under 100. 
+			if _mod == 5 or _mod == 65 then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 70
+			
+			-- PF
+			elseif _mod == 15 or _mod == 69 then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 140
+			
+			-- Flamer
+			elseif _mod == 17  then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 115
+			
+			--poison -- why this? poison is cool!
+			elseif _mod == 61 then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 65
+			
+			-- goomba -- why this? goomba is cool!
+			elseif _mod == 60  then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 60
+			
+			-- kick -- also cool
+			elseif _mod == 21 then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 40
+			
+			-- sniper -- hhmmmmm
+			elseif _mod == 51 or _mod == 14 or _mod == 46 then
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 90
+			else
+			-- if we count 100 up, nothing changes. at least it should 
+			slot[_killer]["pf"] = slot[_killer]["pf"] + 100
+			end
+		end -- teamkill end
+
+	end -- pussy end
 end
