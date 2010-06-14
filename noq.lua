@@ -1601,12 +1601,6 @@ end
 -------------------------------------------------------------------------------
 -- mail functions
 -------------------------------------------------------------------------------
-
--- under construction:
-mail = getConfig("mail") -- enables mail option, make sure all required libs are available
-
-
-
 function sendMail(_to, _subject, _text)
 	if mail == "1" then
 		-- TODO: clean up
