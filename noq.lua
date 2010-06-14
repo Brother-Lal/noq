@@ -357,15 +357,6 @@ function et_ClientBegin( _clientNum )
 		if slot[_clientNum]["new"] == true then
 			createNewPlayer ( _clientNum )
 		end
-	        --- seems to be a leftover from old teamcode, verify!! TODO
-		if slot[_clientNum]["team"] == false then
-			local currentteam = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
-			if currentteam ~= 3 then
-				slot[_clientNum]["team"] = currentteam
-			end
-		else
-			slot[_clientNum]["team"] = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
-		end
 		
 		-- if we have xprestore, we need to restore now!
 		if slot[_clientNum]["setxp"] == true then
