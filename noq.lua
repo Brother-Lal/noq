@@ -35,12 +35,12 @@
 -------------------------------------------------------------------------------
 
 -- LUA module version
-version = "1" -- see version table
-databasecheck = 1
+version 		= "1" -- see version table
+databasecheck 	= 1
 
-homepath = et.trap_Cvar_Get("fs_homepath")
-pbpath = homepath .. "/pb/"
-scriptpath = homepath .. "/nq/" -- full qualified path for the NOQ scripts
+homepath 		= et.trap_Cvar_Get("fs_homepath")
+pbpath 			= homepath .. "/pb/"
+scriptpath 		= homepath .. "/nq/" -- full qualified path for the NOQ scripts
 
 -------------------------------------------------------------------------------
 -- table functions - don't move down!
@@ -131,6 +131,9 @@ usecommands 	= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
 nextmapVoteTime = tonumber(getConfig("nextmapVoteSec"))
+evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
+polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
+maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
 
 if debug == 1 then
 	et.G_Print("************************\n")
@@ -246,13 +249,10 @@ maxclients = 0
 -- for the evener, an perhaps if you want a nifty message a total of bla persons where killed in this game.
 evener = 0
 killcount = 0
-evenerdist = tonumber(getConfig("evenerCheckallSec"))
-lastevener = 0 
+lastevener = 0
+ 
 -- Poll restriction
 lastpoll = 0
-polldist = tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
--- Selfkill restriction
-maxSelfKills = tonumber(getConfig("maxSelfKills")) -- -1 to disable
 
 -------------------------------------------------------------------------------
 
@@ -585,13 +585,13 @@ function et_Obituary( _victim, _killer, _mod )
 		
 		-- update kill vars (victim only)
 		
-	else -- all not world kills
+	else -- all non world kills
 		 
 		-- TODO: Put that pussy code into a single function 
 		if pussyfact == 1
 			-- determine teamkill or not
 			
-
+				-- TODO: More wtf !-) - use client structure, we have the teams set!
 				if tonumber(et.gentity_get(_killer,"sess.sessionTeam")) == tonumber(et.gentity_get(_victim,"sess.sessionTeam")) then
 					-- here it is teamkill
 					-- NOTE: teamkill is not counted as a kill, wich means all added here is even stronger in its weight
