@@ -119,23 +119,18 @@ end
 dbms	= getConfig("dbms") -- possible values mySQL, SQLite
 dbname  = getConfig("dbname")
 
--- under construction:
-mail = getConfig("mail") -- enables mail option, make sure all required libs are available
-mailserv = getConfig("mailserv")
-mailport = getConfig("mailport")
-mailfrom = getConfig("mailfrom")
-
 -- common
+-- enables mail option, make sure all required libs are available
+mail 			= getConfig("mail") 
 recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
 commandprefix 	= getConfig("commandprefix")
 debug 			= tonumber(getConfig("debug")) -- debug 0/1
-debugquerries   = 0
+debugquerries   = tonumber(getConfig("debugquerries"))
 usecommands 	= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
 nextmapVoteTime = tonumber(getConfig("nextmapVoteSec"))
-if pussyfact == 1 then pussyfact = true else pussyfact = false end
 
 if debug == 1 then
 	et.G_Print("************************\n")
@@ -593,7 +588,7 @@ function et_Obituary( _victim, _killer, _mod )
 	else -- all not world kills
 		 
 		-- TODO: Put that pussy code into a single function 
-		if pussyfact == true then
+		if pussyfact == 1
 			-- determine teamkill or not
 			
 
@@ -1135,10 +1130,11 @@ function WriteClientDisconnect( _clientNum, _now, _timediff )
             -- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
 			..timehandle('D','N',slot[_clientNum]["start"]).."' , '"
 			.. slot[_clientNum]["uci"].."')"
-			
-		if debug == 1 then
-			et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"\n ".. query .."<<\"" )
+		
+		if debugquerries == 1 then	
+			et.G_LogPrint( "\n\n".. query .. "\n\n" ) 
 		end
+		
 		res = assert (con:execute( query ))
 		et.G_LogPrint( "Noq: saved player ".._clientNum.." to Database\n" ) 
 	else
@@ -1605,31 +1601,45 @@ end
 -------------------------------------------------------------------------------
 -- mail functions
 -------------------------------------------------------------------------------
+
+-- under construction:
+mail = getConfig("mail") -- enables mail option, make sure all required libs are available
+
+
+
 function sendMail(_to, _subject, _text)
-	
-	rcpt = _to
+	if mail == "1" then
+		-- TODO: clean up
+		local mailserv = getConfig("mailserv")
+		local mailport = getConfig("mailport")
+		local mailfrom = getConfig("mailfrom")
+		rcpt = _to
+		-- end clean up
 
-	mesgt = {
-  				headers = 	{
-    						to = _to,
-    						subject = _subject
-  							},
-  				body = _text
-			}
+		mesgt = {
+					headers = 	{
+								to = _to,
+								subject = _subject
+								},
+					body = _text
+				}
 
 
-	r, e = smtp.send {
-	   from = mailfrom,
-	   rcpt = rcpt, 
-	   source = smtp.message(mesgt),
-	   --user = "",
-	   --password = "",
-	   server = mailserv,
-	   port = mailport
-	}
+		r, e = smtp.send {
+		   from = mailfrom,
+		   rcpt = rcpt, 
+		   source = smtp.message(mesgt),
+		   --user = "",
+		   --password = "",
+		   server = mailserv,
+		   port = mailport
+		}
 
-	if (e) then
-	   et.G_LogPrint("Could not send email: "..e.. "\n")
+		if (e) then
+		   et.G_LogPrint("Could not send email: "..e.. "\n")
+		end
+	else
+		et.G_LogPrint("Mails disabled.\n")
 	end
 end
 
