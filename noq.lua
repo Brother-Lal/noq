@@ -409,7 +409,7 @@ function et_ClientCommand( _clientNum, _command )
 	if usecommands ~= 0 then
 		if arg0 == "say" and string.sub( arg1, 1,1) == commandprefix then -- this means normal say
 		if debug ~= 0 then
-		et.G_Print("Got saycommand: " .. _command)
+			et.G_Print("Got saycommand: " .. _command)
 		end
 			gotCmd( _clientNum, _command , false)
 		
@@ -1313,6 +1313,8 @@ function execCmd(_clientNum , _cmd, _argw)
 		nlastkilled = et.gentity_get(lastkilled, "pers.netname")
 	end
 	
+	--[[
+	-- FIXME : doubled code ?!?!
 	if lastkiller == 1022 then 
 		nlastkiller = "World"
 	elseif lastkiller == -1 then
@@ -1323,6 +1325,7 @@ function execCmd(_clientNum , _cmd, _argw)
 	else
 		nlastkiller = et.gentity_get(lastkiller, "pers.netname")
 	end
+	]]--
 	
 	local otherplayer = _argw
 	
