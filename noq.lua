@@ -1681,11 +1681,54 @@ end
 -- they should not change internals, they are more informative 
 --***************************************************************************
 -- Current available:
+-- cleanSession
 -- pussout
 -- checkBalance
 -- rm_pbalias
 -- teamdamage
 -- showmaps
+-------------------------------------------------------------------------------
+-- cleanSession
+-- cleans the Sessiontable from values older than X months
+-- _arg for first call is amount of months, second call OK to confirm
+-------------------------------------------------------------------------------
+function cleanSession(_callerID, _arg)
+
+	if arg == "" then
+	et.trap_SendServerCommand(_callerID, "print \"\n Argument: first call: months to keep records, second call: OK  \n\"")
+	return
+	end
+
+	if _arg == "OK" then
+		if months ~= nil and months => 1 and months <= 24 then
+			et.trap_SendServerCommand(_callerID, "print \"\n Now erasing all records older than ".. months .." months  \n\"")
+			
+			res = assert (con:execute("DELETE FROM session WHERE `end` < DATE_SUB(CURDATE(), INTERVAL "..months.." MONTH)"))
+			
+			et.trap_SendServerCommand(_callerID, "print \"\n Erased all records older than ".. months .." months  \n\"")
+			et.G_LogPrint( "Noq: Erased data older than "..months.." months from the sessiontable\n" )
+			if _callerID ~= -1 then
+			et.G_LogPrint( "Noq: Deletion was issued by: "..slot[_callerID]['netname'].. " , GUID:"..slot[_callerID]['pkey'].. " \n" )
+			end
+			
+			 
+		else
+			et.trap_SendServerCommand(_callerID, "print \"\n Please at first specify a value between 1 and 24   \n\"")
+			et.trap_SendServerCommand(_callerID, "print \"\n Example: <command> 1 erases all sessionrecords older than 1 month\n\"")
+			return
+		end
+	
+	elseif tonumber(_arg) => 1 and tonumber(_arg) <= 24 then
+		
+		local months = tonumber(_arg)
+		et.trap_SendServerCommand(_callerID, "print \"\n Please confirm the deletion of "..months.." month's data with OK as argument of the same command\n\"")
+		
+	else
+		et.trap_SendServerCommand(_callerID, "print \"\n Please specify a value between 1 and 24  \n\"")
+		return
+	end
+
+end
 -------------------------------------------------------------------------------
 -- pussyout
 -- Displays the Pussyfactor for Player _ClientNum
