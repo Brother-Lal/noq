@@ -609,6 +609,7 @@ function et_Obituary( _victim, _killer, _mod )
 			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 			-- slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills")) -- TODO ????
+			slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1
 		else -- _killer <> _victim
 			-- we assume client[team] is always updated
 			if slot[_killer]["team"] == slot[_victim]["team"] then -- Team kill
@@ -680,20 +681,15 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	-- greetings functionality: check if connect (1) or reconnect (2)
 	
 
-	--Get player GUID
+	--'static' clientfields
 	slot[_clientNum]["pkey"] 	= string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
 	slot[_clientNum]["ip"] 		= et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
 	slot[_clientNum]["isBot"] 	= _isBot
 	slot[_clientNum]["conname"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
-	slot[_clientNum]["netname"] = false
-	slot[_clientNum]["victim"] 	= -1
-	slot[_clientNum]["killwep"] = "nothing"
-	slot[_clientNum]["killer"] 	= -1
-	slot[_clientNum]["deadwep"] = "nothing"
-	
-	-- session
-	-- Get the start connection time
-	slot[_clientNum]["start"] 	= timehandle('N')
+	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
+	slot[_clientNum]["start"] 	= timehandle('N') 		-- Get the start connection time
+
+	-- 'dynamic' clientfields
 	slot[_clientNum]["team"] 	= false -- set the team on client begin (don't use nil here, as it deletes the index!)
 	slot[_clientNum]["axtime"] 	= 0
 	slot[_clientNum]["altime"] 	= 0
@@ -702,11 +698,19 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["acc"] 	= 0
 	slot[_clientNum]["kills"] 	= 0
 	slot[_clientNum]["tkills"] 	= 0
+	slot[_clientNum]["netname"] = false
+	slot[_clientNum]["victim"] 	= -1
+	slot[_clientNum]["killwep"] = "nothing"
+	slot[_clientNum]["killer"] 	= -1
+	slot[_clientNum]["deadwep"] = "nothing"
+	slot[_clientNum]["tkilled"] = 0
+	slot[_clientNum]["selfkills"]	= 0
+	
+
 	slot[_clientNum]["death"] 	= 0
 	slot[_clientNum]["uci"] 	= 0
 	slot[_clientNum]["pf"]		= 0
-	slot[_clientNum]["selfkills"]	= 0
-	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
+
 	
 	if _FirstTime == 1 then 
 		slot[_clientNum]["ntg"] = true
@@ -1312,20 +1316,6 @@ function execCmd(_clientNum , _cmd, _argw)
 	else
 		nlastkilled = et.gentity_get(lastkilled, "pers.netname")
 	end
-	
-	--[[
-	-- FIXME : doubled code ?!?!
-	if lastkiller == 1022 then 
-		nlastkiller = "World"
-	elseif lastkiller == -1 then
-		lastkiller = _clientNum
-		nlastkiller = "nobody"
-	elseif lastkiller == _clientNum then
-		nlastkiller = "myself"
-	else
-		nlastkiller = et.gentity_get(lastkiller, "pers.netname")
-	end
-	]]--
 	
 	local otherplayer = _argw
 	
