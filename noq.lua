@@ -12,30 +12,39 @@
 -- Hose
 -- IRATA [*]
 
-
--- NOTE: Use with NQ 1.2.8 and later only	
-
 -- Setup:
--- - Make sure needed Lua SQL libs are on server and run properly. For mysql dbms you need the additional lib in the path.
--- - Copy the content of this path to fs_homepath/nq 
--- - NOQ is set up to sqlite by default make sure your server instance has write permissions in fs_homepath. 
---   SQLite will create a file "noquarter.sqlite" at this location.
+-- - Make sure all required Lua SQL libs are on server and run properly. 
+-- 		For MySQL dbms you need the additional lib in the path.
+-- - If you want to use sqlite make sure your server instance has write permissions in fs_homepath. 
+--		SQLite will create a file "noquarter.sqlite" at this location.
+--
+-- - Copy the content of this path to fs_homepath/nq
+-- - Set lua_modules "noq.lua noq_i.lua"
+--   
 -- - Make the config your own. There is no need to change code in the NOQ. If you want to see changes use the forum
--- - Restart the server and check if all lua_modules noq_i.lua, noq_c.lua and noq.lua are registered.
--- - Call /rcon !sqlcreate - Done. Your system is set up - you should remove noq_i.lua now.
+-- - Restart the server and check if all lua_modules noq_i.lua, noq_c.lua (optinonal) and noq.lua are registered.
+-- - Call /rcon !sqlcreate - Done. Your system is set up - you should remove noq_i.lua from lua_modules now.
 --
 -- Files:
--- noq_i.lua 		- Install script remove after install
--- noq_c.lua 		- Additional tool to enter sql cmds on the ET console
--- noq_config.cfg 	- Stores all data to run & control the NOQ. Make this file your own!
--- noq_commands.cfg - Commands definition file - Make this file your own! 
--- TODO - we have more files now
--- noq_mods.cfg 	- Methods of death enum file - never touch!
--- noq_weapons.cfg 	- Weapon enum config file - never touch!
+-- noq_i.lua 				- Install script remove after install
+-- noq_c.lua 				- Additional tool to enter sql cmds on the ET console
+-- noq_config.cfg 			- Stores all data to run & control the NOQ. Make this file your own!
+-- noq_commands.cfg 		- Commands definition file - Make this file your own! 
 --
--- nqconst.lua - No Quarter constants
+-- noq_mods_names.cfg 		- Methods of death enum file - never touch!
+-- noq_mods.cfg 			- Methods of death enum file - never touch!
+-- noq_weapons.cfg 			- Weapon enum config file - never touch!
+-- noq_weapons_names.cfg	- Weapon enum config file - never touch!
+--
+-- nqconst.lua 				- No Quarter constants
 --
 
+-- Notes: 
+-- - Use with NQ 1.2.8 and later only	
+-- - Again - you don't need to modyfiy any code in this script. If you disagree contact the dev team.
+
+
+-------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 
 -- SCRIPT VARS - don't touch !
