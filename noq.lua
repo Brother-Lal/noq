@@ -543,6 +543,13 @@ function et_ShutdownGame( _restart )
 			con:close()
 			env:close()
 		end
+		
+		-- delete old sessions if set in config
+		local deleteSessionsOlderXDays = tonumber(getConfig("deleteSessionsOlderXDays"))
+		if  deleteSessionsOlderXDays > 0 then
+			-- TODO
+			-- res = assert (con:execute("DELETE FROM session WHERE `end` < "))
+		end
 	end
 end
 
@@ -586,8 +593,6 @@ function et_Obituary( _victim, _killer, _mod )
 	else -- all non world kills
 		 
 		pussyFactCheck( _victim, _killer, _mod )
-		
-		
 
 		slot[_killer]["victim"] = _victim
 		slot[_killer]["killwep"] = string.sub(meansofdeath[_mod], 5)
@@ -609,7 +614,7 @@ function et_Obituary( _victim, _killer, _mod )
 			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 			-- slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills")) -- TODO ????
-			slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1
+			slot[_victim]["tkills"] = slot[_victim]["tkills"] + 1
 		else -- _killer <> _victim
 			-- we assume client[team] is always updated
 			if slot[_killer]["team"] == slot[_victim]["team"] then -- Team kill
@@ -703,7 +708,6 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["killwep"] = "nothing"
 	slot[_clientNum]["killer"] 	= -1
 	slot[_clientNum]["deadwep"] = "nothing"
-	slot[_clientNum]["tkilled"] = 0
 	slot[_clientNum]["selfkills"]	= 0
 	
 
@@ -897,6 +901,7 @@ end
 -- checkMute
 -- TODO: check this, functions is prepared to work w/o using the shrubbot.cfg
 -- We need a function, which checks if bans/mutes are still valid and updates the database (delete old values of non connected players)
+-- @IlDuca TODO is done ?
 -------------------------------------------------------------------------------
 function checkMute ( _clientNum )
 	-- give hint and mute player ...
@@ -1680,6 +1685,8 @@ end
 -- rm_pbalias
 -- teamdamage
 -- showmaps
+
+
 -------------------------------------------------------------------------------
 -- cleanSession
 -- cleans the Sessiontable from values older than X months
@@ -1696,6 +1703,7 @@ function cleanSession(_callerID, _arg)
 		if months ~= nil and months => 1 and months <= 24 then
 			et.trap_SendServerCommand(_callerID, "print \"\n Now erasing all records older than ".. months .." months  \n\"")
 			
+			-- TODO @luborg this DATE_SUB() is mysql only
 			res = assert (con:execute("DELETE FROM session WHERE `end` < DATE_SUB(CURDATE(), INTERVAL "..months.." MONTH)"))
 			
 			et.trap_SendServerCommand(_callerID, "print \"\n Erased all records older than ".. months .." months  \n\"")
