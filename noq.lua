@@ -1334,6 +1334,18 @@ function execCmd(_clientNum , _cmd, _argw)
 		nlastkilled = et.gentity_get(lastkilled, "pers.netname")
 	end
 	
+	if lastkiller == 1022 then 
+		nlastkiller = "World"
+	elseif lastkiller == -1 then
+		lastkiller = _clientNum
+		nlastkiller = "nobody"
+	elseif lastkiller == _clientNum then
+		nlastkiller = "myself"
+	else
+		nlastkiller = et.gentity_get(lastkiller, "pers.netname")
+	end
+	
+	
 	local otherplayer = _argw
 	
 	local assume = false
