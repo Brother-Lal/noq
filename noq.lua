@@ -623,7 +623,7 @@ function et_Obituary( _victim, _killer, _mod )
 			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 			-- slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills")) -- TODO ????
-			slot[_victim]["tkills"] = slot[_victim]["tkills"] + 1
+			slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1
 		else -- _killer <> _victim
 			-- we assume client[team] is always updated
 			if slot[_killer]["team"] == slot[_victim]["team"] then -- Team kill
@@ -723,6 +723,9 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["death"] 	= 0
 	slot[_clientNum]["uci"] 	= 0
 	slot[_clientNum]["pf"]		= 0
+
+	-- non db client fields
+	slot[_clientNum]["tkilled"] = 0
 
 	
 	if _FirstTime == 1 then 
