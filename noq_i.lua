@@ -177,11 +177,12 @@ function createTablesDBMS()
 			res = assert(con:execute"CREATE INDEX p_netname ON player( netname )" )
 			et.G_Print(res .. "\n")
 			-- session
-			res = assert(con:execute"CREATE INDEX s_pkey ON session ( pkey)" )
+			res = assert(con:execute"CREATE INDEX s_pkey ON session ( pkey )" )
 			et.G_Print(res .. "\n")
-			res = assert(con:execute"CREATE INDEX s_ip ON session ( ip)" )
+			res = assert(con:execute"CREATE INDEX s_ip ON session ( ip )" )
 			et.G_Print(res .. "\n")
-
+			res = assert(con:execute"CREATE INDEX s_end ON session ( end )" )
+			et.G_Print(res .. "\n")
 --[[
 			-- TODO create trigger for updatedate
 			res = assert(con:execute"CREATE TRIGGER insert_player_updatedate AFTER  INSERT ON player \
@@ -262,7 +263,8 @@ function createTablesDBMS()
 				death 		SMALLINT 		DEFAULT 0,				\
 				uci 		TINYINT 		DEFAULT 0,				\
 				INDEX(`pkey`),										\
-				INDEX(`ip`)											\
+				INDEX(`ip`),
+				INDEX('end')										\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
