@@ -263,7 +263,7 @@ function createTablesDBMS()
 				death 		SMALLINT 		DEFAULT 0,				\
 				uci 		TINYINT 		DEFAULT 0,				\
 				INDEX(`pkey`),										\
-				INDEX(`ip`),
+				INDEX(`ip`),                                                                            \
 				INDEX('end')										\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
