@@ -1724,7 +1724,7 @@ function cleanSession(_callerID, _arg)
 	end
 
 	if _arg == "OK" then
-		if months ~= nil and months => 1 and months <= 24 then
+		if months ~= nil and months >= 1 and months <= 24 then
 			et.trap_SendServerCommand(_callerID, "print \"\n Now erasing all records older than ".. months .." months  \n\"")
 			
 			-- TODO @luborg this DATE_SUB() is mysql only
@@ -1743,7 +1743,7 @@ function cleanSession(_callerID, _arg)
 			return
 		end
 	
-	elseif tonumber(_arg) => 1 and tonumber(_arg) <= 24 then
+	elseif tonumber(_arg) >= 1 and tonumber(_arg) <= 24 then
 		
 		local months = tonumber(_arg)
 		et.trap_SendServerCommand(_callerID, "print \"\n Please confirm the deletion of "..months.." month's data with OK as argument of the same command\n\"")
@@ -1939,7 +1939,7 @@ end
 
 -- Does the check for our pussy detection -- called in et_Obituary for non world kills
 function pussyFactCheck( _victim, _killer, _mod )
-	if pussyfact == 1
+	if pussyfact == 1 then
 		-- determine teamkill or not
 		if slot[_killer]["team"] == slot[_victim]["team"] then
 			-- here it is teamkill
