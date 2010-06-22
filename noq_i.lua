@@ -264,7 +264,7 @@ function createTablesDBMS()
 				uci 		TINYINT 		DEFAULT 0,				\
 				INDEX(`pkey`),										\
 				INDEX(`ip`),                                                                            \
-				INDEX('end')										\
+				INDEX(`end`)										\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
@@ -277,7 +277,7 @@ function createTablesDBMS()
 			-- TODO create trigger for updatedate	
 				
 			-- insert data
-			res = assert(con:execute"INSERT INTO version VALUES ( 1, ".. version ..")")		
+			res = assert(con:execute(string.format("INSERT INTO version VALUES ( 1, %s )",version)))
 			et.G_Print(res .. "\n")
 		end
 		
