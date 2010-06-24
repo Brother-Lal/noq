@@ -6,7 +6,6 @@
 -- Remove this script from game server path after installation
 --
 
-
 --------------------------------------------------------------------------------
 color = "^5"
 version = "1"
@@ -101,6 +100,7 @@ function createTablesDBMS()
 			-- Notes:
 			-- We store timestamps as INTEGER - Unix Time, the number of seconds since 1970-01-01 00:00:00 UTC. 
 			
+			-- TODO: add shrubbot flag field
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS player ( \
 				id 			INTEGER 		PRIMARY KEY,	\
 				pkey 		TEXT 			UNIQUE NOT NULL,\
@@ -165,6 +165,13 @@ function createTablesDBMS()
 				uci 		INTEGER 		DEFAULT 0)" )
 			et.G_Print(res .. "\n")
 
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
+				id 			INTEGER 		PRIMARY KEY,				\
+				level       INTEGER 		UNIQUE NOT NULL,			\
+				name		TEXT 			NOT NULL,					\
+				flags 		TEXT			NOT NULL)" )
+			et.G_Print(res .. "\n")
+			
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS version ( 	\
 					id INTEGER PRIMARY KEY,						 			\
 					version INTEGER NOT NULL UNIQUE )" )
@@ -195,9 +202,12 @@ function createTablesDBMS()
    			res = assert(con:execute("INSERT INTO version VALUES ( '1', '" .. version .. "' )"))
 			et.G_Print(res .. "\n")
 			
+			-- TODO: create level entries
+			
 		-- mySQL	
 		elseif dbms == "mySQL" then
 		
+			-- TODO: add shrubbot flag field
 			res = assert(con:execute"CREATE TABLE player ( \
 				id 			INT 			PRIMARY KEY AUTO_INCREMENT,\
 				pkey 		VARCHAR(32) 	UNIQUE  NOT NULL,		\
@@ -268,6 +278,14 @@ function createTablesDBMS()
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
+
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
+				id 			INT 			PRIMARY KEY,				\
+				level       INT 			UNIQUE NOT NULL,			\
+				name		VARCHAR(36)		NOT NULL,					\
+				flags 		VARCHAR(50)		NOT NULL)" )
+			et.G_Print(res .. "\n")
+			
 			res = assert(con:execute"CREATE TABLE version (			\
 					id INT PRIMARY KEY NOT NULL,					\
 					version INT NOT NULL UNIQUE						\
@@ -279,6 +297,9 @@ function createTablesDBMS()
 			-- insert data
 			res = assert(con:execute(string.format("INSERT INTO version VALUES ( 1, %s )",version)))
 			et.G_Print(res .. "\n")
+			
+			-- TODO: create level entries
+			
 		end
 		
 		et.G_Print(color .. commandprefix.."sqlcreate database created version: "..version .."\n")  
