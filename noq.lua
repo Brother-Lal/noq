@@ -173,7 +173,8 @@ end
 -- ["netname"] = row.netname
 -- ["isBot"] = 0	
 -- ["clan"] = 0
--- ["level"] = 0	
+-- ["level"] = 0
+-- ["flags"] = ''		
 -- ["user"] = 0
 -- ["password"] = 0
 -- ["email"] = 0
@@ -318,7 +319,7 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	end
 	lastpoll = (et.trap_Milliseconds() / 1000) - 110
 	
-	-- IlDuca : TEST for mail function
+	-- IlDuca: TEST for mail function
 	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo è un test, speriamo funzioni!!")
 end
 
@@ -570,12 +571,10 @@ function et_RunFrame( _levelTime )
 		local now = timehandle()			
 
 		for i=0, maxclients, 1 do
-			if et.gentity_get(i,"classname") == "player" then
-				-- @Ilduca note: client["team"] is set to false somewhere in this code
-				if slot[i]["team"] ~= -1 then
-					closeTeam ( i )
-				end
-			end	
+			-- @Ilduca note: client["team"] is set to false somewhere in this code
+			if slot[i]["team"] ~= -1 then
+				closeTeam ( i )
+			end
 		end
 
 		gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
@@ -701,6 +700,7 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["isBot"] 	= _isBot
 	slot[_clientNum]["conname"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
+	slot[_clientNum]["flags"]	= "" -- TODO
 	slot[_clientNum]["start"] 	= timehandle('N') 		-- Get the start connection time
 
 	-- 'dynamic' clientfields
@@ -745,9 +745,8 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 		
 		updatePlayerInfo(_clientNum)
 		
-
-			slot[_clientNum]["setxp"] = true
-			slot[_clientNum]["xpset"] = false
+		slot[_clientNum]["setxp"] = true
+		slot[_clientNum]["xpset"] = false
 		
 		return nil
 				
@@ -793,8 +792,8 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["suspect"] = row.suspect
 		slot[_clientNum]["regdate"] = row.regdate
 		slot[_clientNum]["createdate"] = row.createdate -- first seen
-		slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database?
-
+		slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: no q - database
+		slot[_clientNum]["flags"] = row.flags -- TODO: pump it into game
 				
 		--Perhaps put into updatePlayerXP
 		slot[_clientNum]["xp0"] = row.xp0
@@ -1118,7 +1117,7 @@ function WriteClientDisconnect( _clientNum, _now, _timediff )
 		-- Write to session if player was in game
 		saveSession ( _clientNum )
 		savePlayer ( _clientNum )
-		 et.G_LogPrint( "Noq: saved player and session ".._clientNum.." to Database\n" )
+		et.G_LogPrint( "Noq: saved player and session ".._clientNum.." to Database\n" )
 
 	end	
 	slot[_clientNum]["ntg"] = false
@@ -1144,14 +1143,6 @@ function savePlayer ( _clientNum )
     	return
     end
 
-	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
-	local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
-	local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
-	local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
-	local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
-	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
-	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
-
 	-- We also write to player, for our actual data
 	-- TODO
 	-- slot[_clientNum]["user"] 
@@ -1165,14 +1156,14 @@ function savePlayer ( _clientNum )
 	-- IlDuca : done for banexpire
 	res = assert (con:execute("UPDATE player SET clan='".. slot[_clientNum]["clan"] .."',           \
 		 netname='".. name  .."',\
-		 xp0='".. battle .."', 	\
-		 xp1='".. engi .."', 	\
-		 xp2='".. medic .."', 	\
-		 xp3='".. signals .."',	\
-		 xp4='".. light .."', 	\
-		 xp5='".. heavy .."',	\
-		 xp6='".. covert .."',	\
-		 xptot='".. battle + engi + medic + signals + light + heavy + covert .. "',\
+		 xp0='".. et.gentity_get(_clientNum,"sess.skillpoints",0)  .."', 	\
+		 xp1='".. et.gentity_get(_clientNum,"sess.skillpoints",1)  .."', 	\
+		 xp2='".. et.gentity_get(_clientNum,"sess.skillpoints",2)  .."', 	\
+		 xp3='".. et.gentity_get(_clientNum,"sess.skillpoints",3)  .."',	\
+		 xp4='".. et.gentity_get(_clientNum,"sess.skillpoints",4)  .."', 	\
+		 xp5='".. et.gentity_get(_clientNum,"sess.skillpoints",5)  .."',	\
+		 xp6='".. et.gentity_get(_clientNum,"sess.skillpoints",6)  .."',	\
+		 xptot='".. ( et.gentity_get(_clientNum,"sess.skillpoints",0)  + et.gentity_get(_clientNum,"sess.skillpoints",1)  + et.gentity_get(_clientNum,"sess.skillpoints",2)  + et.gentity_get(_clientNum,"sess.skillpoints",3)  + et.gentity_get(_clientNum,"sess.skillpoints",4)  + et.gentity_get(_clientNum,"sess.skillpoints",5)  + et.gentity_get(_clientNum,"sess.skillpoints",6) )  .. "',\
 		 level='".. slot[_clientNum]["level"] .."',				\
 		 banreason='".. slot[_clientNum]["banreason"]  .."',	\
 		 bannedby='".. slot[_clientNum]["bannedby"]  .."',		\
@@ -1211,6 +1202,8 @@ function saveSession( _clientNum )
 
 	-- If player was ingame, we really should save his XP to!
 	-- TODO: think about updating this into client structure
+	-- The final questions is: Do we need the XP stuff at runtime in the client structure ?
+--[[
 	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
 	local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
 	local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
@@ -1218,6 +1211,7 @@ function saveSession( _clientNum )
 	local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
 	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
 	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
+--]]
 	
 	-- TODO: Think about using this earlier, is this the injection check ?		Yes, its an escape function for ' (wich should be the only character allowed by et and with a special meaning for SQL)
 	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
@@ -1238,14 +1232,14 @@ function saveSession( _clientNum )
 			..slot[_clientNum]["axtime"].."', '"
 			..slot[_clientNum]["altime"].."', '"
 			..slot[_clientNum]["sptime"].."', '"
-			..battle.."', '"
-			..engi.."', '"
-			..medic.."', '"
-			..signals.."', '"
-			..light.."', '"
-			..heavy.."', '"
-			..covert.."','"
-			..(battle + engi + medic + signals + light + heavy + covert ).."','"
+			..et.gentity_get(_clientNum,"sess.skillpoints",0).."', '"
+			..et.gentity_get(_clientNum,"sess.skillpoints",1).."', '"
+			..et.gentity_get(_clientNum,"sess.skillpoints",2).."', '"
+			..et.gentity_get(_clientNum,"sess.skillpoints",3).."', '"
+			..et.gentity_get(_clientNum,"sess.skillpoints",4).."', '"
+			..et.gentity_get(_clientNum,"sess.skillpoints",5).."', '"
+			..et.gentity_get(_clientNum,"sess.skillpoints",6).."','"
+			..(et.gentity_get(_clientNum,"sess.skillpoints",0) + et.gentity_get(_clientNum,"sess.skillpoints",1) + et.gentity_get(_clientNum,"sess.skillpoints",2) + et.gentity_get(_clientNum,"sess.skillpoints",3) + et.gentity_get(_clientNum,"sess.skillpoints",4) + et.gentity_get(_clientNum,"sess.skillpoints",5) + et.gentity_get(_clientNum,"sess.skillpoints",6) ).."','"
 			.."0".."', '"
 			..slot[_clientNum]["kills"].."', '"
 			..slot[_clientNum]["tkills"].."', '"
@@ -1733,7 +1727,7 @@ function cleanSession(_callerID, _arg)
 			et.trap_SendServerCommand(_callerID, "print \"\n Erased all records older than ".. months .." months  \n\"")
 			et.G_LogPrint( "Noq: Erased data older than "..months.." months from the sessiontable\n" )
 			if _callerID ~= -1 then
-			et.G_LogPrint( "Noq: Deletion was issued by: "..slot[_callerID]['netname'].. " , GUID:"..slot[_callerID]['pkey'].. " \n" )
+				et.G_LogPrint( "Noq: Deletion was issued by: "..slot[_callerID]['netname'].. " , GUID:"..slot[_callerID]['pkey'].. " \n" )
 			end
 			
 			 
