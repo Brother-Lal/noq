@@ -100,7 +100,6 @@ function createTablesDBMS()
 			-- Notes:
 			-- We store timestamps as INTEGER - Unix Time, the number of seconds since 1970-01-01 00:00:00 UTC. 
 			
-			-- TODO: add shrubbot flag field
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS player ( \
 				id 			INTEGER 		PRIMARY KEY,	\
 				pkey 		TEXT 			UNIQUE NOT NULL,\
@@ -110,6 +109,7 @@ function createTablesDBMS()
 				isBot 		INTEGER 		DEFAULT 0,		\
 				clan 		TEXT 			DEFAULT '',		\
 				level 		INTEGER 		DEFAULT 0,		\
+				flags 		TEXT 			DEFAULT '',		\
 				user 		TEXT 			DEFAULT '',		\
 				password 	TEXT 			DEFAULT '',		\
 				email 		TEXT 			DEFAULT '',		\
@@ -207,7 +207,6 @@ function createTablesDBMS()
 		-- mySQL	
 		elseif dbms == "mySQL" then
 		
-			-- TODO: add shrubbot flag field
 			res = assert(con:execute"CREATE TABLE player ( \
 				id 			INT 			PRIMARY KEY AUTO_INCREMENT,\
 				pkey 		VARCHAR(32) 	UNIQUE  NOT NULL,		\
@@ -217,6 +216,7 @@ function createTablesDBMS()
 				isBot 		BOOLEAN 		DEFAULT 0,				\
 				clan 		VARCHAR(20) 	DEFAULT '',				\
 				level 		INT 			DEFAULT 0,				\
+				flags 		VARCHAR(50) 	DEFAULT '',				\
 				user 		VARCHAR(20) 	DEFAULT '',				\
 				password 	VARCHAR(32) 	DEFAULT '',				\
 				email 		VARCHAR(50) 	DEFAULT '',				\
