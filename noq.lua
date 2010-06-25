@@ -571,9 +571,11 @@ function et_RunFrame( _levelTime )
 		local now = timehandle()			
 
 		for i=0, maxclients, 1 do
-			-- @Ilduca note: client["team"] is set to false somewhere in this code
-			if slot[i]["team"] ~= -1 then
-				closeTeam ( i )
+			if et.gentity_get(i,"classname") == "player" then -- this tests if the playerentity is used! useless to close a entity wich is not in use.
+				-- @Ilduca note: client["team"] is set to false somewhere in this code
+				if slot[i]["team"] ~= -1 then
+					closeTeam ( i )
+				end
 			end
 		end
 
