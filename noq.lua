@@ -295,7 +295,7 @@ end
 cur = {}  -- Will handle the SQL commands returning informations ( es: SELECT )
 res = {}  -- Will handle SQL commands without outputs ( es: INSERT )
 row = {}  -- To manipulate the outputs of SQL command
-row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
+--row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
 
 -- mail setup
 if mail == "1" then
@@ -315,7 +315,7 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	getDBVersion()
 	mapStartTime = et.trap_Milliseconds()
 	if usecommands ~= 0 then
-		parseconf () 
+		parseconf() 
 	end
 	lastpoll = (et.trap_Milliseconds() / 1000) - 110
 	
@@ -326,7 +326,7 @@ end
 function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	initClient( _clientNum, _firstTime, _isBot )
 	
-	local ban = checkBan ( _clientNum )
+	local ban = checkBan( _clientNum )
 	if ban ~= nil then
 		return ban
 	end
@@ -338,6 +338,7 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	if firstTime == 0 or isBot == 1 or getConfig("persgamestartmessage") == "" then 
 		return nil
 	end
+	
 	userInfo = et.trap_GetUserinfo( _clientNum ) 
 	et.trap_SendServerCommand(_clientNum, string.format("%s \"%s %s", getConfig("persgamestartmessagelocation") , getConfig("persgamestartmessage") , et.Info_ValueForKey( userInfo, "name" )))
 
@@ -353,7 +354,6 @@ end
 -- IRATA: check et_ClientSpawn()
 -- TODO/NOTE: Afaik we only need to check if ClientBegin is called once to keep 1.2.7 compatinility
 function et_ClientBegin( _clientNum )
-
 	-- TODO Move this functionality in an own function
 	-- Get the player name if its not set
 	if slot[_clientNum]["netname"] == false then
@@ -370,10 +370,12 @@ function et_ClientBegin( _clientNum )
 	end
 	
 	if databasecheck == 1 then
-		-- If we have Dbaccess, then we will create new Playerentry if necessary
+		-- If we have db access, then we will create new Playerentry if necessary
 		if slot[_clientNum]["new"] == true then
 			createNewPlayer ( _clientNum )
 		end
+		
+		-- TODO check for else case of the above if ... why updating Player XP if client is new ? (slot XP is set in createNewPlayer()
 		
 		-- if we have xprestore, we need to restore now!
 		if slot[_clientNum]["setxp"] == true then
@@ -440,8 +442,8 @@ function et_ClientCommand( _clientNum, _command )
 
 	-- register command
 	if arg0 == "register" then
-		local arg1 = string.lower(et.trap_Argv(1)) -- username
-		local arg2 = string.lower(et.trap_Argv(2)) -- password
+		--local arg1 = string.lower(et.trap_Argv(1)) -- username - see start of et_ClientCommand
+		--local arg2 = string.lower(et.trap_Argv(2)) -- password - see start of et_ClientCommand
 		local name = string.gsub(arg1,"\'", "\\\'")
 		if arg1 ~= "" and arg2 ~= "" then
 			slot[_clientNum]["user"] = name 
@@ -454,7 +456,6 @@ function et_ClientCommand( _clientNum, _command )
 			et.trap_SendServerCommand( _clientNum, "print \"^3Password will be your password for your webaccess  \n\"" ) 
 			return 1
 		end
-
 	end
 	
 	-- Voting restriction
@@ -507,11 +508,11 @@ function et_ClientCommand( _clientNum, _command )
 	-- /kill restriction
 	if arg0 == "kill" then	
 		if maxSelfKills ~= -1 then
-				if slot[_clientNum]["selfkills"] > maxSelfKills then
-					et.trap_SendServerCommand( _clientNum, "cp \"^1You don't have any more selfkills left!") 
-					et.trap_SendServerCommand( _clientNum, "cpm \"^1You don't have any more selfkills left!")
-					return 1
-				end
+			if slot[_clientNum]["selfkills"] > maxSelfKills then
+				et.trap_SendServerCommand( _clientNum, "cp \"^1You don't have any more selfkills left!") 
+				et.trap_SendServerCommand( _clientNum, "cpm \"^1You don't have any more selfkills left!")
+				return 1
+			end
 			et.trap_SendServerCommand( _clientNum, "cp \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
 			et.trap_SendServerCommand( _clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
 			return 0
@@ -571,7 +572,12 @@ function et_RunFrame( _levelTime )
 		local now = timehandle()			
 
 		for i=0, maxclients, 1 do
-			if et.gentity_get(i,"classname") == "player" then -- this tests if the playerentity is used! useless to close a entity wich is not in use.
+			-- this tests if the playerentity is used! useless to close a entity wich is not in use.
+			-- @Luborg: Actually it checks if the ent is a player - this is always the case (ent 0 - maxclients) if they are active
+			-- Did you get errors ? Checking slot[i]["team"] should be enough here since the slot table is a mirror of current players
+			-- and "team" == -1 means we already closed the team -> slot not in use. closeTeam() should handle the other cases
+			-- It's worth to sort this out it's RunFrame ... 
+			if et.gentity_get(i,"classname") == "player" then 
 				-- @Ilduca note: client["team"] is set to false somewhere in this code
 				if slot[i]["team"] ~= -1 then
 					closeTeam ( i )
@@ -695,7 +701,6 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	-- note: this script should work w/o db connection
 	-- greetings functionality: check if connect (1) or reconnect (2)
 	
-
 	--'static' clientfields
 	slot[_clientNum]["pkey"] 	= string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
 	slot[_clientNum]["ip"] 		= et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
@@ -721,7 +726,6 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["deadwep"] = "nothing"
 	slot[_clientNum]["selfkills"]	= 0
 	
-
 	slot[_clientNum]["death"] 	= 0
 	slot[_clientNum]["uci"] 	= 0
 	slot[_clientNum]["pf"]		= 0
@@ -750,8 +754,7 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 		slot[_clientNum]["setxp"] = true
 		slot[_clientNum]["xpset"] = false
 		
-		return nil
-				
+		return nil			
 	end
 	
 	if debug == 1 then		
@@ -822,7 +825,7 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["mutedby"] = ""
 		slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
 		
-		-- Go to Clientbegin and say hes new
+		-- Go to Clientbegin and say it's new
 		slot[_clientNum]["new"] = true
 	end
 end
@@ -874,7 +877,6 @@ end
 --        in order to warn online admins and maybe the player himself
 ------------------------------------------------------------------------------- 
 function checkBan ( _clientNum )
-		
 	if slot[_clientNum]["bannedby"] ~= "" then
 		if  slot[_clientNum]["banreason"] ~= "" then
 			if  slot[_clientNum]["banexpire"] ~= "1000-01-01 00:00:00" then
@@ -907,6 +909,7 @@ function checkBan ( _clientNum )
 			end
 		end
 	end
+	
 	return nil
 end
 
@@ -1500,8 +1503,6 @@ function initNOQ ()
 	-- get all we need at gamestart from game
 	gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
 	map = tostring(et.trap_Cvar_Get("mapname"))
-	    
-	-- timelimit = tonumber(et.trap_Cvar_Get("timelimit")) -- update this on frame (if changed during game?) -- use it if you need it :) 
 end
 
 -------------------------------------------------------------------------------
@@ -1715,8 +1716,8 @@ end
 function cleanSession(_callerID, _arg)
 
 	if arg == "" then
-	et.trap_SendServerCommand(_callerID, "print \"\n Argument: first call: months to keep records, second call: OK  \n\"")
-	return
+		et.trap_SendServerCommand(_callerID, "print \"\n Argument: first call: months to keep records, second call: OK  \n\"")
+		return
 	end
 
 	if _arg == "OK" then
@@ -1731,8 +1732,7 @@ function cleanSession(_callerID, _arg)
 			if _callerID ~= -1 then
 				et.G_LogPrint( "Noq: Deletion was issued by: "..slot[_callerID]['netname'].. " , GUID:"..slot[_callerID]['pkey'].. " \n" )
 			end
-			
-			 
+				 
 		else
 			et.trap_SendServerCommand(_callerID, "print \"\n Please at first specify a value between 1 and 24   \n\"")
 			et.trap_SendServerCommand(_callerID, "print \"\n Example: <command> 1 erases all sessionrecords older than 1 month\n\"")
@@ -1740,7 +1740,6 @@ function cleanSession(_callerID, _arg)
 		end
 	
 	elseif tonumber(_arg) >= 1 and tonumber(_arg) <= 24 then
-		
 		local months = tonumber(_arg)
 		et.trap_SendServerCommand(_callerID, "print \"\n Please confirm the deletion of "..months.." month's data with OK as argument of the same command\n\"")
 		
@@ -1750,6 +1749,7 @@ function cleanSession(_callerID, _arg)
 	end
 
 end
+
 -------------------------------------------------------------------------------
 -- pussyout
 -- Displays the Pussyfactor for Player _ClientNum
@@ -1768,7 +1768,6 @@ end
 -- As we add 100 for every normal kill, the pussyfactor approaches 1 after some time with "normal" kills
 -- 
 --]]
-
 function pussyout( _clientNum )
 	local pf = slot[tonumber(_clientNum)]["pf"]
 	-- TODO: use client structure slot[tonumber(_clientNum)]["kills"] -- it should be up to date!
