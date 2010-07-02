@@ -1297,7 +1297,6 @@ function gotCmd( _clientNum, _command, _vsay)
 	end
 
 	-- We search trough the commands-array for a suitable command
-	et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. tostring(lvl))
 	for i=lvl, 0, -1 do
 		if commands[i][cmd] ~= nil then
 			execCmd(_clientNum, commands[i][cmd], argw)
