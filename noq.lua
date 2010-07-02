@@ -1473,7 +1473,7 @@ end
 -- Parses commandos from commandofile function
 -------------------------------------------------------------------------------
 function parseconf()
-	local	datei = io.open ( (scriptpath .. "commands.cfg" ) ,"r") 
+	local	datei = io.open ( (scriptpath .. "noq_commands.cfg" ) ,"r") 
 	
 	for i=0, 31, 1 do				
 		commands[i] = {}
@@ -1484,11 +1484,10 @@ function parseconf()
 		local filestr = line
 		local testcase = string.find(filestr, "^%s*%#")
 		if testcase == nil then
-			for level,comm,commin in string.gfind(filestr, "[^%#](%d+)%s*%-%s*(%w+)%s*%=%s*(.*)[^%\n]*") do
-		--		et.G_LogPrint ("Parsing CMD:"..comm .. "level: "..level.." Content: ".. commin .."\n")
+			for level,comm,commin in string.gfind(filestr, "([0-9]*)%s*%-%s*(%w+)%s*%=%s*(.*)[^%\n]*") do
+				-- et.G_LogPrint ("Parsing CMD:"..comm .. " Level: "..level.." Content: ".. commin .."\n")
 				i = tonumber(level)
-				commands[i][comm] = commin	
-		
+				commands[i][comm] = commin			
 				nmr = nmr +1
 			end
 		end
@@ -1538,10 +1537,9 @@ function updateTeam( _clientNum )
 	local teamTemp = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
 	
 	if teamTemp ~= tonumber(slot[_clientNum]["team"]) then -- now we have teamchange!!!
-		
 		if debug == 1 then
-			if slot[_clientNum]["team"] ~= nil and teamTemp ~= nil then
-			  et.SendConsoleCommand(et.EXEC_APPEND, "chat \" TEAMCHANGE: " ..team[tonumber(slot[_clientNum]["team"])] .." to " .. team[teamTemp] .. "  \"  ")
+			if tonumber(slot[_clientNum]["team"]) ~= nil and teamTemp ~= nil then
+				et.trap_SendConsoleCommand(et.EXEC_APPEND, string.format("chat \" TEAMCHANGE: %s to %s \" ",team[tonumber(slot[_clientNum]["team"])], team[teamTemp]))
 			end
 		end
 		
