@@ -18,7 +18,9 @@
 -- - If you want to use sqlite make sure your server instance has write permissions in fs_homepath. 
 --		SQLite will create a file "noquarter.sqlite" at this location.
 --
--- - Copy the content of this path to fs_homepath/nq
+-- - Copy the content of this path to fs_homepath/fs_game/noq
+-- - for example /usr/local/games/enemy-territory/nq/noq
+-- 
 -- - Set lua_modules "noq.lua noq_i.lua"
 --   
 -- - Make the config your own. There is no need to change code in the NOQ. If you want to see changes use the forum
@@ -56,8 +58,9 @@ version 		= "1" -- see version table
 databasecheck 	= 1
 
 homepath 		= et.trap_Cvar_Get("fs_homepath")
+fs_game 		= et.trap_Cvar_Get("fs_game")
 pbpath 			= homepath .. "/pb/"
-scriptpath 		= homepath .. "/nq/" -- full qualified path for the NOQ scripts
+scriptpath 		= homepath .. "/" .. fs_game .. "/noq/" -- full qualified path for the NOQ scripts
 
 -------------------------------------------------------------------------------
 -- table functions - don't move down!
@@ -110,10 +113,10 @@ end
 et.G_LogPrint("Loading NOQ config from ".. scriptpath.."\n")
 noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 -- TODO: check if we can do this in 2 tables 
-meansofdeath 	= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
+meansofdeath 		= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
 weapons 		= assert(table.load( scriptpath .. "noq_weapons.cfg")) -- all weapons
-mod				= assert(table.load( scriptpath .. "noq_mods_names.cfg")) -- mods by name
-w				= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- waepons by name
+mod			= assert(table.load( scriptpath .. "noq_mods_names.cfg")) -- mods by name
+w			= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- waepons by name
 -- end TODO
 greetings		= assert(table.load( scriptpath .. "noq_greetings.cfg")) -- all greetings, customize as wished
 
@@ -141,10 +144,10 @@ dbname  = getConfig("dbname")
 mail 			= getConfig("mail") 
 recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
-commandprefix 	= getConfig("commandprefix")
+commandprefix 		= getConfig("commandprefix")
 debug 			= tonumber(getConfig("debug")) -- debug 0/1
-debugquerries   = tonumber(getConfig("debugquerries"))
-usecommands 	= tonumber(getConfig("usecommands"))
+debugquerries   	= tonumber(getConfig("debugquerries"))
+usecommands		= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
 nextmapVoteTime = tonumber(getConfig("nextmapVoteSec"))
