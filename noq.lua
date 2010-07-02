@@ -211,8 +211,9 @@ end
 -- ["xp6"] = 0
 -- ["xptot"] = 0
 -- ["acc"] = 0
--- ["kills"] = 0
--- ["tkills"] = 0
+-- ["kills"] = 0 
+-- ["tkills"] = 0 teamkills you did
+-- ["tkills"] = 0 the amount you got teamkilled
 -- ["death"] = 0
 -- ["uci"] = 0
 -- Added Fields during ingame session in slot[clientNum]
@@ -221,8 +222,8 @@ end
 -- slot[clientNum]["killwep"] = meansofdeathbumber
 -- slot[clientNum]["killer"] = last person who killed clientNum(ID)
 -- slot[clientNum]["deadwep"] =  meansfdeathnumber
--- slot[_clientNum]["lastTeamChange"] -- in seconds
--- slot[_clientNum]["selfkills"]
+-- slot[clientNum]["lastTeamChange"] -- in seconds
+-- slot[clientNum]["selfkills"] Selfkills you did
 --
 --]]
 
@@ -629,18 +630,18 @@ function et_Obituary( _victim, _killer, _mod )
 		-- Self kill (restriction)
 		if _killer == _victim then
 			if _mod == mod["MOD_SUICIDE"] then
-				-- gotCmd( _clientNum, _command , false) -- wtf is this for?
 				slot[_killer]["selfkills"] = slot[_killer]["selfkills"] + 1 -- what about if they use nades?
 			end
 			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 			-- slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills")) -- TODO ????
-			slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1
+			-- slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1
 		else -- _killer <> _victim
 			-- we assume client[team] is always updated
 			if slot[_killer]["team"] == slot[_victim]["team"] then -- Team kill
 				-- TODO: check if death/kills need an update here
-				slot[_victim]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills"))			
+				slot[_killer]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills"))
+				slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1			
 			else -- cool kill
 				slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 				slot[_killer]["kills"] = tonumber(et.gentity_get(_killer,"sess.kills"))		
