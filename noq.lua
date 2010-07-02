@@ -1936,52 +1936,39 @@ function timeLeft()
 	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
 end
 
+
+-- TODO: Add more cases for ugly teamkills (not only panzer ... knife, poison etc) 
 -- Does the check for our pussy detection -- called in et_Obituary for non world kills
+-- cool weapons get a value < 100 lame weapons/activities > 100
 function pussyFactCheck( _victim, _killer, _mod )
 	if pussyfact == 1 then
-		-- determine teamkill or not
-		if slot[_killer]["team"] == slot[_victim]["team"] then
+		if slot[_killer]["team"] == slot[_victim]["team"] then -- teamkill
 			-- here it is teamkill
 			-- NOTE: teamkill is not counted as a kill, wich means all added here is even stronger in its weight
-			if _mod == 15 or _mod == 69 then
+			if _mod == mod["MOD_PANZERFAUST"] or _mod == mod["MOD_BAZOOKA"] then
 				slot[_killer]["pf"] = slot[_killer]["pf"] + 170
 			else
 				slot[_killer]["pf"] = slot[_killer]["pf"] + 110
 			end
-			
-		else
-			-- no teamkill -- TODO: use names ...
-		
-			--Knivekill -- why this? knife is cool! .... therefore it adds a value under 100. 
-			if _mod == 5 or _mod == 65 then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 70
-			
-			-- PF
-			elseif _mod == 15 or _mod == 69 then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 140
-			
-			-- Flamer
-			elseif _mod == 17  then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 115
-			
-			--poison -- why this? poison is cool!
-			elseif _mod == 61 then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 65
-			
-			-- goomba -- why this? goomba is cool!
-			elseif _mod == 60  then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 60
-			
-			-- kick -- also cool
-			elseif _mod == 21 then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 40
-			
-			-- sniper -- hhmmmmm
-			elseif _mod == 51 or _mod == 14 or _mod == 46 then
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 90
+		else -- no teamkill 
+			-- TODO sort this by coolness
+			if _mod == mod["MOD_KNIFE"] or _mod == mod["MOD_THROWKNIFE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 70
+			elseif _mod == mod["MOD_PANZERFAUST"] or _mod == mod["MOD_BAZOOKA"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 140
+			elseif _mod == mod["MOD_FLAMETHROWER"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 115
+			elseif _mod == mod["MOD_POISON"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 65
+			elseif _mod == mod["MOD_GOOMBA"] or _mod = mod["MOD_DYNAMITE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 60
+			elseif _mod == mod["MOD_KICKED"] or _mod == mod["MOD_BACKSTAB"] or _mod == mod["MOD_SHOVE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 40
+			elseif _mod == mod["MOD_K43_SCOPE"] or _mod == mod["MOD_FG42_SCOPE"] or _mod == mod["MOD_GARAND_SCOPE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 90
 			else
-			-- if we count 100 up, nothing changes. at least it should 
-			slot[_killer]["pf"] = slot[_killer]["pf"] + 100
+				-- if we count 100 up, nothing changes. at least it should 
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 100
 			end
 		end -- teamkill end
 
