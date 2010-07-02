@@ -167,7 +167,7 @@ function createTablesDBMS()
 
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
 				id 			INTEGER 		PRIMARY KEY,				\
-				level       INTEGER 		UNIQUE NOT NULL,			\
+				pseudo      TEXT 			UNIQUE NOT NULL,			\
 				name		TEXT 			NOT NULL,					\
 				flags 		TEXT			NOT NULL)" )
 			et.G_Print(res .. "\n")
@@ -281,7 +281,7 @@ function createTablesDBMS()
 
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
 				id 			INT 			PRIMARY KEY,				\
-				level       INT 			UNIQUE NOT NULL,			\
+				pseudo      VARCHAR(15) 	UNIQUE NOT NULL,			\
 				name		VARCHAR(36)		NOT NULL,					\
 				flags 		VARCHAR(50)		NOT NULL)" )
 			et.G_Print(res .. "\n")
