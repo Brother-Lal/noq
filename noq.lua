@@ -597,10 +597,9 @@ function et_RunFrame( _levelTime )
 end
 
 function et_Obituary( _victim, _killer, _mod )
-	if debug == 1 then
-		et.G_LogPrint ("MOD: ".._victim .. " wurd kill " .._killer .."Index:".. _Deaththingie .."  ;".. meansofdeath[_mod].."\n")
+	if debug ~= 0 then
+		et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. "Victim: ".._victim .. " Killer " .._killer .." MOD: ".. meansofdeath[_mod].."\n")
 	end
-	
 	if _killer == 1022 then
 		-- this is for a kill by falling or similar trough the world. Mapmortar etc also.
 		
@@ -628,7 +627,11 @@ function et_Obituary( _victim, _killer, _mod )
 		-- Self kill (restriction)
 		if _killer == _victim then
 			if _mod == 33 then
+				-- gotCmd( _clientNum, _command , false) -- wtf is this for?
 				slot[_killer]["selfkills"] = slot[_killer]["selfkills"] + 1 -- what about if they use nades?
+				if debug ~= 0 then
+					et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. "Selfkill detected, " .. slot[_killer]["netname"] ..  color .. " selfkills in total:" .. slot[_killer]["selfkills"])
+				end
 			end
 			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
@@ -1294,6 +1297,7 @@ function gotCmd( _clientNum, _command, _vsay)
 	end
 
 	-- We search trough the commands-array for a suitable command
+	et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. tostring(lvl))
 	for i=lvl, 0, -1 do
 		if commands[i][cmd] ~= nil then
 			execCmd(_clientNum, commands[i][cmd], argw)
