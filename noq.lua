@@ -626,12 +626,9 @@ function et_Obituary( _victim, _killer, _mod )
 		
 		-- Self kill (restriction)
 		if _killer == _victim then
-			if _mod == 33 then
+			if _mod == mod["MOD_SUICIDE"] then
 				-- gotCmd( _clientNum, _command , false) -- wtf is this for?
 				slot[_killer]["selfkills"] = slot[_killer]["selfkills"] + 1 -- what about if they use nades?
-				if debug ~= 0 then
-					et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. "Selfkill detected, " .. slot[_killer]["netname"] ..  color .. " selfkills in total:" .. slot[_killer]["selfkills"])
-				end
 			end
 			-- TODO: wtf? why not just add 1 to the field? Why call an ETfunction if WE could do it faster?? 
 			slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
