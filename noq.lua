@@ -113,10 +113,10 @@ end
 et.G_LogPrint("Loading NOQ config from ".. scriptpath.."\n")
 noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 -- TODO: check if we can do this in 2 tables 
-meansofdeath 		= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
+meansofdeath 	= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
 weapons 		= assert(table.load( scriptpath .. "noq_weapons.cfg")) -- all weapons
-mod			= assert(table.load( scriptpath .. "noq_mods_names.cfg")) -- mods by name
-w			= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- waepons by name
+mod				= assert(table.load( scriptpath .. "noq_mods_names.cfg")) -- mods by name
+w				= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- waepons by name
 -- end TODO
 greetings		= assert(table.load( scriptpath .. "noq_greetings.cfg")) -- all greetings, customize as wished
 
@@ -144,13 +144,13 @@ dbname  = getConfig("dbname")
 mail 			= getConfig("mail") 
 recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
-commandprefix 		= getConfig("commandprefix")
+commandprefix 	= getConfig("commandprefix")
 debug 			= tonumber(getConfig("debug")) -- debug 0/1
-debugquerries   	= tonumber(getConfig("debugquerries"))
+debugquerries   = tonumber(getConfig("debugquerries"))
 usecommands		= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
-nextmapVoteTime = tonumber(getConfig("nextmapVoteSec"))
+nextmapVoteTime	= tonumber(getConfig("nextmapVoteSec"))
 evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
@@ -275,6 +275,24 @@ lastevener = 0
 -- Poll restriction
 lastpoll = 0
 
+-- Declare some vars we will use in the script
+-- We could allocate this each time, but since are used lot of times is better to make them global
+-- TODO: cur and res are exactly the same things, so we could save memory using only one of them
+cur = {}  -- Will handle the SQL commands returning informations ( es: SELECT )
+res = {}  -- Will handle SQL commands without outputs ( es: INSERT )
+row = {}  -- To manipulate the outputs of SQL command
+--row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
+
+-- mail setup
+if mail == "1" then
+	smtp = require("socket.smtp")
+end
+
+team = { "AXIS" , "ALLIES" , "SPECTATOR" }
+class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
+
+-------------------------------------------------------------------------------
+-- DBMS
 -------------------------------------------------------------------------------
 
 -- Handle different dbms
@@ -291,22 +309,6 @@ else
   -- stop script
   error("DBMS not supported.")
 end
-
--- Declare some vars we will use in the script
--- We could allocate this each time, but since are used lot of times is better to make them global
--- TODO: cur and res are exactly the same things, so we could save memory using only one of them
-cur = {}  -- Will handle the SQL commands returning informations ( es: SELECT )
-res = {}  -- Will handle SQL commands without outputs ( es: INSERT )
-row = {}  -- To manipulate the outputs of SQL command
---row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
-
--- mail setup
-if mail == "1" then
-	smtp = require("socket.smtp")
-end
-
-team = { "AXIS" , "ALLIES" , "SPECTATOR" }
-class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
 
 -------------------------------------------------------------------------------
 -- ET functions
