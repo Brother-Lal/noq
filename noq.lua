@@ -18,10 +18,10 @@
 -- - If you want to use sqlite make sure your server instance has write permissions in fs_homepath. 
 --		SQLite will create a file "noquarter.sqlite" at this location.
 --
--- - Copy the content of this path to fs_homepath/fs_game/noq
--- - for example /usr/local/games/enemy-territory/nq/noq
+-- - Copy the content of this path to fs_homepath/fs_game/nq/noq
+-- - for example /home/<USER>/.etwolf/nq/noq (default case if fs_homepath is not set by admin))
 -- 
--- - Set lua_modules "noq.lua noq_i.lua"
+-- - Set lua_modules "noq/noq.lua noq/noq_i.lua"
 --   
 -- - Make the config your own. There is no need to change code in the NOQ. If you want to see changes use the forum
 -- - Restart the server and check if all lua_modules noq_i.lua, noq_c.lua (optinonal) and noq.lua are registered.
