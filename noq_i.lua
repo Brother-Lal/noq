@@ -136,6 +136,10 @@ function dropTablesDBMS()
 	et.G_Print(res .. "\n")
 	res = assert(con:execute"DROP TABLE player")
 	et.G_Print(res .. "\n")
+	res = assert(con:execute"DROP TABLE log")
+	et.G_Print(res .. "\n")
+	res = assert(con:execute"DROP TABLE level")
+	et.G_Print(res .. "\n")
 	res = assert(con:execute"DROP TABLE version")
 	et.G_Print(res .. "\n")
 end
@@ -154,9 +158,9 @@ function createTablesDBMS()
 			-- Notes:
 			-- We store timestamps as INTEGER - Unix Time, the number of seconds since 1970-01-01 00:00:00 UTC. 
 			
-			res = assert(con:execute"CREATE TABLE IF NOT EXISTS player ( \
-				id 			INTEGER 		PRIMARY KEY,	\
-				pkey 		TEXT 			UNIQUE NOT NULL,\
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS player ( 		\
+				id 		INTEGER 		PRIMARY KEY,		\
+				pkey 		TEXT 			UNIQUE NOT NULL,	\
 				conname 	TEXT 			NOT NULL,		\
 				regname 	TEXT 			DEFAULT '',		\
 				netname 	TEXT 			DEFAULT '',		\
@@ -177,33 +181,41 @@ function createTablesDBMS()
 				xptot		INTEGER 		DEFAULT 0,		\
 				banreason 	TEXT 			DEFAULT '',		\
 				bannedby 	TEXT 			DEFAULT '',		\
-				banexpire 	INTEGER 		DEFAULT NULL,	\
+				banexpire 	INTEGER 		DEFAULT NULL,		\
 				mutedreason TEXT			DEFAULT '',		\
 				mutedby 	TEXT 			DEFAULT '',		\
-				muteexpire 	DATE 			DEFAULT NULL,	\
+				muteexpire 	DATE 			DEFAULT NULL,		\
 				warnings 	INTEGER 		DEFAULT 0,		\
 				suspect 	INTEGER 		DEFAULT 0,		\
-				regdate 	DATE 			DEFAULT NULL,	\
+				regdate 	DATE 			DEFAULT NULL,		\
 				updatedate 	DATE 			NOT NULL,		\
 				createdate 	DATE 			NOT NULL)" )
 			et.G_Print(res .. "\n")
 			
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 		\
+				id		INTEGER			PRIMARY KEY, 		\
+				guid1		TEXT			NOT NULL,		\
+				guid2		TEXT			DEFAULT NULL,		\
+				type		INTEGER			DEFAULT NULL,		\
+				textxml		TEXT			DEFAULT NULL,		\
+				createdate	DATE			NOT NULL)")
+			et.G_Print(res .. "\n")
 
-			res = assert(con:execute"CREATE TABLE IF NOT EXISTS session ( \
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS session ( 		\
 				id 			INTEGER 		PRIMARY KEY,	\
 				pkey 		INTEGER 		NOT NULL,		\
 				slot 		INTEGER 		NOT NULL,		\
 				map 		TEXT 			NOT NULL,		\
-				ip 			TEXT 			DEFAULT '',		\
+				ip 			TEXT 			DEFAULT '',	\
 				netname 	TEXT 			DEFAULT '',		\
-				valid 		INTEGER 		DEFAULT NULL,	\
+				valid 		INTEGER 		DEFAULT NULL,		\
 				start 		DATE 			NOT NULL,		\
-				end 		DATE 			DEFAULT NULL,	\
-				sptime 		INTEGER 		DEFAULT NULL,	\
-				axtime 		INTEGER 		DEFAULT NULL,	\
-				altime 		INTEGER 		DEFAULT NULL,	\
-				lctime		INTEGER 		DEFAULT NULL,	\
-				sstime		INTEGER 		DEFAULT NULL,	\
+				end 		DATE 			DEFAULT NULL,		\
+				sptime 		INTEGER 		DEFAULT NULL,		\
+				axtime 		INTEGER 		DEFAULT NULL,		\
+				altime 		INTEGER 		DEFAULT NULL,		\
+				lctime		INTEGER 		DEFAULT NULL,		\
+				sstime		INTEGER 		DEFAULT NULL,		\
 				xp0 		INTEGER 		DEFAULT 0,		\
 				xp1 		INTEGER 		DEFAULT 0,		\
 				xp2 		INTEGER 		DEFAULT 0,		\
@@ -212,23 +224,23 @@ function createTablesDBMS()
 				xp5 		INTEGER 		DEFAULT 0,		\
 				xp6 		INTEGER 		DEFAULT 0,		\
 				xptot 		INTEGER 		DEFAULT 0,		\
-				acc 		REAL			DEFAULT 0.0,	\
+				acc 		REAL			DEFAULT 0.0,		\
 				kills 		INTEGER 		DEFAULT 0,		\
 				tkills 		INTEGER 		DEFAULT 0,		\
 				death 		INTEGER 		DEFAULT 0,		\
 				uci 		INTEGER 		DEFAULT 0)" )
 			et.G_Print(res .. "\n")
 
-			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
-				id 			INTEGER 		PRIMARY KEY,				\
-				pseudo      TEXT 			UNIQUE NOT NULL,			\
-				name		TEXT 			NOT NULL,					\
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( 		\
+				id 		INTEGER 		PRIMARY KEY,		\
+				pseudo      	TEXT 			UNIQUE NOT NULL,	\
+				name		TEXT 			NOT NULL,		\
 				flags 		TEXT			NOT NULL)" )
 			et.G_Print(res .. "\n")
 			
-			res = assert(con:execute"CREATE TABLE IF NOT EXISTS version ( 	\
-					id INTEGER PRIMARY KEY,						 			\
-					version INTEGER NOT NULL UNIQUE )" )
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS version ( 		\
+				id 		INTEGER 		PRIMARY KEY,		\
+				version 	INTEGER 		NOT NULL UNIQUE )" )
 			et.G_Print(res .. "\n")
 		
 			-- SQLite needs exra cmds for setting up an index (aynbody knows syntax for create table stmd?)
@@ -262,40 +274,52 @@ function createTablesDBMS()
 		elseif dbms == "mySQL" then
 		
 			res = assert(con:execute"CREATE TABLE player ( \
-				id 			INT 			PRIMARY KEY AUTO_INCREMENT,\
-				pkey 		VARCHAR(32) 	UNIQUE  NOT NULL,		\
-				conname 	VARCHAR(36) 	NOT NULL,				\
-				regname 	VARCHAR(36) 	DEFAULT '',				\
-				netname 	VARCHAR(36) 	DEFAULT '',				\
-				isBot 		BOOLEAN 		DEFAULT 0,				\
-				clan 		VARCHAR(20) 	DEFAULT '',				\
-				level 		INT 			DEFAULT 0,				\
-				flags 		VARCHAR(50) 	DEFAULT '',				\
-				user 		VARCHAR(20) 	DEFAULT '',				\
-				password 	VARCHAR(32) 	DEFAULT '',				\
-				email 		VARCHAR(50) 	DEFAULT '',				\
-				xp0 		INT 			DEFAULT 0,				\
-				xp1 		INT 			DEFAULT 0,				\
-				xp2 		INT 			DEFAULT 0,				\
-				xp3 		INT 			DEFAULT 0,				\
-				xp4 		INT 			DEFAULT 0,				\
-				xp5 		INT 			DEFAULT 0,				\
-				xp6 		INT 			DEFAULT 0,				\
-				xptot 		INT 			DEFAULT 0,				\
-				banreason 	VARCHAR(1024) 	DEFAULT '',				\
-				bannedby 	VARCHAR(36) 	DEFAULT '',				\
-				banexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',			\
-				mutedreason VARCHAR(1024)	DEFAULT '',				\
-				mutedby 	VARCHAR(36) 	DEFAULT '',				\
-				muteexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',			\
-				warnings 	SMALLINT 		DEFAULT 0,				\
-				suspect 	TINYINT 		DEFAULT 0,				\
-				regdate 	DATETIME 		DEFAULT NULL,			\
-				updatedate 	TIMESTAMP 		DEFAULT '0000-00-00 00:00:00' on update CURRENT_TIMESTAMP,\
-				createdate 	DATETIME 		NOT NULL,				\
-				INDEX(`regname`),									\
-				INDEX(`netname`)									\
+				id 		INT 			PRIMARY KEY AUTO_INCREMENT,					\
+				pkey 		VARCHAR(32) 		UNIQUE  NOT NULL,						\
+				conname 	VARCHAR(36) 		NOT NULL,							\
+				regname 	VARCHAR(36) 		DEFAULT '',							\
+				netname 	VARCHAR(36) 		DEFAULT '',							\
+				isBot 		BOOLEAN 		DEFAULT 0,							\
+				clan 		VARCHAR(20) 		DEFAULT '',							\
+				level 		INT 			DEFAULT 0,							\
+				flags 		VARCHAR(50) 		DEFAULT '',							\
+				user 		VARCHAR(20) 		DEFAULT '',							\
+				password 	VARCHAR(32) 		DEFAULT '',							\
+				email 		VARCHAR(50) 		DEFAULT '',							\
+				xp0 		INT 			DEFAULT 0,							\
+				xp1 		INT 			DEFAULT 0,							\
+				xp2 		INT 			DEFAULT 0,							\
+				xp3 		INT 			DEFAULT 0,							\
+				xp4 		INT 			DEFAULT 0,							\
+				xp5 		INT 			DEFAULT 0,							\
+				xp6 		INT 			DEFAULT 0,							\
+				xptot 		INT 			DEFAULT 0,							\
+				banreason 	VARCHAR(1024) 		DEFAULT '',							\
+				bannedby 	VARCHAR(36) 		DEFAULT '',							\
+				banexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',					\
+				mutedreason VARCHAR(1024)		DEFAULT '',							\
+				mutedby 	VARCHAR(36) 		DEFAULT '',							\
+				muteexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',					\
+				warnings 	SMALLINT 		DEFAULT 0,							\
+				suspect 	TINYINT 		DEFAULT 0,							\
+				regdate 	DATETIME 		DEFAULT NULL,							\
+				updatedate 	TIMESTAMP 		DEFAULT '0000-00-00 00:00:00' on update CURRENT_TIMESTAMP,	\
+				createdate 	DATETIME 		NOT NULL,							\
+				INDEX(`regname`),											\
+				INDEX(`netname`)											\
 				) ENGINE=InnoDB" )		
+			et.G_Print(res .. "\n")
+
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 		\
+				id		INT			PRIMARY KEY, 		\
+				guid1		VARCHAR(32)		NOT NULL,		\
+				guid2		VARCHAR(32)		DEFAULT NULL,		\
+				type		INT			DEFAULT NULL,		\
+				textxml		VARCHAR(2056)		DEFAULT NULL,		\
+				createdate	DATETIME		NOT NULL,		\
+				INDEX('guid1'),							\
+				INDEX('guid2')							\
+				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
 			res = assert(con:execute"CREATE TABLE session (			\
