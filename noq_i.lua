@@ -21,6 +21,7 @@ res = {}
 fs_game 		= et.trap_Cvar_Get("fs_game")
 homepath 		= et.trap_Cvar_Get("fs_homepath")
 scriptpath 		= homepath .. "/" .. fs_game .. "/noq/" -- full qualified path for the NOQ scripts
+dbms			= "SQLite" -- dbms you want to create.  See noq.lua for possible values!
 
 -------------------------------------------------------------------------------
 -- table functions - don't move down or edit!
@@ -80,11 +81,11 @@ noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 --------------------------------------------------------------------------------
 
 -- Handle different dbms
-if getConfig("dbms") == "mySQL" then
+if dbms == "mySQL" then
 	require "luasql.mysql"
 	env = assert( luasql.mysql() )
 	con = assert( env:connect(getConfig("dbname"), getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
-elseif getConfig("dbms") == "SQLite" then
+elseif dbms == "SQLite" then
 	require "luasql.sqlite3" 
 	env = assert( luasql.sqlite3() )
 	-- this opens OR creates a sqlite db - if this file is loaded db is created -fix this?
