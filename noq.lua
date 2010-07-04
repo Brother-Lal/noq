@@ -1960,7 +1960,7 @@ function pussyFactCheck( _victim, _killer, _mod )
 				slot[_killer]["pf"] = slot[_killer]["pf"] + 115
 			elseif _mod == mod["MOD_POISON"] then
 				slot[_killer]["pf"] = slot[_killer]["pf"] + 65
-			elseif _mod == mod["MOD_GOOMBA"] or _mod = mod["MOD_DYNAMITE"] then
+			elseif _mod == mod["MOD_GOOMBA"] or _mod == mod["MOD_DYNAMITE"] then
 				slot[_killer]["pf"] = slot[_killer]["pf"] + 60
 			elseif _mod == mod["MOD_KICKED"] or _mod == mod["MOD_BACKSTAB"] or _mod == mod["MOD_SHOVE"] then
 				slot[_killer]["pf"] = slot[_killer]["pf"] + 40
