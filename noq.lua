@@ -1633,22 +1633,20 @@ end
 
 function checkBalance( _force )
 
-	-- TODO: rework this, actually we can access the needed data from the slot table: "team" etc
-	-- would save a bit performance .. 
+	-- TODO: Do we need extra tables to store this kind of data ?
 	local axis = {} -- is this a field required?
 	local allies = {} -- is this a field required?
-	--local numclients = 0 -- current clients in game
 
 	for i=0, maxclients, 1 do
-			local tempteam = slot[i]["team"] --returns nil if slot not existing
-			if tempteam ~= nil then
-				if tempteam == team["AXIS"] then
-					table.insert(axis,i)
-				elseif tempteam == team["ALLIES"] then
-					table.insert(allies,i)
-				end
-				-- debugPrint("print","SlotID: " ..i.. " team:" .. team[tempteam])
+		-- slot[i]["team"] should return nil if slot does not exist or -1 if not set (see runframe, closeteam)
+		if slot[i]["team"] ~= nil and slot[i]["team"] ~= -1 then
+			if slot[i]["team"] == team["AXIS"] then
+				table.insert(axis,i)
+			elseif slot[i]["team"] == team["ALLIES"] then
+				table.insert(allies,i)
 			end
+			-- debugPrint("print","SlotID: " ..i.. " team:" .. slot[i]["team"])
+		end
 	end
     
 
