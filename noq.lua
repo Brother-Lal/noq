@@ -120,6 +120,7 @@ end
 -------------------------------------------------------------------------------
 function debugPrint( target, msg )
 	if debug ~= 0 then
+
 		local lmsg = "[DBG] " .. msg .. "\n"
 		local lcmsg = "^7[DBG] " .. color .. msg .. "\n"
 		
@@ -271,27 +272,25 @@ for i=0, maxclients, 1 do
 	slot[i] = {}	
 end
 
--- command table
+-- command table, initialised in parseconf
 commands = {}
--- Shrub uses only 31 Levels. at least wiki says TODO: VERIFY
-for i=0, 31, 1 do				
-	commands[i] = {}
-end
+
  
 --[[ 
 --For testing, the !owned known from ETadmin
-commands[0]['owned'] = "print ^1Ha^3ha^5ha^3, i owned ^7<PLAYER_LAST_VICTIM_CNAME>^3 with my ^7<PLAYER_LAST_VICTIM_WEAPON>^7!!!"
-commands[0]['pants'] = "print ^1No^3no^5noooo^7, i was killed by ^3<PLAYER_LAST_KILLER_CNAME>^7 with a ^3<PLAYER_LAST_KILLER_WEAPON>^7!!!"
-commands[0]['parsecmds'] = "$LUA$ parseconf()"
-commands[0]['pussyfactor'] = "$LUA$ pussyout(<PART2IDS>)"
-commands[0]['spectime'] = "$LUA$ time = slot[_clientNum]['sptime']; et.trap_SendServerCommand(et.EXEC_APPEND , 'print \"..time.. \" seconds in spec')"
-commands[0]['axtime'] = "$LUA$ time = slot[_clientNum]['axtime']; et.trap_SendServerCommand(et.EXEC_APPEND , 'print \"..time.. \" seconds in axis')"
-commands[0]['altime'] = "$LUA$ time = slot[_clientNum]['altime']; et.trap_SendServerCommand(et.EXEC_APPEND , 'print \"..time.. \" seconds in allies')"
-commands[0]['noqban'] = "$LUA$ ban(<PART2ID>)" --TODO The BANFUNCTION...
--- ^      ^      ^ 
--- Array  |      |
---      level    |
--- 			   Part after Prefix
+commands['cmd'][0]['owned'] = "print ^1Ha^3ha^5ha^3, i owned ^7<PLAYER_LAST_VICTIM_CNAME>^3 with my ^7<PLAYER_LAST_VICTIM_WEAPON>^7!!!"
+commands['cmd'][0]['pants'] = "print ^1No^3no^5noooo^7, i was killed by ^3<PLAYER_LAST_KILLER_CNAME>^7 with a ^3<PLAYER_LAST_KILLER_WEAPON>^7!!!"
+commands['cmd'][0]['parsecmds'] = "$LUA$ parseconf()"
+commands['cmd'][0]['pussyfactor'] = "$LUA$ pussyout(<PART2IDS>)"
+commands['cmd'][0]['spectime'] = "$LUA$ time = slot[_clientNum]['sptime']; et.trap_SendServerCommand(et.EXEC_APPEND , 'print \"..time.. \" seconds in spec')"
+commands['cmd'][0]['axtime'] = "$LUA$ time = slot[_clientNum]['axtime']; et.trap_SendServerCommand(et.EXEC_APPEND , 'print \"..time.. \" seconds in axis')"
+commands['cmd'][0]['altime'] = "$LUA$ time = slot[_clientNum]['altime']; et.trap_SendServerCommand(et.EXEC_APPEND , 'print \"..time.. \" seconds in allies')"
+commands['cmd'][0]['noqban'] = "$LUA$ ban(<PART2ID>)" --TODO The BANFUNCTION...
+-- ^       ^    ^     ^
+-- Array   |    |     |
+--        type  |     |
+-- 			   Level  |
+--                   Part after Prefix
 -- Its possible to implement 2 commands with same commandname but different functions for different levels
 --]]
 
@@ -694,7 +693,7 @@ function et_Obituary( _victim, _killer, _mod )
 end
 
 function et_ConsoleCommand( _command )
-	debugPrint("cpm", "ConsoleCommand - command: " .. _command )
+	-- debugPrint("cpm", "ConsoleCommand - command: " .. _command )
 	
 	-- noq cmds ...
 	if string.lower(et.trap_Argv(0)) == commandprefix.."noq" then  
@@ -1293,7 +1292,7 @@ function gotCmd( _clientNum, _command, _vsay)
 	local realcmd
 	
 	if _vsay == nil then -- silent cmd
-	cmd = string.sub(arg0 ,2)
+		cmd = string.sub(arg0 ,2)
 		argw = arg1
 	elseif _vsay == false then -- normal say
 		cmd = string.sub(arg1 ,2)
@@ -1313,10 +1312,20 @@ function gotCmd( _clientNum, _command, _vsay)
 
 	-- We search trough the commands-array for a suitable command
 	for i=lvl, 0, -1 do
-		if commands[i][cmd] ~= nil then
-			execCmd(_clientNum, commands[i][cmd], argw)
-			if _vsay == nil then
-				return 1
+		if commands["cmd"][i][cmd] ~= nil then
+			if cmd == 'help' then
+				debugPrint("cpm",argw)
+				for i=lvl, 0, -1 do
+					if commands["hlp"][i][argw] ~= nil then
+						helpCmd( _clientNum, argw, i) 
+						return 1
+					end
+				end
+			else 
+				execCmd(_clientNum, commands["cmd"][i][cmd], argw)
+				if _vsay == nil then
+					return 1
+				end
 			end
 			return
 		end
@@ -1333,6 +1342,23 @@ function justWords( _str )
 	if not _str:gsub("%S+", helper):find"%S" then 	return t end
 end
 
+-------------------------------------------------------------------------------
+-- helpCmd
+-- prints help from custom commands
+-- 
+-------------------------------------------------------------------------------
+
+function helpCmd(_clientNum , cmd, i)
+	-- Colors same as in NQ
+	local tc = "^D" -- title color
+	local nc = "^Y" -- text color
+	local hc = "^R" -- highlight color
+	-- TODO: Somehow this is all wrong.. the mod does 
+	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "help: " .. nc .. "NOQ help for '" .. hc .. cmd .. nc .. "':\n\"")
+	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Function: " .. nc .. commands["hlp"][i][cmd] .. "\n\"")
+	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Syntax: " .. commands["syn"][i][cmd] .. "\n\"")
+	return 1
+end
 -------------------------------------------------------------------------------
 -- execCmd
 -- The real work to exec a cmd is done here, all substitutions and the switch for
@@ -1448,8 +1474,7 @@ function execCmd(_clientNum , _cmd, _argw)
 			readshit = execthis:read("*a")
 			execthis:close()
 			readshit = string.gsub(readshit, "\n","\"\nqsay \"")
-			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")
-			return	
+			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")	
 		else
 		-- well, at the end we send the command to the console
 		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
@@ -1492,21 +1517,49 @@ end
 -------------------------------------------------------------------------------
 function parseconf()
 	local	datei = io.open ( (scriptpath .. "noq_commands.cfg" ) ,"r") 
-	
-	for i=0, 31, 1 do				
-		commands[i] = {}
+
+	-- Shrub uses only 31 Levels. at least wiki says TODO: VERIFY
+	commands["cmd"] = {}
+	commands["syn"] = {}
+	commands["hlp"] = {}
+	for i=0, 31, 1 do
+		commands["cmd"][i] = {}
+		commands["syn"][i] = {}
+		commands["hlp"][i] = {}
 	end
+	
 	nmr = 1
 	nmr2 = 1
+	local lasti = nil
+	local lastcmd = nil
 	for line in datei:lines() do
 		local filestr = line
 		local testcase = string.find(filestr, "^%s*%#")
 		if testcase == nil then
-			for level,comm,commin in string.gfind(filestr, "([0-9]*)%s*%-%s*(%w+)%s*%=%s*(.*)[^%\n]*") do
-				-- et.G_LogPrint ("Parsing CMD:"..comm .. " Level: "..level.." Content: ".. commin .."\n")
-				i = tonumber(level)
-				commands[i][comm] = commin			
-				nmr = nmr +1
+			local testcase = string.find(filestr, "^%s*%w+%s*%=%s*")
+			if testcase ~= nil then
+				debugPrint("logprint",filestr)
+				
+				for  helptype, helptext in string.gfind(filestr, "^*%s*(%w+)%s*%=%s*(.*)[^%\n]*") do
+					debugPrint("logprint",helptext)
+					if helptype == "help" then
+						commands["hlp"][lasti][lastcmd] = helptext
+					else
+						commands["syn"][lasti][lastcmd] = helptext
+					end
+				end
+			else
+				for level,comm,commin in string.gfind(filestr, "^*([0-9]*)%s*%-%s*(%w+)%s*%=%s*(.*)[^%\n]*") do
+					-- et.G_LogPrint ("Parsing CMD:"..comm .. " Level: "..level.." Content: ".. commin .."\n")	
+					i = tonumber(level)
+					commands["cmd"][i][comm] = commin
+					commands["hlp"][i][comm] = "n/a"
+					commands["syn"][i][comm] = "n/a"
+				
+					nmr = nmr +1
+					lasti = i
+					lastcmd = comm
+				end
 			end
 		end
 		nmr2 = nmr2 +1
