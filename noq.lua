@@ -103,12 +103,42 @@ end
 -- table helper
 function getInfoFromTable( _table )
 	-- table.sort(cvartable)
-	for k,v in pairs(_table) do et.G_Print(k .. "=" .. v .. "\n") end
+	debugPrint("log","************************")
+	for k,v in pairs(_table) do debugPrint("log",k .. "=" .. v) end
+	debugPrint("log","************************")
 	-- setn not set so empty
 	-- et.G_Print("size:" .. table.getn(cvartable) .. "\n")
 end
 -- table functions end
 
+-------------------------------------------------------------------------------
+-- debugPrint
+-- Helper function to print to log
+-- target: can be 'cpm','print','logprint'?
+-- TODO: extend to be able to print variables recursively out
+-- TODO: http://lua-users.org/wiki/SwitchStatement ?
+-------------------------------------------------------------------------------
+function debugPrint( target, msg )
+	if debug ~= 0 then
+		local lmsg = "[DBG] " .. msg .. "\n"
+		local lcmsg = "^7[DBG] " .. color .. msg .. "\n"
+		
+		if target == "cpm" then
+			et.trap_SendServerCommand( -1 ,"cpm \"" .. lcmsg .. "\"")
+		
+		-- elseif target == "cpmnow" then
+		-- 	et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"" .. lcmsg .. "\"" )
+		
+		elseif target == "print" then
+			et.G_Print( lcmsg )
+		
+		elseif target == "logprint" then
+			et.G_LogPrint( lmsg )
+		
+		-- elseif slot[target] ~= nil then
+		end
+	end
+end
 
 et.G_LogPrint("Loading NOQ config from ".. scriptpath.."\n")
 noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
@@ -155,11 +185,14 @@ evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
 
-if debug == 1 then
-	et.G_Print("************************\n")
-	getInfoFromTable(noqvartable)
-	et.G_Print("************************\n")
-end
+-- this is a security risk, with "rcon map_restart" *any rcon* user can see this output from G_Print and G_LogPrint.
+-- getInfoFromTable function addapted to use debugPrint("log",...)
+-- if debug == 1 then
+--	et.G_Print("************************")
+--	getInfoFromTable(noqvartable)
+--	et.G_Print("************************")
+-- end
+getInfoFromTable(noqvartable)
 
 --[[-----------------------------------------------------------------------------
 -- DOCU of Datastructurs in this script
@@ -419,16 +452,14 @@ function et_ClientCommand( _clientNum, _command )
 	local arg2 = string.lower(et.trap_Argv(2))
 	local callershrublvl = et.G_shrubbot_level(_clientNum)
 
-	if debug ~= 0 then
-		et.G_Print("Got a Clientcommand: ".. arg0 .. "\n")
-	end
+
+	debugPrint("print","Got a Clientcommand: ".. arg0)
+
 
 	-- switch to disable the !commands 
 	if usecommands ~= 0 then
 		if arg0 == "say" and string.sub( arg1, 1,1) == commandprefix then -- this means normal say
-		if debug ~= 0 then
-			et.G_Print("Got saycommand: " .. _command)
-		end
+			debugPrint("print","Got saycommand: " .. _command)
 			gotCmd( _clientNum, _command , false)
 		
 		end
@@ -487,17 +518,16 @@ function et_ClientCommand( _clientNum, _command )
 
 				--check the time that the map is running already
 				mapTime = et.trap_Milliseconds() - mapStartTime
-				if debug == 1 then
-					et.G_Print("maptime = " .. mapTime .."\n")
-					et.G_Print("maptime in seconds = " .. mapTime/1000 .."\n")
-					et.G_Print("mapstarttime = " .. mapStartTime .."\n")
-					et.G_Print("mapstarttime in seconds = " .. mapStartTime/1000 .."\n")
-				end
+				
+				debugPrint("print","maptime = " .. mapTime)
+				debugPrint("print","maptime in seconds = " .. mapTime/1000 )
+				debugPrint("print","mapstarttime = " .. mapStartTime)
+				debugPrint("print","mapstarttime in seconds = " .. mapStartTime/1000)
+				
 				--compare to the value that is given in config where nextmap votes are allowed
 				if nextmapVoteTime == 0 then
-					if debug == 1 then
-						et.G_Print("Nextmap vote limiter is disabled!")
-					end
+					debugPrint("print","Nextmap vote limiter is disabled!")
+
 					return 0
 				elseif mapTime / 1000 > nextmapVoteTime then
 					--if not allowed send error msg and return 1	
@@ -600,9 +630,8 @@ function et_RunFrame( _levelTime )
 end
 
 function et_Obituary( _victim, _killer, _mod )
-	if debug ~= 0 then
-		et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. "Victim: ".._victim .. " Killer " .._killer .." MOD: ".. meansofdeath[_mod].."\n")
-	end
+
+	debugPrint("cpm", "Victim: ".._victim .. " Killer " .._killer .." MOD: ".. meansofdeath[_mod])
 	if _killer == 1022 then
 		-- this is for a kill by falling or similar trough the world. Mapmortar etc also.
 		
@@ -665,9 +694,7 @@ function et_Obituary( _victim, _killer, _mod )
 end
 
 function et_ConsoleCommand( _command )
-	if debug == 1 then
-	  et.trap_SendServerCommand( -1 ,"cpm \"" .. color .. "ConsoleCommand - command: " .. _command )
-	end
+	debugPrint("cpm", "ConsoleCommand - command: " .. _command )
 	
 	-- noq cmds ...
 	if string.lower(et.trap_Argv(0)) == commandprefix.."noq" then  
@@ -746,14 +773,10 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 		slot[_clientNum]["ntg"] = false
 	end	
 					
-	if debug == 1 then
-		et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT CLIENT \n \"" )
-	end
+	debugPrint("cpm", "LUA: INIT CLIENT" )
 	
 	if databasecheck == 1 then
-		if debug == 1 then
-			et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT DATABASECHECK EXEC \n \"" )
-		end
+		debugPrint("cpm", "LUA: INIT DATABASECHECK EXEC" )
 		
 		updatePlayerInfo(_clientNum)
 		
@@ -763,9 +786,7 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 		return nil			
 	end
 	
-	if debug == 1 then		
-		et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT CLIENT NO DATABASE INTERACTION \n \"" )
-	end
+	debugPrint("cpm", "LUA: INIT CLIENT NO DATABASE INTERACTION" )
 	
     return nil
 end
@@ -782,9 +803,7 @@ function updatePlayerInfo ( _clientNum )
 	
 	-- This player is already present in the database
 	if row then
-		if debug == 1 then
-			et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT CLIENT ROW EXISTS \n \"" )
-		end
+		debugPrint("cpm", "LUA: INIT CLIENT ROW EXISTS")
 		-- Start to collect related information for this player id
 		-- player
 		slot[_clientNum]["id"] = row.id
@@ -816,13 +835,9 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["xp6"] = row.xp6
 		slot[_clientNum]["xptot"] = row.xptot
 			
-		if debug == 1 then
-			et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT CLIENT FROM ROW GOOD\n \"" )
-		end
+		debugPrint("cpm", "LUA: INIT CLIENT FROM ROW GOOD" )
 	else	
-		if debug == 1 then
-			et.trap_SendConsoleCommand(et.EXEC_NOW , "cpm \"LUA: INIT CLIENT NO ROW -> NEW \n \"" )
-		end
+		debugPrint("cpm", "LUA: INIT CLIENT NO ROW -> NEW" )
 		-- Since he is new, he isn't banned or muted: let him pass those check
 		slot[_clientNum]["banreason"] = ""
 		slot[_clientNum]["bannedby"] = ""
@@ -1542,7 +1557,7 @@ function updateTeam( _clientNum )
 	if teamTemp ~= tonumber(slot[_clientNum]["team"]) then -- now we have teamchange!!!
 		if debug == 1 then
 			if tonumber(slot[_clientNum]["team"]) ~= nil and teamTemp ~= nil then
-				et.trap_SendConsoleCommand(et.EXEC_APPEND, string.format("chat \" TEAMCHANGE: %s to %s \" ",team[tonumber(slot[_clientNum]["team"])], team[teamTemp]))
+				debugPrint("cpm","TEAMCHANGE: " .. team[tonumber(slot[_clientNum]["team"])] .. " to " .. team[teamTemp])
 			end
 		end
 		
@@ -1624,17 +1639,16 @@ function checkBalance( _force )
 	local allies = {} -- is this a field required?
 	--local numclients = 0 -- current clients in game
 
-	for i=0, maxclients, 1 do				
-			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
-			if team == 0 then
-				table.insert(axis,i)
-				--numclients = numclients +1
-			end 
-			if team == 1 then
-				table.insert(allies,i)
-				--numclients = numclients +1
+	for i=0, maxclients, 1 do
+			local tempteam = slot[i]["team"] --returns nil if slot not existing
+			if tempteam ~= nil then
+				if tempteam == team["AXIS"] then
+					table.insert(axis,i)
+				elseif tempteam == team["ALLIES"] then
+					table.insert(allies,i)
+				end
+				-- debugPrint("print","SlotID: " ..i.. " team:" .. team[tempteam])
 			end
-			-- team == 3 -- spec
 	end
     
 
@@ -1677,7 +1691,7 @@ function checkBalance( _force )
 			local cmd =  "!put ".. gtable[rand] .." "..teamchar[smallerteam].." \n"  
 			--et.G_Print( "CMD: ".. cmd .. "\n") 
 			et.trap_SendConsoleCommand( et.EXEC_APPEND, cmd ) 
-			et.trap_SendServerCommand(-1 , "chat \"^2EVENER: ^7Thank you, ".. et.gentity_get(gtable[rand], "pers.netname") .." ^7for helping to even the teams. \" ")
+			et.trap_SendServerCommand(-1 , "chat \"^2EVENER: ^7Thank you, ".. slot[rand]["netname"] .." ^7for helping to even the teams. \" ")
 		else
 			et.trap_SendConsoleCommand( et.EXEC_APPEND, "chat \"^2EVENER: ^1Teams seem unfair, would someone from ^2".. team[greaterteam] .."^1 please switch to ^2"..team[smallerteam].."^1?  \" " )
 		end
