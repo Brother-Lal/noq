@@ -153,7 +153,7 @@ function createTablesDBMS()
 		et.G_Print(color .. commandprefix.."sqlcreate for ".. getConfig("dbms") .." started\n") 
 	
 		-- SQLite
-		if dbms == "SQLite" then
+		if getConfig("dbms") == "SQLite" then
 			
 			-- Notes:
 			-- We store timestamps as INTEGER - Unix Time, the number of seconds since 1970-01-01 00:00:00 UTC. 
@@ -272,7 +272,7 @@ function createTablesDBMS()
 			-- TODO: create level entries
 			
 		-- mySQL	
-		elseif dbms == "mySQL" then
+		elseif getConfig("dbms") == "mySQL" then
 		
 			res = assert(con:execute"CREATE TABLE player ( \
 				id 		INT 			PRIMARY KEY AUTO_INCREMENT,					\
@@ -386,7 +386,7 @@ function createTablesDBMS()
 end
 
 function shuttdownDBMS()
-	if dbms == "mySQL" or dbms == "SQLite" then
+	if getConfig("dbms") == "mySQL" or getConfig("dbms") == "SQLite" then
 		con:close()
 		env:close()
 	else 
