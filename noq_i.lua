@@ -150,7 +150,7 @@ function createTablesDBMS()
 		-- A non existing time is NULL
 		-- If you add more fields create usefull default values ...
 
-		et.G_Print(color .. commandprefix.."sqlcreate for ".. dbms .." started\n") 
+		et.G_Print(color .. commandprefix.."sqlcreate for ".. getConfig("dbms") .." started\n") 
 	
 		-- SQLite
 		if dbms == "SQLite" then
