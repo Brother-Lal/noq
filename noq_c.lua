@@ -23,6 +23,10 @@ commandprefix = "!"
 debug = 0 -- debug 0/1
 tablespacer = " " -- use something like " " or "|"
 
+fs_game 		= et.trap_Cvar_Get("fs_game")
+homepath 		= et.trap_Cvar_Get("fs_homepath")
+scriptpath 		= homepath .. "/" .. fs_game .. "/noq/" -- full qualified path for the NOQ scripts
+
 -------------------------------------------------------------------------------
 -- table functions - don't move down or edit!
 -------------------------------------------------------------------------------
