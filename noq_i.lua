@@ -122,8 +122,12 @@ end
 
 -- 
 function cleanTablesDBMS()
-	-- assert(con:execute"delete from player")
-	-- assert(con:execute"delete from session")
+	res = assert(con:execute"delete from player")
+	et.G_Print(res .. "\n")
+	res = assert(con:execute"delete from session")
+	et.G_Print(res .. "\n")
+	res = assert(con:execute"delete from log")
+	et.G_Print(res .. "\n")
 end
 
 -- For future versions if the db structure does exist
