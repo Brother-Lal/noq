@@ -10,6 +10,8 @@
 -- IlDuca
 -- Luborg
 -- Hose
+-- Ailmanki
+-- BubbaG1
 -- IRATA [*]
 
 -- Setup:
