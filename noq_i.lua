@@ -188,8 +188,8 @@ function createTablesDBMS()
 				warnings 	INTEGER 		DEFAULT 0,		\
 				suspect 	INTEGER 		DEFAULT 0,		\
 				regdate 	DATE 			DEFAULT NULL,		\
-				updatedate 	DATE 			NOT NULL,		\
-				createdate 	DATE 			NOT NULL)" )
+				updatedate 	DATE 			DEFAULT CURRENT_DATE,	\
+				createdate 	DATE 			DEFAULT CURRENT_DATE)" )
 			et.G_Print(res .. "\n")
 			
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 		\
@@ -198,18 +198,18 @@ function createTablesDBMS()
 				guid2		TEXT			DEFAULT NULL,		\
 				type		INTEGER			DEFAULT NULL,		\
 				textxml		TEXT			DEFAULT NULL,		\
-				createdate	DATE			NOT NULL)")
+				createdate	DATE			DEFAULT CURRENT_DATE)")
 			et.G_Print(res .. "\n")
 
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS session ( 		\
-				id 			INTEGER 		PRIMARY KEY,	\
+				id 		INTEGER 		PRIMARY KEY,		\
 				pkey 		INTEGER 		NOT NULL,		\
 				slot 		INTEGER 		NOT NULL,		\
 				map 		TEXT 			NOT NULL,		\
-				ip 			TEXT 			DEFAULT '',	\
+				ip 		TEXT 			DEFAULT '',		\
 				netname 	TEXT 			DEFAULT '',		\
 				valid 		INTEGER 		DEFAULT NULL,		\
-				start 		DATE 			NOT NULL,		\
+				start 		DATE 			DEFAULT CURRENT_DATE,	\
 				end 		DATE 			DEFAULT NULL,		\
 				sptime 		INTEGER 		DEFAULT NULL,		\
 				axtime 		INTEGER 		DEFAULT NULL,		\
@@ -232,11 +232,11 @@ function createTablesDBMS()
 			et.G_Print(res .. "\n")
 
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( 		\
-				id 			INTEGER 		PRIMARY KEY,						\
-				pseudo      TEXT 			UNIQUE NOT NULL,					\
-				name		TEXT 			NOT NULL,							\
-				greetings   TEXT			DEFAULT '',							\
-				flags 		TEXT			NOT NULL)" )
+				id		INTEGER 	PRIMARY KEY,			\
+				pseudo		TEXT 		UNIQUE NOT NULL,		\
+				name		TEXT 		NOT NULL,			\
+				greetings	TEXT		DEFAULT '',			\
+				flags 		TEXT		NOT NULL)" )
 			et.G_Print(res .. "\n")
 			
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS version ( 		\
@@ -250,6 +250,9 @@ function createTablesDBMS()
 			et.G_Print(res .. "\n")
 			res = assert(con:execute"CREATE INDEX p_netname ON player( netname )" )
 			et.G_Print(res .. "\n")
+			--log
+			res = assert(con:execute"CREATE INDEX l_guid ON log (guid1, guid2)" )
+			et.G_Print(res .. "\n")
 			-- session
 			res = assert(con:execute"CREATE INDEX s_pkey ON session ( pkey )" )
 			et.G_Print(res .. "\n")
@@ -257,14 +260,7 @@ function createTablesDBMS()
 			et.G_Print(res .. "\n")
 			res = assert(con:execute"CREATE INDEX s_end ON session ( end )" )
 			et.G_Print(res .. "\n")
---[[
-			-- TODO create trigger for updatedate
-			res = assert(con:execute"CREATE TRIGGER insert_player_updatedate AFTER  INSERT ON player \
-     			BEGIN																		\
-      				UPDATE player SET updatedate = DATETIME('NOW')  WHERE id = new.id;		\
-     			END;")
-			et.G_Print(res .. "\n")
-]]--
+
 			-- insert data
    			res = assert(con:execute("INSERT INTO version VALUES ( '1', '" .. version .. "' )"))
 			et.G_Print(res .. "\n")
@@ -318,68 +314,71 @@ function createTablesDBMS()
 				type		INT			DEFAULT NULL,		\
 				textxml		VARCHAR(2056)		DEFAULT NULL,		\
 				createdate	DATETIME		NOT NULL,		\
-				INDEX('guid1'),							\
-				INDEX('guid2')							\
+				INDEX(`guid1`),							\
+				INDEX(`guid2`)							\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
-			res = assert(con:execute"CREATE TABLE session (			\
-				id 			INT 			PRIMARY KEY NOT NULL AUTO_INCREMENT,\
+			res = assert(con:execute"CREATE TABLE session (					\
+				id 		INT 		PRIMARY KEY NOT NULL AUTO_INCREMENT,	\
 				pkey 		VARCHAR(32) 	NOT NULL,				\
-				slot 		SMALLINT 		NOT NULL,				\
+				slot 		SMALLINT 	NOT NULL,				\
 				map 		VARCHAR(36) 	NOT NULL,				\
-				ip 			VARCHAR(25) 	DEFAULT '',				\
+				ip 		VARCHAR(25) 	DEFAULT '',				\
 				netname 	VARCHAR(36) 	DEFAULT '',				\
-				valid 		BOOLEAN 		DEFAULT NULL,			\
-				start 		DATETIME 		NOT NULL,				\
-				end 		DATETIME 		DEFAULT NULL,			\
-				sptime 		TIME 			DEFAULT NULL,			\
-				axtime 		TIME 			DEFAULT NULL,			\
-				altime 		TIME 			DEFAULT NULL,			\
-				lctime 		TIME 			DEFAULT NULL,			\
-				sstime 		TIME 			DEFAULT NULL,			\
-				xp0 		INT 			DEFAULT 0,				\
-				xp1 		INT 			DEFAULT 0,				\
-				xp2 		INT 			DEFAULT 0,				\
-				xp3 		INT 			DEFAULT 0,				\
-				xp4 		INT 			DEFAULT 0,				\
-				xp5 		INT 			DEFAULT 0,				\
-				xp6 		INT 			DEFAULT 0,				\
-				xptot		INT 			DEFAULT 0,				\
-				acc 		DOUBLE (10,2) 	DEFAULT 0.0,			\
-				kills 		SMALLINT 		DEFAULT 0,				\
-				tkills 		SMALLINT 		DEFAULT 0,				\
-				death 		SMALLINT 		DEFAULT 0,				\
-				uci 		TINYINT 		DEFAULT 0,				\
-				INDEX(`pkey`),										\
-				INDEX(`ip`),                                                                            \
-				INDEX(`end`)										\
+				valid 		BOOLEAN 	DEFAULT NULL,				\
+				start 		DATETIME 	NOT NULL,				\
+				end 		DATETIME 	DEFAULT NULL,				\
+				sptime 		TIME 		DEFAULT NULL,				\
+				axtime 		TIME 		DEFAULT NULL,				\
+				altime 		TIME 		DEFAULT NULL,				\
+				lctime 		TIME 		DEFAULT NULL,				\
+				sstime 		TIME 		DEFAULT NULL,				\
+				xp0 		INT 		DEFAULT 0,				\
+				xp1 		INT 		DEFAULT 0,				\
+				xp2 		INT 		DEFAULT 0,				\
+				xp3 		INT 		DEFAULT 0,				\
+				xp4 		INT 		DEFAULT 0,				\
+				xp5 		INT 		DEFAULT 0,				\
+				xp6 		INT 		DEFAULT 0,				\
+				xptot		INT 		DEFAULT 0,				\
+				acc 		DOUBLE (10,2) 	DEFAULT 0.0,				\
+				kills 		SMALLINT 	DEFAULT 0,				\
+				tkills 		SMALLINT 	DEFAULT 0,				\
+				death 		SMALLINT 	DEFAULT 0,				\
+				uci 		TINYINT 	DEFAULT 0,				\
+				INDEX(`pkey`),								\
+				INDEX(`ip`),								\
+				INDEX(`end`)								\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
-
 
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
-				id 			INT 			PRIMARY KEY,				\
-				pseudo      VARCHAR(15) 	UNIQUE NOT NULL,			\
-				name		VARCHAR(36)		NOT NULL,					\
-				greetings   VARCHAR(150)	DEFAULT '',					\
+				id 		INT 			PRIMARY KEY,				\
+				pseudo      	VARCHAR(15) 		UNIQUE NOT NULL,			\
+				name		VARCHAR(36)		NOT NULL,				\
+				greetings	VARCHAR(150)		DEFAULT '',				\
 				flags 		VARCHAR(50)		NOT NULL)" )
 			et.G_Print(res .. "\n")
 			
-			res = assert(con:execute"CREATE TABLE version (			\
-					id INT PRIMARY KEY NOT NULL,					\
-					version INT NOT NULL UNIQUE						\
+			res = assert(con:execute"CREATE TABLE version (				\
+				id		INT		PRIMARY KEY NOT NULL,		\
+				version		INT		NOT NULL UNIQUE			\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 				
-			-- TODO create trigger for updatedate	
+			-- mySQL needs a trigger to add the current date/time to a datetime field
+			res = assert(con:execute"CREATE TRIGGER trigger_player_insert 			\
+				BEFORE INSERT ON `player` FOR EACH ROW SET NEW.createdate = NOW();" )
+			et.G_Print(res .. "\n")
+				
+			res = assert(con:execute"CREATE TRIGGER trigger_log_insert 			\
+				BEFORE INSERT ON `log` FOR EACH ROW SET NEW.createdate = NOW();" )
+			et.G_Print(res .. "\n")
 				
 			-- insert data
 			res = assert(con:execute(string.format("INSERT INTO version VALUES ( 1, %s )",version)))
 			et.G_Print(res .. "\n")
-			
-			-- TODO: create level entries
-			
 		end
 		
 		et.G_Print(color .. commandprefix.."sqlcreate database created version: "..version .."\n")  
