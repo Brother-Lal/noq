@@ -12,37 +12,90 @@
 --
 
 -- Notes:
--- There are limits by the buffer of ET. Avoid very long statements and don't expect you always get the full result printed.
--- Keep it short
+-- There are limits by the buffer of ET. 
+-- Avoid very long statements and don't expect you always get the full result printed.
+-- Keep it short.
+-------------------------------------------------------------------------------
 
---------------------------------------------------------------------------------
 color = "^5"
 version = 1
 commandprefix = "!"
 debug = 0 -- debug 0/1
 tablespacer = " " -- use something like " " or "|"
+
+-------------------------------------------------------------------------------
+-- table functions - don't move down or edit!
+-------------------------------------------------------------------------------
+
+-- TODO: we use same functions in the noq.lua
+-- Find a way to use more centralized
+
+-- The table load 
+function table.load( sfile )
+   -- catch marker for stringtable
+   if string.sub( sfile,-3,-1 ) == "--|" then
+	  tables,err = loadstring( sfile )
+   else
+	  tables,err = loadfile( sfile )
+   end
+   if err then return _,err
+   end
+   tables = tables()
+   for idx = 1,#tables do
+	  local tolinkv,tolinki = {},{}
+	  for i,v in pairs( tables[idx] ) do
+		 if type( v ) == "table" and tables[v[1]] then
+			table.insert( tolinkv,{ i,tables[v[1]] } )
+		 end
+		 if type( i ) == "table" and tables[i[1]] then
+			table.insert( tolinki,{ i,tables[i[1]] } )
+		 end
+	  end
+	  -- link values, first due to possible changes of indices
+	  for _,v in ipairs( tolinkv ) do
+		 tables[idx][v[1]] = v[2]
+	  end
+	  -- link indices
+	  for _,v in ipairs( tolinki ) do
+		 tables[idx][v[2]],tables[idx][v[1]] =  tables[idx][v[1]],nil
+	  end
+   end
+   return tables[1]
+end
+
+-- Gets varvalue else null
+function getConfig( varname )
+	local value = noqvartable[varname]
+	
+	if value then
+	  	return value
+	else
+		et.G_Print("warning, invalid config value for " .. varname .. "\n")
+	  	return "null"
+	end
+end
+
+et.G_LogPrint("Loading NOQ config from ".. scriptpath.."\n")
+noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
+
 --------------------------------------------------------------------------------
--- db connection data
-dbms	= "SQLite" -- possible values "mySQL", "postgreSQL" and "SQLite"
-dbname  = "noquarter.sqlite" -- also filename for SQLite file
-dbuser  = "myuser" 
-dbpassword = "mypassword"
---------------------------------------------------------------------------------
+
 env = nil
 con = nil
 
--- Connect & handle different dbms
-if dbms == "mySQL" then
-  	require "luasql.mysql"
-  	env = assert (luasql.mysql())
-  	con = assert (env:connect( dbname, dbuser, dbpassword, dbhostname, dbport ))
-elseif dbms == "SQLite" then
+-- Handle different dbms
+if getConfig("dbms") == "mySQL" then
+	require "luasql.mysql"
+	env = assert( luasql.mysql() )
+	con = assert( env:connect(getConfig("dbname"), getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
+elseif getConfig("dbms") == "SQLite" then
 	require "luasql.sqlite3" 
-	env = assert (luasql.sqlite3())
-	con = assert (env:connect( dbname )) -- this opens OR creates a sqlite db - if this Lua is loaded db is created -fix this?
+	env = assert( luasql.sqlite3() )
+	-- this opens OR creates a sqlite db - if this file is loaded db is created -fix this?
+	con = assert( env:connect( getConfig("dbname") ) )
 else
-	-- stop script
-  	error("DBMS not supported.")
+  -- stop script
+  error("DBMS not supported.")
 end
 
 cur = {}
@@ -157,7 +210,7 @@ function et_ConsoleCommand( command )
 end
 
 function shuttdownDBMS()
-	if dbms == "mySQL" or dbms == "SQLite" then
+	if getConfig("dbms") == "mySQL" or getConfig("dbms") == "SQLite" then
 		con:close()
 		env:close()
 	else 
