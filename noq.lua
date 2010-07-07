@@ -459,8 +459,8 @@ function et_ClientCommand( _clientNum, _command )
 	if usecommands ~= 0 then
 		if arg0 == "say" and string.sub( arg1, 1,1) == commandprefix then -- this means normal say
 			debugPrint("print","Got saycommand: " .. _command)
-			gotCmd( _clientNum, _command , false)
-		
+			local returnvalue = gotCmd( _clientNum, _command , false)
+			return returnvalue
 		end
 		
 		if arg0 == "vsay" and string.sub( arg2 , 1, 1) == commandprefix then -- this means a !command with vsay
@@ -707,9 +707,22 @@ function et_ConsoleCommand( _command )
 		-- try first param to cast as int
 		-- if int check if slot .. ban
 		-- if not try to get player via part of name ...
-		
+	-- csay - say something to clients console .. usefull for EXEC_APPEND!
+	elseif string.lower(et.trap_Argv(0)) == "csay" then
+		-- local _argc = tonumber(et.trap_Argc())
+		if (et.trap_Argc() < 2) then 
+			_targetid = tonumber(et.trap_Argv(1))
+			if slot[_targetid] ~= nil then
+				-- local msg = ""
+				-- for i=2,(_argc-1),1 do
+				-- 	msg = msg .. et.trap_Argv(i) .." "
+				-- end
+				et.trap_SendServerCommand( _targetid,"print \"" .. et.trap_Argv(2) .."\"")
+			end
+		end
 	end
 	-- add more cmds here ...
+	
 end
 
 function et_ClientSpawn( _clientNum, _revived )
@@ -1314,11 +1327,15 @@ function gotCmd( _clientNum, _command, _vsay)
 	for i=lvl, 0, -1 do
 		if commands["cmd"][i][cmd] ~= nil then
 			if cmd == 'help' then
-				debugPrint("cpm",argw)
-				for i=lvl, 0, -1 do
-					if commands["hlp"][i][argw] ~= nil then
-						helpCmd( _clientNum, argw, i) 
-						return 1
+				if argw == "" then
+					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^3NOQ help: to be done.. \"")	
+					-- TODO: add the help -- quite some work formatting and all.. :/ 
+				else
+					for i=lvl, 0, -1 do
+						if commands["hlp"][i][argw] ~= nil then
+							helpCmd( _clientNum, argw, i) 
+							return 1
+						end
 					end
 				end
 			else 
@@ -1326,7 +1343,7 @@ function gotCmd( _clientNum, _command, _vsay)
 				if _vsay == nil then
 					return 1
 				end
-			end
+			end 
 			return
 		end
 	end
@@ -1348,16 +1365,15 @@ end
 -- 
 -------------------------------------------------------------------------------
 
-function helpCmd(_clientNum , cmd, i)
+function helpCmd(_clientNum , cmd, i, fullmsg)
 	-- Colors same as in NQ
 	local tc = "^D" -- title color
 	local nc = "^Y" -- text color
 	local hc = "^R" -- highlight color
-	-- TODO: Somehow this is all wrong.. the mod does 
+	et.trap_SendConsoleCommand(et.EXEC_NOW, "qsay \"".. slot[_clientNum]["netname"] .. "^7: ^2!help " .. cmd .. "\"")	
 	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "help: " .. nc .. "NOQ help for '" .. hc .. cmd .. nc .. "':\n\"")
 	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Function: " .. nc .. commands["hlp"][i][cmd] .. "\n\"")
 	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Syntax: " .. commands["syn"][i][cmd] .. "\n\"")
-	return 1
 end
 -------------------------------------------------------------------------------
 -- execCmd
