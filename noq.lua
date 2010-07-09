@@ -389,8 +389,6 @@ function et_ClientUserinfoChanged( _clientNum )
 	if databasecheck == 1 then
 		thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
 		
-		et.trap_SendConsoleCommand( et.EXEC_APPEND, "chat \"^3 string.sub(guid, 1, 7) = ^7".. string.sub(thisGuid, 1, 7) .." \" " )
-		
 		if string.sub(thisGuid, 1, 7) ~= "OMNIBOT" then
 			thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 			
