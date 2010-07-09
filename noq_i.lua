@@ -311,20 +311,20 @@ function createTablesDBMS()
 				) ENGINE=InnoDB" )		
 			et.G_Print(res .. "\n")
 
-			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 		\
-				id		INT			PRIMARY KEY, 		\
-				guid1		VARCHAR(32)		NOT NULL,		\
-				guid2		VARCHAR(32)		DEFAULT NULL,		\
-				type		INT			DEFAULT NULL,		\
-				textxml		VARCHAR(2056)		DEFAULT NULL,		\
-				createdate	DATETIME		NOT NULL,		\
-				INDEX(`guid1`),							\
-				INDEX(`guid2`)							\
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 				\
+				id		INT			PRIMARY KEY AUTO_INCREMENT, 		\
+				guid1		VARCHAR(32)		NOT NULL,				\
+				guid2		VARCHAR(32)		DEFAULT NULL,				\
+				type		INT			DEFAULT NULL,				\
+				textxml		VARCHAR(2056)		DEFAULT NULL,				\
+				createdate	DATETIME		NOT NULL,				\
+				INDEX(`guid1`),									\
+				INDEX(`guid2`)									\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
 			res = assert(con:execute"CREATE TABLE session (					\
-				id 		INT 		PRIMARY KEY NOT NULL AUTO_INCREMENT,	\
+				id 		INT 		PRIMARY KEY AUTO_INCREMENT,		\
 				pkey 		VARCHAR(32) 	NOT NULL,				\
 				slot 		SMALLINT 	NOT NULL,				\
 				map 		VARCHAR(36) 	NOT NULL,				\
@@ -358,7 +358,7 @@ function createTablesDBMS()
 			et.G_Print(res .. "\n")
 
 			res = assert(con:execute"CREATE TABLE IF NOT EXISTS level ( \
-				id 		INT 			PRIMARY KEY,				\
+				id 		INT 			PRIMARY KEY AUTO_INCREMENT,		\
 				pseudo      	VARCHAR(15) 		UNIQUE NOT NULL,			\
 				name		VARCHAR(36)		NOT NULL,				\
 				greetings	VARCHAR(150)		DEFAULT '',				\
@@ -366,7 +366,7 @@ function createTablesDBMS()
 			et.G_Print(res .. "\n")
 			
 			res = assert(con:execute"CREATE TABLE version (				\
-				id		INT		PRIMARY KEY NOT NULL,		\
+				id		INT		PRIMARY KEY AUTO_INCREMENT,		\
 				version		INT		NOT NULL UNIQUE			\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
