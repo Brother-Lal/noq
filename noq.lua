@@ -387,10 +387,10 @@ end
 
 function et_ClientUserinfoChanged( _clientNum )
 	if databasecheck == 1 then
-		thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
+		local thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
 		
 		if string.sub(thisGuid, 1, 7) ~= "OMNIBOT" then
-			thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
+			local thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 			
 			--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
 			cur = assert (con:execute("SELECT * FROM log WHERE guid1='".. thisGuid .."' AND textxml='<name>".. thisName .."</name>' LIMIT 1"))
