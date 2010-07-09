@@ -385,6 +385,30 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	return nil
 end
 
+function et_ClientUserinfoChanged( _clientNum )
+	if databasecheck == 1 then
+		thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
+		
+		et.trap_SendConsoleCommand( et.EXEC_APPEND, "chat \"^3 string.sub(guid, 1, 7) = ^7".. string.sub(thisGuid, 1, 7) .." \" " )
+		
+		if string.sub(thisGuid, 1, 7) ~= "OMNIBOT" then
+			thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
+			
+			--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
+			cur = assert (con:execute("SELECT * FROM log WHERE guid1='".. thisGuid .."' AND textxml='<name>".. thisName .."</name>' LIMIT 1"))
+			row = cur:fetch ({}, "a")
+			cur:close()
+
+			if row then
+				--nothing to do, player name (alias) exists
+			else
+				res = assert (con:execute("INSERT INTO log (guid1, type, textxml)		\
+					VALUES ('".. thisGuid .."', 3, '<name>".. thisName .."</name>')"))			
+			end
+		end
+	end
+end
+
 -- This function is called:
 --	- after the connection is over, so when you first join the game world
 --
