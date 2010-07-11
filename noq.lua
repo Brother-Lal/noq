@@ -501,7 +501,7 @@ function et_ClientCommand( _clientNum, _command )
 		local name = string.gsub(arg1,"\'", "\\\'")
 		if arg1 ~= "" and arg2 ~= "" then
 			slot[_clientNum]["user"] = name 
-			res = assert (con:execute("UPDATE player SET user='" .. name .."', password='MD5("..arg2..")' WHERE pkey='"..slot[_clientNum]["pkey"].."'"))
+			res = assert (con:execute("UPDATE player SET user='" .. name .."', password=MD5('"..arg2.."') WHERE pkey='"..slot[_clientNum]["pkey"].."'"))
 			et.trap_SendServerCommand( _clientNum, "print \"^3Successfully registered. To reset password just re-register. \n\"" ) 
 			return 1
 		else
