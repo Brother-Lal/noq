@@ -10,7 +10,7 @@
 -- IlDuca
 -- Luborg
 -- Hose
--- Ailmanki
+-- ailmanki
 -- BubbaG1
 -- IRATA [*]
 
@@ -103,7 +103,7 @@ end
 
 
 -- table helper
-function getInfoFromTable( _table )
+function debug_getInfoFromTable( _table )
 	-- table.sort(cvartable)
 	debugPrint("log","************************")
 	for k,v in pairs(_table) do debugPrint("log",k .. "=" .. v) end
@@ -188,14 +188,8 @@ evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
 
--- this is a security risk, with "rcon map_restart" *any rcon* user can see this output from G_Print and G_LogPrint.
--- getInfoFromTable function addapted to use debugPrint("log",...)
--- if debug == 1 then
---	et.G_Print("************************")
---	getInfoFromTable(noqvartable)
---	et.G_Print("************************")
--- end
-getInfoFromTable(noqvartable)
+-- Prints the configuration
+debug_getInfoFromTable(noqvartable)
 
 --[[-----------------------------------------------------------------------------
 -- DOCU of Datastructurs in this script
@@ -203,7 +197,7 @@ getInfoFromTable(noqvartable)
 -- The table slot[clientNum] is created each time someone connect and will store the current client informations
 -- The current fields are:
 -- 
--- ["team"] = nil
+-- ["team"] = false
 --
 -- ["id"] = nil
 -- ["pkey"] = 0
@@ -263,7 +257,7 @@ getInfoFromTable(noqvartable)
 --
 --]]
 
--- This is above meantinoned table
+-- This is above mentioned table
 slot = {}
 
 -- Note: Players are ents 0 - (sv_maxclients-1)
@@ -750,10 +744,10 @@ function et_ConsoleCommand( _command )
 end
 
 function et_ClientSpawn( _clientNum, _revived )
-	-- TODO: check if this works
+	-- TODO: check if this works, works!
 	-- _revived == 1 means he was revived
 	if _revived ~= 1 then
-		updateTeam(_clientNum)	
+		updateTeam(_clientNum)
 	end
 end
 
@@ -1352,7 +1346,7 @@ function gotCmd( _clientNum, _command, _vsay)
 		if commands["cmd"][i][cmd] ~= nil then
 			if cmd == 'help' then
 				if argw == "" then
-					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^3NOQ help: to be done.. \"")	
+					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^For NOQ help type !cmdlist.. \"")	
 					-- TODO: add the help -- quite some work formatting and all.. :/ 
 				else
 					for i=lvl, 0, -1 do
@@ -1641,7 +1635,7 @@ function getDBVersion()
 end
 
 -------------------------------------------------------------------------------
--- updateTeam
+-- skillpoints
 -- set times accordingly when the player changes team
 -------------------------------------------------------------------------------
 function updateTeam( _clientNum )
