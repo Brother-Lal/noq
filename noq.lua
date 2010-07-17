@@ -366,8 +366,6 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	end
 	-- valid client
 	
-	checkMute( _clientNum )
-	
 	-- personal game start message / server greetings	
 	if firstTime == 0 or isBot == 1 or getConfig("persgamestartmessage") == "" then 
 		return nil
@@ -424,6 +422,9 @@ function et_ClientBegin( _clientNum )
 	if slot[_clientNum]["ntg"] == true then
 		greetClient(_clientNum)
 	end
+	
+	-- Move the mute check here
+	checkMute( _clientNum )
 	
 	if databasecheck == 1 then
 		-- If we have db access, then we will create new Playerentry if necessary
@@ -926,6 +927,7 @@ end
 -- TODO : would be cool to inform admins about bans through mail
 -- TODO : add something that track a just-unbanned player ( for time bans )
 --        in order to warn online admins and maybe the player himself
+-- NOTE : do something like checkMute with an own LUA function?
 ------------------------------------------------------------------------------- 
 function checkBan ( _clientNum )
 	if slot[_clientNum]["bannedby"] ~= "" then
@@ -966,29 +968,32 @@ end
 
 -------------------------------------------------------------------------------
 -- checkMute
--- TODO: check this, functions is prepared to work w/o using the shrubbot.cfg
--- We need a function, which checks if bans/mutes are still valid and updates the database (delete old values of non connected players)
--- @IlDuca TODO is done ?
+-- Called in clientBegin in order to print the warning message to the player
+-- The mute is done through ET, calculating the time between NOW and muteexpire
+-- and setting the seconds to the game's mute system. Expired check is done with
+-- the field mutedby; muteexpire is cleared in the database when cleintDisconnect
+-- TODO : would be cool to inform admins about mutes through mail
+-- TODO : add something that track a just-unmuted player ( for time mute )
+--        in order to warn online admins and maybe the player himself
 -------------------------------------------------------------------------------
 function checkMute ( _clientNum )
-	-- give hint and mute player ...
 	if slot[_clientNum]["mutedby"] ~= "" then
-		et.gentity_set(_clientNum,"sess.muted", 1) 
-		if slot[_clientNum]["mutedreason"] ~= "" then
-			et.gentity_set(_clientNum,"sess.muted_by", slot[_clientNum]["mutedreason"])
-			if slot[_clientNum]["muteexpire"] ~= "1000-01-01 00:00:00" then
-				et.gentity_set(_clientNum,"sess.auto_mute_time", slot[_clientNum]["muteexpire"])
-				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are muted by "..slot[_clientNum][mutedby].." until "..row.muteexpire..". Reason: "..slot[_clientNum][mutedreason])
-			else
-				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are permanently muted by "..slot[_clientNum][mutedby]..". Reason: "..slot[_clientNum][mutedreason])
-			end
+		-- Check permanent mute
+		if slot[_clientNum]["muteexpire"] == "1000-01-01 00:00:00" then
+		    et.MutePlayer( _clientNum, -1, slot[_clientNum]["mutedreason"] )
+		    return nil
+		end
+		muteseconds = timehandle( 'DS', 'N', slot[_clientNum]["muteexpire"] )
+	    -- Check if the mute is still valid
+	    if  muteseconds > 0 then
+			-- The mute is expired: clear the mute fields and continue
+			slot[_clientNum]["mutedby"] = ""
+			slot[_clientNum]["mutedreason"] = ""
+			slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
 		else
-			if slot[_clientNum]["muteexpire"] ~= "1000-01-01 00:00:00" then
-				et.gentity_set(_clientNum,"sess.auto_mute_time", slot[_clientNum]["muteexpire"])
-				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are muted by "..slot[_clientNum][mutedby].." until "..slot[_clientNum][muteexpire])
-			else
-				et.trap_SendServerCommand( _clientNum, "cpm \"^1You are permanently muted by "..slot[_clientNum][mutedby])
-			end
+		    -- The mute is still valid: mute him!
+		    muteseconds = muteseconds * (-1)
+		    et.MutePlayer( _clientNum, muteseconds, slot[_clientNum]["mutedreason"] )
 		end
 	end
 	
@@ -1030,7 +1035,7 @@ function createNewPlayer ( _clientNum )
 end
 
 -------------------------------------------------------------------------------
---timehandle
+-- timehandle
 -- Function to handle times
 -- TODO : check if the time returned with option 'D' is in the right format we need
 -- TODO : actually, 'D' and 'DS' are almost equal: save some lines mergin them!!
@@ -1208,8 +1213,12 @@ function savePlayer ( _clientNum )
 
 	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
 
-	-- FIXME getting attempt to concatenate field 'muteexpire' (a nil value) (sqlite
-	-- IlDuca : done for banexpire
+	if slot[_clientNum]["muteexpire"] ~= "1000-01-01 00:00:00" and timehandle( 'DS', 'N', slot[_clientNum]["muteexpire"] ) > 0 then
+		slot[_clientNum]["mutedby"] = ""
+		slot[_clientNum]["mutedreason"] = ""
+		slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
+	end
+	
 	res = assert (con:execute("UPDATE player SET clan='".. slot[_clientNum]["clan"] .."',           \
 		 netname='".. name  .."',\
 		 xp0='".. et.gentity_get(_clientNum,"sess.skillpoints",0)  .."', 	\
@@ -1226,11 +1235,10 @@ function savePlayer ( _clientNum )
 		 banexpire='".. slot[_clientNum]["banexpire"] .."',		\
 		 mutedreason='".. slot[_clientNum]["mutedreason"] .."',	\
 		 mutedby='".. slot[_clientNum]["mutedby"] .."',			\
+		 muteexpire='".. slot[_clientNum]["muteexpire"] .."',	\
 		 warnings='".. slot[_clientNum]["warnings"] .."',		\
 		 suspect='".. slot[_clientNum]["suspect"] .."'			\
 		 WHERE pkey='".. slot[_clientNum]["pkey"] .."'"))
-
---		muteexpire='".. slot[_clientNum]["muteexpire"] .."',	\
 end
 
 -------------------------------------------------------------------------------
