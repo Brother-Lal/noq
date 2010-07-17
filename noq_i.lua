@@ -185,10 +185,10 @@ function createTablesDBMS()
 				xptot		INTEGER 		DEFAULT 0,		\
 				banreason 	TEXT 			DEFAULT '',		\
 				bannedby 	TEXT 			DEFAULT '',		\
-				banexpire 	INTEGER 		DEFAULT NULL,		\
+				banexpire 	DATE 			DEFAULT '1000-01-01 00:00:00',	\
 				mutedreason TEXT			DEFAULT '',		\
 				mutedby 	TEXT 			DEFAULT '',		\
-				muteexpire 	DATE 			DEFAULT NULL,		\
+				muteexpire 	DATE 			DEFAULT '1000-01-01 00:00:00',	\
 				warnings 	INTEGER 		DEFAULT 0,		\
 				suspect 	INTEGER 		DEFAULT 0,		\
 				regdate 	DATE 			DEFAULT NULL,		\
