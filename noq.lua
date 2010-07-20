@@ -41,6 +41,7 @@
 -- noq_weapons_names.cfg	- Weapon enum config file - never touch!
 --
 -- nqconst.lua 				- No Quarter constants
+-- noq_db.lua 				- No Quarter DB functions
 --
 
 -- Notes: 
@@ -59,10 +60,11 @@
 version 		= "1" -- see version table
 databasecheck 	= 1
 
-homepath 		= et.trap_Cvar_Get("fs_homepath")
-fs_game 		= et.trap_Cvar_Get("fs_game")
+homepath 		= et.trap_Cvar_Get("fs_homepath") .. "/"
+fs_game 		= et.trap_Cvar_Get("fs_game") .. "/"
 pbpath 			= homepath .. "/pb/"
-scriptpath 		= homepath .. "/" .. fs_game .. "/noq/" -- full qualified path for the NOQ scripts
+noqpath			= "noq/"
+scriptpath 		= homepath .. fs_game .. noqpath  -- full qualified path for the NOQ scripts
 
 -------------------------------------------------------------------------------
 -- table functions - don't move down!
@@ -179,7 +181,8 @@ recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
 commandprefix 	= getConfig("commandprefix")
 debug 			= tonumber(getConfig("debug")) -- debug 0/1
-debugquerries   = tonumber(getConfig("debugquerries"))
+-- moved to noq_db.lua
+-- debugquerries   = tonumber(getConfig("debugquerries"))
 usecommands		= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
@@ -305,11 +308,12 @@ lastevener = 0
 lastpoll = 0
 
 -- Declare some vars we will use in the script
+-- Moved to noq_db.lua
 -- We could allocate this each time, but since are used lot of times is better to make them global
 -- TODO: cur and res are exactly the same things, so we could save memory using only one of them
-cur = {}  -- Will handle the SQL commands returning informations ( es: SELECT )
-res = {}  -- Will handle SQL commands without outputs ( es: INSERT )
-row = {}  -- To manipulate the outputs of SQL command
+-- cur = {}  -- Will handle the SQL commands returning informations ( es: SELECT )
+-- res = {}  -- Will handle SQL commands without outputs ( es: INSERT )
+-- row = {}  -- To manipulate the outputs of SQL command
 --row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
 
 -- mail setup
@@ -321,23 +325,11 @@ team = { "AXIS" , "ALLIES" , "SPECTATOR" }
 class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
 
 -------------------------------------------------------------------------------
--- DBMS
+-- load DB functions
 -------------------------------------------------------------------------------
-
--- Handle different dbms
-if getConfig("dbms") == "mySQL" then
-	require "luasql.mysql"
-	env = assert( luasql.mysql() )
-	con = assert( env:connect(getConfig("dbname"), getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
-elseif getConfig("dbms") == "SQLite" then
-	require "luasql.sqlite3" 
-	env = assert( luasql.sqlite3() )
-	-- this opens OR creates a sqlite db - if this file is loaded db is created -fix this?
-	con = assert( env:connect( getConfig("dbname") ) )
-else
-  -- stop script
-  error("DBMS not supported.")
-end
+-- dofile(scriptpath .. "noq_db.lua") -- would allow to load a lua script, like include in php I think
+require(noqpath .. "noq_db")
+DBCon:DoConnect()
 
 -------------------------------------------------------------------------------
 -- ET functions
@@ -380,27 +372,14 @@ end
 function et_ClientUserinfoChanged( _clientNum )
 	if databasecheck == 1 then
 		local thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
-		
 		if string.sub(thisGuid, 1, 7) ~= "OMNIBOT" then
 			local thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
-			
-			--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
-			cur = assert (con:execute("SELECT * FROM log WHERE guid1='".. thisGuid .."' AND textxml='<name>".. thisName .."</name>' LIMIT 1"))
-			row = cur:fetch ({}, "a")
-			cur:close()
-
-			if row then
-				--nothing to do, player name (alias) exists
-			else
-				res = assert (con:execute("INSERT INTO log (guid1, type, textxml)		\
-					VALUES ('".. thisGuid .."', 3, '<name>".. thisName .."</name>')"))			
-			end
+			DBCon:SetPlayerAlias( thisName, thisGuid )
 		end
 	end
 end
 
--- This function is called:
---	- after the connection is over, so when you first join the game world
+-- This function is called - after the connection is over, so when you first join the game world
 --
 -- Before r3493 also:
 --	- when you change team
@@ -488,8 +467,8 @@ function et_ClientCommand( _clientNum, _command )
 		
 		if et.G_shrubbot_permission( _clientNum, "3" ) == 1 then -- and finally, a silent !command
 			if string.sub( arg0 , 1, 1) == commandprefix then
-			gotCmd ( _clientNum, _command, nil)
-			return 0
+				gotCmd ( _clientNum, _command, nil)
+				return 0
 			end
 		end
 		 
@@ -612,8 +591,8 @@ function et_ShutdownGame( _restart )
 		-- delete old sessions if set in config
 		local deleteSessionsOlderXDays = tonumber(getConfig("deleteSessionsOlderXDays"))
 		if  deleteSessionsOlderXDays > 0 then
-			-- TODO
-			-- res = assert (con:execute("DELETE FROM session WHERE `end` < "))
+			-- TODO: Implement this in noq_db.lua
+			DBCon:DoDeleteOldSessions( deleteSessionsOlderXDays )
 		end
 	end
 end
@@ -641,8 +620,10 @@ function et_RunFrame( _levelTime )
 
 		gstate = tonumber(et.trap_Cvar_Get( "gamestate" ))
 		
-		-- Added last kill of the round
-		execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , lastkill)
+		-- Added last kill of the round-- this fails when no kills have been done
+		if (lastkill ~= nil) then
+			execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , lastkill)
+		end
 		--TODO: Should we call the save to the DB right here?
 	end
 end
@@ -715,19 +696,23 @@ function et_ConsoleCommand( _command )
 	-- debugPrint("cpm", "ConsoleCommand - command: " .. _command )
 	
 	-- noq cmds ...
-	if string.lower(et.trap_Argv(0)) == commandprefix.."noq" then  
-		if (et.trap_Argc() < 2) then 
-			et.G_Print("#sql is used to access the db with common sql commands.\n") 
-			et.G_Print("usage: ...")
-			return 1 
-		end 
-	-- noq warn ...	
-	elseif string.lower(et.trap_Argv(0)) == commandprefix.."warn" then
+	-- TODO: What is this !noq cmd good for in here?
+	-- if string.lower(et.trap_Argv(0)) == commandprefix.."noq" then  
+	-- 	if (et.trap_Argc() < 2) then 
+	--		et.G_Print("#sql is used to access the db with common sql commands.\n") 
+	--		et.G_Print("usage: ...")
+	--		return 1 
+	--	end
+	 
+	-- noq warn ...
+	-- TODO: What is this !warn cmd good for in here?
+	-- elseif string.lower(et.trap_Argv(0)) == commandprefix.."warn" then
 		-- try first param to cast as int
 		-- if int check if slot .. ban
 		-- if not try to get player via part of name ...
+	
 	-- csay - say something to clients console .. usefull for EXEC_APPEND!
-	elseif string.lower(et.trap_Argv(0)) == "csay" then
+	if string.lower(et.trap_Argv(0)) == "csay" then
 		-- local _argc = tonumber(et.trap_Argc())
 		if (et.trap_Argc() < 2) then 
 			_targetid = tonumber(et.trap_Argv(1))
@@ -741,7 +726,6 @@ function et_ConsoleCommand( _command )
 		end
 	end
 	-- add more cmds here ...
-	
 end
 
 function et_ClientSpawn( _clientNum, _revived )
@@ -827,44 +811,42 @@ end
 -- Updates the Playerinformation out of the Database (IF POSSIBLE!)
 -------------------------------------------------------------------------------
 function updatePlayerInfo ( _clientNum )
-	--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
-	cur = assert (con:execute("SELECT * FROM player WHERE pkey='".. slot[_clientNum]["pkey"] .."' LIMIT 1"))
-	row = cur:fetch ({}, "a")
-	cur:close()
+	DBCon:GetPlayerInfo( slot[_clientNum]["pkey"] )
 	
-	-- This player is already present in the database
-	if row then
+	if DBCon.row then
+		-- This player is already present in the database
 		debugPrint("cpm", "LUA: INIT CLIENT ROW EXISTS")
 		-- Start to collect related information for this player id
 		-- player
-		slot[_clientNum]["id"] = row.id
-		slot[_clientNum]["regname"] = row.regname
-		slot[_clientNum]["conname"] = row.conname
-		--slot[_clientNum]["netname"] = row.netname --we dont set netname to a invalid old databaseentry
-		slot[_clientNum]["clan"] = row.clan	
-		slot[_clientNum]["user"] = row.user -- only for admin info
-		slot[_clientNum]["banreason"] = row.banreason
-		slot[_clientNum]["bannedby"] = row.bannedby
-		slot[_clientNum]["banexpire"] = row.banexpire
-		slot[_clientNum]["mutedreason"] = row.mutedreason
-		slot[_clientNum]["mutedby"] = row.mutedby
-		slot[_clientNum]["muteexpire"] = row.muteexpire
-		slot[_clientNum]["warnings"] = row.warnings
-		slot[_clientNum]["suspect"] = row.suspect
-		slot[_clientNum]["regdate"] = row.regdate
-		slot[_clientNum]["createdate"] = row.createdate -- first seen
-		slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: no q - database
-		slot[_clientNum]["flags"] = row.flags -- TODO: pump it into game
+		slot[_clientNum]["id"] = DBCon.row.id
+		slot[_clientNum]["regname"] = DBCon.row.regname
+		slot[_clientNum]["conname"] = DBCon.row.conname
+		--slot[_clientNum]["netname"] = DBCon.row.netname --we dont set netname to a invalid old databaseentry
+		slot[_clientNum]["clan"] = DBCon.row.clan	
+		slot[_clientNum]["user"] = DBCon.row.user -- only for admin info
+		slot[_clientNum]["banreason"] = DBCon.row.banreason
+		slot[_clientNum]["bannedby"] = DBCon.row.bannedby
+		slot[_clientNum]["banexpire"] = DBCon.row.banexpire
+		slot[_clientNum]["mutedreason"] = DBCon.row.mutedreason
+		slot[_clientNum]["mutedby"] = DBCon.row.mutedby
+		slot[_clientNum]["muteexpire"] = DBCon.row.muteexpire
+		slot[_clientNum]["warnings"] = DBCon.row.warnings
+		slot[_clientNum]["suspect"] = DBCon.row.suspect
+		slot[_clientNum]["regdate"] = DBCon.row.regdate
+		slot[_clientNum]["createdate"] = DBCon.row.createdate -- first seen
+		--slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: no q - database; ailmanki: changed.. if the user is in db we get in from db, else from shrubbot.
+		slot[_clientNum]["level"] = DBCon.row.level
+		slot[_clientNum]["flags"] = DBCon.row.flags -- TODO: pump it into game
 				
 		--Perhaps put into updatePlayerXP
-		slot[_clientNum]["xp0"] = row.xp0
-		slot[_clientNum]["xp1"] = row.xp1
-		slot[_clientNum]["xp2"] = row.xp2
-		slot[_clientNum]["xp3"] = row.xp3
-		slot[_clientNum]["xp4"] = row.xp4
-		slot[_clientNum]["xp5"] = row.xp5
-		slot[_clientNum]["xp6"] = row.xp6
-		slot[_clientNum]["xptot"] = row.xptot
+		slot[_clientNum]["xp0"] = DBCon.row.xp0
+		slot[_clientNum]["xp1"] = DBCon.row.xp1
+		slot[_clientNum]["xp2"] = DBCon.row.xp2
+		slot[_clientNum]["xp3"] = DBCon.row.xp3
+		slot[_clientNum]["xp4"] = DBCon.row.xp4
+		slot[_clientNum]["xp5"] = DBCon.row.xp5
+		slot[_clientNum]["xp6"] = DBCon.row.xp6
+		slot[_clientNum]["xptot"] = DBCon.row.xptot
 			
 		debugPrint("cpm", "LUA: INIT CLIENT FROM ROW GOOD" )
 	else	
@@ -1008,15 +990,8 @@ end
 function createNewPlayer ( _clientNum )
 	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
 	local conname = string.gsub(slot[_clientNum]["conname"],"\'", "\\\'")
-
 	-- This player is a new one: create a new database entry with our Infos
-	res = assert (con:execute("INSERT INTO player (pkey, isBot, netname, updatedate, createdate, conname) VALUES ('"
-		..slot[_clientNum]["pkey"].."', "
-		..slot[_clientNum]["isBot"]..", '"
-		..name.."', '"
-		..slot[_clientNum]["start"] .."', '"
-		..slot[_clientNum]["start"] .."', '"
-		..conname.."')"))
+	DBCon:DoCreateNewPlayer( slot[_clientNum]["pkey"], slot[_clientNum]["isBot"], name, slot[_clientNum]["start"], slot[_clientNum]["start"], conname)
 		
 	-- Jep, these values are correct, as he is new!
 	slot[_clientNum]["xp0"] = 0
@@ -1147,25 +1122,12 @@ end
 function WriteClientDisconnect( _clientNum, _now, _timediff )
 	if slot[_clientNum]["team"] == false then
 		slot[_clientNum]["uci"] = et.gentity_get( _clientNum ,"sess.uci")
-	
 		-- In this case the player never entered the game world, he disconnected during connection time
-		query = "INSERT INTO session (pkey, slot, map, ip, valid, start, end, sstime, uci) VALUES ('"
-			..slot[_clientNum]["pkey"].."', '"
-			.._clientNum.."', '"
-			..map.."', '"
-			..slot[_clientNum]["ip"].."', '" 
-			.."0".."', '"
-			..slot[_clientNum]["start"].."', '"
-			..timehandle('N').."' , '"
-            -- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
-			..timehandle('D','N',slot[_clientNum]["start"]).."' , '"
-			.. slot[_clientNum]["uci"].."')"
 		
-		if debugquerries == 1 then	
-			et.G_LogPrint( "\n\n".. query .. "\n\n" ) 
-		end
+		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
+		DBCon:SetPlayerSession_WCD( slot[_clientNum]["pkey"], _clientNum, map, slot[_clientNum]["ip"], "0", slot[_clientNum]["start"], timehandle('N'), timehandle('D','N',slot[_clientNum]["start"]), slot[_clientNum]["uci"] )
 		
-		res = assert (con:execute( query ))
+		
 		et.G_LogPrint( "Noq: saved player ".._clientNum.." to Database\n" ) 
 	else
 		-- The player disconnected during a valid game session. We have to close his playing time
@@ -1218,27 +1180,17 @@ function savePlayer ( _clientNum )
 		slot[_clientNum]["mutedreason"] = ""
 		slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
 	end
+	slot[_clientNum]["xp0"] = et.gentity_get(_clientNum,"sess.skillpoints",0)
+	slot[_clientNum]["xp1"] = et.gentity_get(_clientNum,"sess.skillpoints",1)
+	slot[_clientNum]["xp2"] = et.gentity_get(_clientNum,"sess.skillpoints",2)
+	slot[_clientNum]["xp3"] = et.gentity_get(_clientNum,"sess.skillpoints",3)
+	slot[_clientNum]["xp4"] = et.gentity_get(_clientNum,"sess.skillpoints",4)
+	slot[_clientNum]["xp5"] = et.gentity_get(_clientNum,"sess.skillpoints",5)
+	slot[_clientNum]["xp6"] = et.gentity_get(_clientNum,"sess.skillpoints",6)
+	slot[_clientNum]["xptot"] = slot[_clientNum]["xp0"] + slot[_clientNum]["xp1"] + slot[_clientNum]["xp2"] + slot[_clientNum]["xp3"] + slot[_clientNum]["xp4"] + slot[_clientNum]["xp5"] + slot[_clientNum]["xp6"]
 	
-	res = assert (con:execute("UPDATE player SET clan='".. slot[_clientNum]["clan"] .."',           \
-		 netname='".. name  .."',\
-		 xp0='".. et.gentity_get(_clientNum,"sess.skillpoints",0)  .."', 	\
-		 xp1='".. et.gentity_get(_clientNum,"sess.skillpoints",1)  .."', 	\
-		 xp2='".. et.gentity_get(_clientNum,"sess.skillpoints",2)  .."', 	\
-		 xp3='".. et.gentity_get(_clientNum,"sess.skillpoints",3)  .."',	\
-		 xp4='".. et.gentity_get(_clientNum,"sess.skillpoints",4)  .."', 	\
-		 xp5='".. et.gentity_get(_clientNum,"sess.skillpoints",5)  .."',	\
-		 xp6='".. et.gentity_get(_clientNum,"sess.skillpoints",6)  .."',	\
-		 xptot='".. ( et.gentity_get(_clientNum,"sess.skillpoints",0)  + et.gentity_get(_clientNum,"sess.skillpoints",1)  + et.gentity_get(_clientNum,"sess.skillpoints",2)  + et.gentity_get(_clientNum,"sess.skillpoints",3)  + et.gentity_get(_clientNum,"sess.skillpoints",4)  + et.gentity_get(_clientNum,"sess.skillpoints",5)  + et.gentity_get(_clientNum,"sess.skillpoints",6) )  .. "',\
-		 level='".. slot[_clientNum]["level"] .."',				\
-		 banreason='".. slot[_clientNum]["banreason"]  .."',	\
-		 bannedby='".. slot[_clientNum]["bannedby"]  .."',		\
-		 banexpire='".. slot[_clientNum]["banexpire"] .."',		\
-		 mutedreason='".. slot[_clientNum]["mutedreason"] .."',	\
-		 mutedby='".. slot[_clientNum]["mutedby"] .."',			\
-		 muteexpire='".. slot[_clientNum]["muteexpire"] .."',	\
-		 warnings='".. slot[_clientNum]["warnings"] .."',		\
-		 suspect='".. slot[_clientNum]["suspect"] .."'			\
-		 WHERE pkey='".. slot[_clientNum]["pkey"] .."'"))
+	DBCon:SetPlayerInfo( slot[_clientNum] )
+	
 end
 
 -------------------------------------------------------------------------------
@@ -1276,43 +1228,16 @@ function saveSession( _clientNum )
 	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
 	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
 --]]
+	slot[_clientNum]["xp0"] = et.gentity_get(_clientNum,"sess.skillpoints",0)
+	slot[_clientNum]["xp1"] = et.gentity_get(_clientNum,"sess.skillpoints",1)
+	slot[_clientNum]["xp2"] = et.gentity_get(_clientNum,"sess.skillpoints",2)
+	slot[_clientNum]["xp3"] = et.gentity_get(_clientNum,"sess.skillpoints",3)
+	slot[_clientNum]["xp4"] = et.gentity_get(_clientNum,"sess.skillpoints",4)
+	slot[_clientNum]["xp5"] = et.gentity_get(_clientNum,"sess.skillpoints",5)
+	slot[_clientNum]["xp6"] = et.gentity_get(_clientNum,"sess.skillpoints",6)
+	slot[_clientNum]["xptot"] = slot[_clientNum]["xp0"] + slot[_clientNum]["xp1"] + slot[_clientNum]["xp2"] + slot[_clientNum]["xp3"] + slot[_clientNum]["xp4"] + slot[_clientNum]["xp5"] + slot[_clientNum]["xp6"]
 	
-	-- TODO: Think about using this earlier, is this the injection check ?		Yes, its an escape function for ' (wich should be the only character allowed by et and with a special meaning for SQL)
-	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
-	
-	-- Write to session if player was in game
-		
-	local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
-			..slot[_clientNum]["pkey"].."', '"
-			.._clientNum .."', '"
-			..map.."', '"
-			..slot[_clientNum]["ip"].."', '"
-			.. name .."', "
-			.."1" ..", '"
-			..slot[_clientNum]["start"].."', '"
-			..timehandle('N').. "',  '"
-            -- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
-			..timehandle('D','N',slot[_clientNum]["start"]).."' , '"
-			..slot[_clientNum]["axtime"].."', '"
-			..slot[_clientNum]["altime"].."', '"
-			..slot[_clientNum]["sptime"].."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",0).."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",1).."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",2).."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",3).."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",4).."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",5).."', '"
-			..et.gentity_get(_clientNum,"sess.skillpoints",6).."','"
-			..(et.gentity_get(_clientNum,"sess.skillpoints",0) + et.gentity_get(_clientNum,"sess.skillpoints",1) + et.gentity_get(_clientNum,"sess.skillpoints",2) + et.gentity_get(_clientNum,"sess.skillpoints",3) + et.gentity_get(_clientNum,"sess.skillpoints",4) + et.gentity_get(_clientNum,"sess.skillpoints",5) + et.gentity_get(_clientNum,"sess.skillpoints",6) ).."','"
-			.."0".."', '"
-			..slot[_clientNum]["kills"].."', '"
-			..slot[_clientNum]["tkills"].."', '"
-			..slot[_clientNum]["death"].. "' )"
-		res = assert (con:execute(sessquery))
-	
-	if debugquerries == 1 then	
-		et.G_LogPrint( "\n\n".. sessquery .. "\n\n" ) 
-	end
+	DBCon:SetPlayerSession( slot[_clientNum], map, _clientNum )
 end
 
 -------------------------------------------------------------------------------
@@ -1627,18 +1552,15 @@ end
 -------------------------------------------------------------------------------
 function getDBVersion()
 	-- Check the database version
-	cur = assert (con:execute("SELECT version FROM version ORDER BY id DESC LIMIT 1"))
-	row = cur:fetch ({}, "a")
-	cur:close()
+	local versiondb = DBCon:GetVersion()
 	
-	if row.version == version then
+	if versiondb == version then
 		databasecheck = 1
 		et.G_LogPrint("^1Database "..dbname.." is up to date. Script version is ".. version .."\n")
 	else
-		et.G_LogPrint("^1Database "..dbname.." is not up to date: SQL support disabled! Requested version is ".. version .."\n")
+		et.G_LogPrint("^1Database "..dbname.." is not up to date: DBMS support disabled! Requested version is ".. version .."\n")
 		-- We don't need to keep the connection with the database open
-		con:close()
-		env:close()
+		DBCon:DoDisconnect()
 	end
 end
 
@@ -1835,8 +1757,7 @@ function cleanSession(_callerID, _arg)
 		if months ~= nil and months >= 1 and months <= 24 then
 			et.trap_SendServerCommand(_callerID, "print \"\n Now erasing all records older than ".. months .." months  \n\"")
 			
-			-- TODO @luborg this DATE_SUB() is mysql only
-			res = assert (con:execute("DELETE FROM session WHERE `end` < DATE_SUB(CURDATE(), INTERVAL "..months.." MONTH)"))
+			DBCon:DoDeleteOldSessions(months)
 			
 			et.trap_SendServerCommand(_callerID, "print \"\n Erased all records older than ".. months .." months  \n\"")
 			et.G_LogPrint( "Noq: Erased data older than "..months.." months from the sessiontable\n" )
