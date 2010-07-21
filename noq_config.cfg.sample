@@ -32,7 +32,7 @@ return {
 	["teamdamageMessage4"] = "your nickname is a synonym of collateral damage!",
 	["teamdamageMessage5"] = "you don't care about teams - everybody is your enemy!",
 	["teamdamageMessage6"] = "you are a counteragent killing more of your own team. Get paid by enemy?",
-	["deleteSessionsOlderXDays"] = "0",
+	["deleteSessionsOlderXMonths"] = "0",
 },
 }
 

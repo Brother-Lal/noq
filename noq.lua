@@ -407,20 +407,21 @@ function et_ClientBegin( _clientNum )
 	
 	if databasecheck == 1 then
 		-- If we have db access, then we will create new Playerentry if necessary
-		if slot[_clientNum]["new"] == true then
-			createNewPlayer ( _clientNum )
-		end
-		
 		-- TODO check for else case of the above if ... why updating Player XP if client is new ? (slot XP is set in createNewPlayer()
 		
-		-- if we have xprestore, we need to restore now!
-		if slot[_clientNum]["setxp"] == true then
-			-- But only, if xprestore is on!
-			if xprestore == 1 then
-				updatePlayerXP( _clientNum )
+		if slot[_clientNum]["new"] == true then
+			createNewPlayer ( _clientNum )
+		else
+			-- if we have xprestore, we need to restore now!
+			if slot[_clientNum]["setxp"] == true then
+				
+				-- But only, if xprestore is on!
+				if xprestore == 1 then
+					updatePlayerXP( _clientNum )
+				end
+				slot[_clientNum]["setxp"] = nil
 			end
-			slot[_clientNum]["setxp"] = nil
-		end
+		end	
 	end -- end databasecheck
 end
 
@@ -566,34 +567,33 @@ end
 function et_ShutdownGame( _restart )
 	if databasecheck == 1 then
 		-- We write only the informations from a session that gone till intermission end
-		if tonumber(et.trap_Cvar_Get( "gamestate" )) == -1 then
-			-- This is when the map ends: we have to close all opened sessions
-			-- Cycle between all possible clients
-			
-			local endgametime = timehandle('N')
-			
-			for i=0, maxclients, 1 do
-				if et.gentity_get(i,"classname") == "player" then
-	
-     				-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
-					local timediff = timehandle('D',endgametime,slot[i]["start"])
-
-					WriteClientDisconnect( i , endgametime, timediff )
-
-					slot[i] = nil
-				end
-			end
-
-			con:close()
-			env:close()
-		end
 		
-		-- delete old sessions if set in config
-		local deleteSessionsOlderXDays = tonumber(getConfig("deleteSessionsOlderXDays"))
-		if  deleteSessionsOlderXDays > 0 then
-			-- TODO: Implement this in noq_db.lua
-			DBCon:DoDeleteOldSessions( deleteSessionsOlderXDays )
+		-- gamestate 2 reached once when !restart used - also when map ends regularly..
+		-- this gets called ONCE .. and gamestate is not -1.
+		--if tonumber(et.trap_Cvar_Get( "gamestate" )) == -1 then
+
+		-- This is when the map ends: we have to close all opened sessions
+		-- Cycle between all possible clients
+		local endgametime = timehandle('N')
+		
+		for i=0, maxclients, 1 do
+			-- TODO: check slot[] if its existing
+			if et.gentity_get(i,"classname") == "player" then
+	     		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
+				local timediff = timehandle('D',endgametime,slot[i]["start"])
+				et.G_LogPrint( "Noq: saved player "..i.." to Database\n" ) 
+				WriteClientDisconnect( i , endgametime, timediff )
+				slot[i] = nil
+			end
 		end
+		DBCon:DoDisconnect()
+	end
+		
+	-- delete old sessions if set in config
+	local deleteSessionsOlderXMonths = tonumber(getConfig("deleteSessionsOlderXMonths"))
+	if  deleteSessionsOlderXMonths > 0 then
+		-- TODO: Implement this in noq_db.lua
+		DBCon:DoDeleteOldSessions( deleteSessionsOlderXMonths )
 	end
 end
 
@@ -992,16 +992,14 @@ function createNewPlayer ( _clientNum )
 	local conname = string.gsub(slot[_clientNum]["conname"],"\'", "\\\'")
 	-- This player is a new one: create a new database entry with our Infos
 	DBCon:DoCreateNewPlayer( slot[_clientNum]["pkey"], slot[_clientNum]["isBot"], name, slot[_clientNum]["start"], slot[_clientNum]["start"], conname)
-		
-	-- Jep, these values are correct, as he is new!
-	slot[_clientNum]["xp0"] = 0
-	slot[_clientNum]["xp1"] = 0
-	slot[_clientNum]["xp2"] = 0
-	slot[_clientNum]["xp3"] = 0
-	slot[_clientNum]["xp4"] = 0
-	slot[_clientNum]["xp5"] = 0
-	slot[_clientNum]["xp6"] = 0
-	slot[_clientNum]["xptot"] = 0
+	slot[_clientNum]["xp0"] = et.gentity_get(_clientNum,"sess.skillpoints",0)
+	slot[_clientNum]["xp1"] = et.gentity_get(_clientNum,"sess.skillpoints",1)
+	slot[_clientNum]["xp2"] = et.gentity_get(_clientNum,"sess.skillpoints",2)
+	slot[_clientNum]["xp3"] = et.gentity_get(_clientNum,"sess.skillpoints",3)
+	slot[_clientNum]["xp4"] = et.gentity_get(_clientNum,"sess.skillpoints",4)
+	slot[_clientNum]["xp5"] = et.gentity_get(_clientNum,"sess.skillpoints",5)
+	slot[_clientNum]["xp6"] = et.gentity_get(_clientNum,"sess.skillpoints",6)
+	slot[_clientNum]["xptot"] = slot[_clientNum]["xp0"] + slot[_clientNum]["xp1"] + slot[_clientNum]["xp2"] + slot[_clientNum]["xp3"] + slot[_clientNum]["xp4"] + slot[_clientNum]["xp5"] + slot[_clientNum]["xp6"]
 	slot[_clientNum]["suspect"] = 0
 	slot[_clientNum]["new"] = nil
 	
