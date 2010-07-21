@@ -170,10 +170,6 @@ end
 
 -- don't get often used vars from noqvartable ...
 
--- Database managment system to use
-dbms	= getConfig("dbms") -- possible values mySQL, SQLite
-dbname  = getConfig("dbname")
-
 -- common
 -- enables mail option, make sure all required libs are available
 mail 			= getConfig("mail") 
@@ -306,15 +302,6 @@ lastevener = 0
  
 -- Poll restriction
 lastpoll = 0
-
--- Declare some vars we will use in the script
--- Moved to noq_db.lua
--- We could allocate this each time, but since are used lot of times is better to make them global
--- TODO: cur and res are exactly the same things, so we could save memory using only one of them
--- cur = {}  -- Will handle the SQL commands returning informations ( es: SELECT )
--- res = {}  -- Will handle SQL commands without outputs ( es: INSERT )
--- row = {}  -- To manipulate the outputs of SQL command
---row1 = {} -- To manipulate the outputs of SQL command in case we need more than one request
 
 -- mail setup
 if mail == "1" then
@@ -481,8 +468,9 @@ function et_ClientCommand( _clientNum, _command )
 		--local arg2 = string.lower(et.trap_Argv(2)) -- password - see start of et_ClientCommand
 		local name = string.gsub(arg1,"\'", "\\\'")
 		if arg1 ~= "" and arg2 ~= "" then
-			slot[_clientNum]["user"] = name 
-			res = assert (con:execute("UPDATE player SET user='" .. name .."', password=MD5('"..arg2.."') WHERE pkey='"..slot[_clientNum]["pkey"].."'"))
+			slot[_clientNum]["user"] = name
+			DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
+			
 			et.trap_SendServerCommand( _clientNum, "print \"^3Successfully registered. To reset password just re-register. \n\"" ) 
 			return 1
 		else
@@ -577,7 +565,7 @@ function et_ShutdownGame( _restart )
 		local endgametime = timehandle('N')
 		
 		for i=0, maxclients, 1 do
-			-- TODO: check slot[] if its existing
+			-- TODO: check slot[] if its existingreco
 			if et.gentity_get(i,"classname") == "player" then
 	     		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
 				local timediff = timehandle('D',endgametime,slot[i]["start"])
