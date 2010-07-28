@@ -1551,7 +1551,7 @@ function getDBVersion()
 end
 
 -------------------------------------------------------------------------------
--- skillpoints
+-- updateTeam
 -- set times accordingly when the player changes team
 -------------------------------------------------------------------------------
 function updateTeam( _clientNum )
@@ -1633,7 +1633,6 @@ end
 -- force is a boolean controlling if there is only an announcement or a real action is taken.
 -- Action is taken if its true.
 -------------------------------------------------------------------------------
-
 function checkBalance( _force )
 
 	-- TODO: Do we need extra tables to store this kind of data ?
@@ -1720,7 +1719,7 @@ end
 --***************************************************************************
 -- Current available:
 -- cleanSession
--- pussout
+-- pussyout
 -- checkBalance
 -- rm_pbalias
 -- teamdamage
@@ -1945,14 +1944,17 @@ function showmaps()
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"".. ent2 .. "\"")
 end
 
+-------------------------------------------------------------------------------
+-- timeLeft
 -- Retuns rest of time to play
+-------------------------------------------------------------------------------
 function timeLeft()
 	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
 end
-
-
+-------------------------------------------------------------------------------
+-- pussyFactCheck
+-- adjusts the Pussyfactor after an kill trough et_obituary
 -- TODO: Add more cases for ugly teamkills (not only panzer ... knife, poison etc) 
--- Does the check for our pussy detection -- called in et_Obituary for non world kills
 -- cool weapons get a value < 100 lame weapons/activities > 100
 function pussyFactCheck( _victim, _killer, _mod )
 	if pussyfact == 1 then
@@ -1988,3 +1990,7 @@ function pussyFactCheck( _victim, _killer, _mod )
 
 	end -- pussy end
 end
+
+-------------------------------------------------------------------------------
+-- Here does End, kthxbye 
+-------------------------------------------------------------------------------
