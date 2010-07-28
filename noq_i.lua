@@ -168,6 +168,7 @@ function createTablesDBMS()
 				conname 	TEXT 			NOT NULL,		\
 				regname 	TEXT 			DEFAULT '',		\
 				netname 	TEXT 			DEFAULT '',		\
+				cleanname 	TEXT 			DEFAULT '',		\
 				isBot 		INTEGER 		DEFAULT 0,		\
 				clan 		TEXT 			DEFAULT '',		\
 				level 		INTEGER 		DEFAULT 0,		\
@@ -212,6 +213,7 @@ function createTablesDBMS()
 				map 		TEXT 			NOT NULL,		\
 				ip 		TEXT 			DEFAULT '',		\
 				netname 	TEXT 			DEFAULT '',		\
+				cleanname 	TEXT 			DEFAULT '',		\
 				valid 		INTEGER 		DEFAULT NULL,		\
 				start 		DATE 			DEFAULT CURRENT_DATE,	\
 				end 		DATE 			DEFAULT NULL,		\
@@ -248,7 +250,7 @@ function createTablesDBMS()
 				version 	INTEGER 		NOT NULL UNIQUE )" )
 			et.G_Print(res .. "\n")
 		
-			-- SQLite needs exra cmds for setting up an index (aynbody knows syntax for create table stmd?)
+			-- SQLite needs exra cmds for setting up an index (anybody knows syntax for create table stmd?)
 			-- player
 			res = assert(con:execute"CREATE INDEX p_regname ON player( regname )" )
 			et.G_Print(res .. "\n")
@@ -275,85 +277,87 @@ function createTablesDBMS()
 		elseif getConfig("dbms") == "mySQL" then
 		
 			res = assert(con:execute"CREATE TABLE player ( \
-				id 		INT 			PRIMARY KEY AUTO_INCREMENT,					\
-				pkey 		VARCHAR(32) 		UNIQUE  NOT NULL,						\
-				conname 	VARCHAR(36) 		NOT NULL,							\
-				regname 	VARCHAR(36) 		DEFAULT '',							\
-				netname 	VARCHAR(36) 		DEFAULT '',							\
-				isBot 		BOOLEAN 		DEFAULT 0,							\
-				clan 		VARCHAR(20) 		DEFAULT '',							\
-				level 		INT 			DEFAULT 0,							\
-				flags 		VARCHAR(50) 		DEFAULT '',							\
-				user 		VARCHAR(20) 		DEFAULT '',							\
-				password 	VARCHAR(32) 		DEFAULT '',							\
-				email 		VARCHAR(50) 		DEFAULT '',							\
-				xp0 		INT 			DEFAULT 0,							\
-				xp1 		INT 			DEFAULT 0,							\
-				xp2 		INT 			DEFAULT 0,							\
-				xp3 		INT 			DEFAULT 0,							\
-				xp4 		INT 			DEFAULT 0,							\
-				xp5 		INT 			DEFAULT 0,							\
-				xp6 		INT 			DEFAULT 0,							\
-				xptot 		INT 			DEFAULT 0,							\
-				banreason 	VARCHAR(1024) 		DEFAULT '',							\
-				bannedby 	VARCHAR(36) 		DEFAULT '',							\
-				banexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',					\
-				mutedreason VARCHAR(1024)		DEFAULT '',							\
-				mutedby 	VARCHAR(36) 		DEFAULT '',							\
-				muteexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',					\
-				warnings 	SMALLINT 		DEFAULT 0,							\
-				suspect 	TINYINT 		DEFAULT 0,							\
-				regdate 	DATETIME 		DEFAULT NULL,							\
+				id 		INT 			PRIMARY KEY AUTO_INCREMENT,						\
+				pkey 		VARCHAR(32) 	UNIQUE  NOT NULL,							\
+				conname 	VARCHAR(36) 	NOT NULL,									\
+				regname 	VARCHAR(36) 	DEFAULT '',									\
+				netname 	VARCHAR(36) 	DEFAULT '',									\
+				cleanname 	VARCHAR(36) 	DEFAULT '',									\
+				isBot 		BOOLEAN 		DEFAULT 0,									\
+				clan 		VARCHAR(20) 	DEFAULT '',									\
+				level 		INT 			DEFAULT 0,									\
+				flags 		VARCHAR(50) 	DEFAULT '',									\
+				user 		VARCHAR(20) 	DEFAULT '',									\
+				password 	VARCHAR(32) 	DEFAULT '',									\
+				email 		VARCHAR(50) 	DEFAULT '',									\
+				xp0 		INT 			DEFAULT 0,									\
+				xp1 		INT 			DEFAULT 0,									\
+				xp2 		INT 			DEFAULT 0,									\
+				xp3 		INT 			DEFAULT 0,									\
+				xp4 		INT 			DEFAULT 0,									\
+				xp5 		INT 			DEFAULT 0,									\
+				xp6 		INT 			DEFAULT 0,									\
+				xptot 		INT 			DEFAULT 0,									\
+				banreason 	VARCHAR(1024) 	DEFAULT '',									\
+				bannedby 	VARCHAR(36) 	DEFAULT '',									\
+				banexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',				\
+				mutedreason VARCHAR(1024)	DEFAULT '',									\
+				mutedby 	VARCHAR(36) 	DEFAULT '',									\
+				muteexpire 	DATETIME 		DEFAULT '1000-01-01 00:00:00',				\
+				warnings 	SMALLINT 		DEFAULT 0,									\
+				suspect 	TINYINT 		DEFAULT 0,									\
+				regdate 	DATETIME 		DEFAULT NULL,								\
 				updatedate 	TIMESTAMP 		DEFAULT '0000-00-00 00:00:00' on update CURRENT_TIMESTAMP,	\
-				createdate 	DATETIME 		NOT NULL,							\
-				INDEX(`regname`),											\
-				INDEX(`netname`)											\
+				createdate 	DATETIME 		NOT NULL,									\
+				INDEX(`regname`),														\
+				INDEX(`netname`)														\
 				) ENGINE=InnoDB" )		
 			et.G_Print(res .. "\n")
 
-			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 				\
-				id		INT			PRIMARY KEY AUTO_INCREMENT, 		\
-				guid1		VARCHAR(32)		NOT NULL,				\
-				guid2		VARCHAR(32)		DEFAULT NULL,				\
-				type		INT			DEFAULT NULL,				\
-				textxml		VARCHAR(2056)		DEFAULT NULL,				\
-				createdate	DATETIME		NOT NULL,				\
-				INDEX(`guid1`),									\
-				INDEX(`guid2`)									\
+			res = assert(con:execute"CREATE TABLE IF NOT EXISTS log ( 					\
+				id		INT			PRIMARY KEY AUTO_INCREMENT, 						\
+				guid1		VARCHAR(32)		NOT NULL,									\
+				guid2		VARCHAR(32)		DEFAULT NULL,								\
+				type		INT			DEFAULT NULL,									\
+				textxml		VARCHAR(2056)		DEFAULT NULL,							\
+				createdate	DATETIME		NOT NULL,									\
+				INDEX(`guid1`),															\
+				INDEX(`guid2`)															\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
-			res = assert(con:execute"CREATE TABLE session (					\
-				id 		INT 		PRIMARY KEY AUTO_INCREMENT,		\
-				pkey 		VARCHAR(32) 	NOT NULL,				\
-				slot 		SMALLINT 	NOT NULL,				\
-				map 		VARCHAR(36) 	NOT NULL,				\
-				ip 		VARCHAR(25) 	DEFAULT '',				\
-				netname 	VARCHAR(36) 	DEFAULT '',				\
-				valid 		BOOLEAN 	DEFAULT NULL,				\
-				start 		DATETIME 	NOT NULL,				\
-				end 		DATETIME 	DEFAULT NULL,				\
-				sptime 		TIME 		DEFAULT NULL,				\
-				axtime 		TIME 		DEFAULT NULL,				\
-				altime 		TIME 		DEFAULT NULL,				\
-				lctime 		TIME 		DEFAULT NULL,				\
-				sstime 		TIME 		DEFAULT NULL,				\
-				xp0 		INT 		DEFAULT 0,				\
-				xp1 		INT 		DEFAULT 0,				\
-				xp2 		INT 		DEFAULT 0,				\
-				xp3 		INT 		DEFAULT 0,				\
-				xp4 		INT 		DEFAULT 0,				\
-				xp5 		INT 		DEFAULT 0,				\
-				xp6 		INT 		DEFAULT 0,				\
-				xptot		INT 		DEFAULT 0,				\
-				acc 		DOUBLE (10,2) 	DEFAULT 0.0,				\
-				kills 		SMALLINT 	DEFAULT 0,				\
-				tkills 		SMALLINT 	DEFAULT 0,				\
-				death 		SMALLINT 	DEFAULT 0,				\
-				uci 		TINYINT 	DEFAULT 0,				\
-				INDEX(`pkey`),								\
-				INDEX(`ip`),								\
-				INDEX(`end`)								\
+			res = assert(con:execute"CREATE TABLE session (								\
+				id 		INT 		PRIMARY KEY AUTO_INCREMENT,							\
+				pkey 		VARCHAR(32) 	NOT NULL,									\
+				slot 		SMALLINT 		NOT NULL,									\
+				map 		VARCHAR(36) 	NOT NULL,									\
+				ip 		VARCHAR(25) 		DEFAULT '',									\
+				netname 	VARCHAR(36) 	DEFAULT '',									\
+				cleanname 	VARCHAR(36) 	DEFAULT '',									\
+				valid 		BOOLEAN 	DEFAULT NULL,									\
+				start 		DATETIME 	NOT NULL,										\
+				end 		DATETIME 	DEFAULT NULL,									\
+				sptime 		TIME 		DEFAULT NULL,									\
+				axtime 		TIME 		DEFAULT NULL,									\
+				altime 		TIME 		DEFAULT NULL,									\
+				lctime 		TIME 		DEFAULT NULL,									\
+				sstime 		TIME 		DEFAULT NULL,									\
+				xp0 		INT 		DEFAULT 0,										\
+				xp1 		INT 		DEFAULT 0,										\
+				xp2 		INT 		DEFAULT 0,										\
+				xp3 		INT 		DEFAULT 0,										\
+				xp4 		INT 		DEFAULT 0,										\
+				xp5 		INT 		DEFAULT 0,										\
+				xp6 		INT 		DEFAULT 0,										\
+				xptot		INT 		DEFAULT 0,										\
+				acc 		DOUBLE (10,2) 	DEFAULT 0.0,								\
+				kills 		SMALLINT 	DEFAULT 0,										\
+				tkills 		SMALLINT 	DEFAULT 0,										\
+				death 		SMALLINT 	DEFAULT 0,										\
+				uci 		TINYINT 	DEFAULT 0,										\
+				INDEX(`pkey`),															\
+				INDEX(`ip`),															\
+				INDEX(`end`)															\
 				) ENGINE=InnoDB" )
 			et.G_Print(res .. "\n")
 
