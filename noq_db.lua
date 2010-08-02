@@ -1,4 +1,3 @@
-
 -- The NOQ - No Quarter Lua next generation game manager
 --
 -- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
@@ -101,10 +100,11 @@ DBCon = {
 	-- maybe could also be used to reset Player, as pkey is unique
 	-------------------------------------------------------------------------------
 	['DoCreateNewPlayer'] = function( self, pkey, isBot, netname, updatedate, createdate, conname )
-		self.cur = assert( self.con:execute("INSERT INTO player (pkey, isBot, netname, updatedate, createdate, conname) VALUES ('"
+		self.cur = assert( self.con:execute("INSERT INTO player (pkey, isBot, netname, cleanname, updatedate, createdate, conname) VALUES ('"
 			..pkey.."', "
 			..isBot..", '"
 			..netname.."', '"
+			..et.Q_CleanStr(netname).."', "
 			..updatedate .."', '"
 			..createdate .."', '"
 			..conname.."')"))
@@ -120,13 +120,15 @@ DBCon = {
 		-- TODO: What about ET clients which are modified?
 		
 		local name = string.gsub(player["netname"],"\'", "\\\'")
+		
 
-		local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
+		local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, cleanname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
 			..player["pkey"].."', '"
 			..slot.."', '"
 			..map.."', '"
 			..player["ip"].."', '"
 			..name.."', "
+			..et.Q_CleanStr(name).."', "
 			.."1"..", '"
 			..player["start"].."','"
 			..timehandle('N').. "', '"
@@ -185,6 +187,7 @@ DBCon = {
 		local name = string.gsub(player["netname"],"\'", "\\\'")
 		self.cur = assert (self.con:execute("UPDATE player SET clan='".. player["clan"] .."',           \
 			 netname='".. name  .."',\
+			 cleanname='"..et.Q_CleanStr(name).."',\
 			 xp0='".. player["xp0"]  .."', 	\
 			 xp1='".. player["xp1"]  .."', 	\
 			 xp2='".. player["xp2"]  .."', 	\

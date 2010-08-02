@@ -797,6 +797,7 @@ end
 -------------------------------------------------------------------------------
 -- updatePlayerInfo
 -- Updates the Playerinformation out of the Database (IF POSSIBLE!)
+-- Also called on connect
 -------------------------------------------------------------------------------
 function updatePlayerInfo ( _clientNum )
 	DBCon:GetPlayerInfo( slot[_clientNum]["pkey"] )
@@ -809,7 +810,7 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["id"] = DBCon.row.id
 		slot[_clientNum]["regname"] = DBCon.row.regname
 		slot[_clientNum]["conname"] = DBCon.row.conname
-		--slot[_clientNum]["netname"] = DBCon.row.netname --we dont set netname to a invalid old databaseentry
+		--slot[_clientNum]["netname"] = DBCon.row.netname --we don't set netname to a invalid old databaseentry
 		slot[_clientNum]["clan"] = DBCon.row.clan	
 		slot[_clientNum]["user"] = DBCon.row.user -- only for admin info
 		slot[_clientNum]["banreason"] = DBCon.row.banreason
@@ -822,7 +823,7 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["suspect"] = DBCon.row.suspect
 		slot[_clientNum]["regdate"] = DBCon.row.regdate
 		slot[_clientNum]["createdate"] = DBCon.row.createdate -- first seen
-		--slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: no q - database; ailmanki: changed.. if the user is in db we get in from db, else from shrubbot.
+		--slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: noq - database; ailmanki: changed.. if the user is in db we get in from db, else from shrubbot.
 		slot[_clientNum]["level"] = DBCon.row.level
 		slot[_clientNum]["flags"] = DBCon.row.flags -- TODO: pump it into game
 				
@@ -1956,6 +1957,7 @@ end
 -- adjusts the Pussyfactor after an kill trough et_obituary
 -- TODO: Add more cases for ugly teamkills (not only panzer ... knife, poison etc) 
 -- cool weapons get a value < 100 lame weapons/activities > 100
+-------------------------------------------------------------------------------
 function pussyFactCheck( _victim, _killer, _mod )
 	if pussyfact == 1 then
 		if slot[_killer]["team"] == slot[_victim]["team"] then -- teamkill
