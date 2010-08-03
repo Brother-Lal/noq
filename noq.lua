@@ -1543,9 +1543,9 @@ function getDBVersion()
 	
 	if versiondb == version then
 		databasecheck = 1
-		et.G_LogPrint("^1Database "..dbname.." is up to date. Script version is ".. version .."\n")
+		et.G_LogPrint("^1Database "..DBCon.dbname.." is up to date. Script version is ".. version .."\n")
 	else
-		et.G_LogPrint("^1Database "..dbname.." is not up to date: DBMS support disabled! Requested version is ".. version .."\n")
+		et.G_LogPrint("^1Database "..DBCon.dbname.." is not up to date: DBMS support disabled! Requested version is ".. version .."\n")
 		-- We don't need to keep the connection with the database open
 		DBCon:DoDisconnect()
 	end
