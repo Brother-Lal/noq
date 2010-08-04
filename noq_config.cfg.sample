@@ -26,6 +26,7 @@ return {
 	["maxSelfKills"] = "3", 
 	["evenerCheckallSec"] = "40",
 	["nextmapVoteSec"] = "0",
+	["lognames"]="1",
 	["teamdamageMessage1"] = "You do love your mates!",
 	["teamdamageMessage2"] = "you hit your mates from time to time!",
 	["teamdamageMessage3"] = "you don't care about teambleeding very much!",

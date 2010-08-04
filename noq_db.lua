@@ -95,7 +95,7 @@ DBCon = {
 	end,
 	
 	-------------------------------------------------------------------------------
-	-- creatNewPlayer
+	-- createNewPlayer
 	-- Create a new Player: write to Database, set Xp 0
 	-- maybe could also be used to reset Player, as pkey is unique
 	-------------------------------------------------------------------------------
@@ -104,7 +104,7 @@ DBCon = {
 			..pkey.."', "
 			..isBot..", '"
 			..netname.."', '"
-			..et.Q_CleanStr(netname).."', "
+			..et.Q_CleanStr(netname).."', '"
 			..updatedate .."', '"
 			..createdate .."', '"
 			..conname.."')"))
@@ -127,7 +127,7 @@ DBCon = {
 			..slot.."', '"
 			..map.."', '"
 			..player["ip"].."', '"
-			..name.."', "
+			..name.."', '"
 			..et.Q_CleanStr(name).."', "
 			.."1"..", '"
 			..player["start"].."','"

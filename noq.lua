@@ -182,6 +182,7 @@ debug 			= tonumber(getConfig("debug")) -- debug 0/1
 usecommands		= tonumber(getConfig("usecommands"))
 xprestore 		= tonumber(getConfig("xprestore"))
 pussyfact 		= tonumber(getConfig("pussyfactor"))
+lognames 		= tonumber(getConfig("lognames"))
 nextmapVoteTime	= tonumber(getConfig("nextmapVoteSec"))
 evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
@@ -358,10 +359,12 @@ end
 
 function et_ClientUserinfoChanged( _clientNum )
 	if databasecheck == 1 then
-		local thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
-		if string.sub(thisGuid, 1, 7) ~= "OMNIBOT" then
-			local thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
-			DBCon:SetPlayerAlias( thisName, thisGuid )
+		if lognames == 1 then 
+			local thisGuid = string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
+			if string.sub(thisGuid, 1, 7) ~= "OMNIBOT" then
+				local thisName = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
+				DBCon:SetPlayerAlias( thisName, thisGuid )
+			end
 		end
 	end
 end
@@ -656,7 +659,7 @@ function et_Obituary( _victim, _killer, _mod )
 			-- we assume client[team] is always updated
 			if slot[_killer]["team"] == slot[_victim]["team"] then -- Team kill
 				-- TODO: check if death/kills need an update here
-				slot[_killer]["tkills"] = tonumber(et.gentity_get(_clientNum,"sess.team_kills"))
+				slot[_killer]["tkills"] = slot[_killer]["tkills"] + 1		
 				slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1			
 			else -- cool kill
 				slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
@@ -1112,7 +1115,7 @@ function WriteClientDisconnect( _clientNum, _now, _timediff )
 		-- In this case the player never entered the game world, he disconnected during connection time
 		
 		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
-		DBCon:SetPlayerSession_WCD( slot[_clientNum]["pkey"], _clientNum, map, slot[_clientNum]["ip"], "0", slot[_clientNum]["start"], timehandle('N'), timehandle('D','N',slot[_clientNum]["start"]), slot[_clientNum]["uci"] )
+		DBCon:SetPlayerSessionWCD( slot[_clientNum]["pkey"], _clientNum, map, slot[_clientNum]["ip"], "0", slot[_clientNum]["start"], timehandle('N'), timehandle('D','N',slot[_clientNum]["start"]), slot[_clientNum]["uci"] )
 		
 		
 		et.G_LogPrint( "Noq: saved player ".._clientNum.." to Database\n" ) 
@@ -1302,7 +1305,6 @@ end
 -- prints help from custom commands
 -- 
 -------------------------------------------------------------------------------
-
 function helpCmd(_clientNum , cmd, i, fullmsg)
 	-- Colors same as in NQ
 	local tc = "^D" -- title color
@@ -1336,6 +1338,9 @@ function execCmd(_clientNum , _cmd, _argw)
 	
 	if lastkiller == 1022 then 
 		nlastkiller = "World"
+		if slot[_clientNum]["deadwep"] == 'FALLING' then
+			nlastkiller = "\'Newton\'s third law\'"		
+		end
 	elseif lastkiller == -1 then
 		lastkiller = _clientNum
 		nlastkiller = "nobody"
