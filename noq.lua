@@ -1313,7 +1313,7 @@ function helpCmd(_clientNum , cmd, i, fullmsg)
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "qsay \"".. slot[_clientNum]["netname"] .. "^7: ^2!help " .. cmd .. "\"")	
 	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "help: " .. nc .. "NOQ help for '" .. hc .. cmd .. nc .. "':\n\"")
 	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Function: " .. nc .. commands["hlp"][i][cmd] .. "\n\"")
-	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Syntax: " .. commands["syn"][i][cmd] .. "\n\"")
+	et.trap_SendServerCommand( _clientNum,"print \"" .. tc .. "Syntax: " .. hc .. commands["syn"][i][cmd] .. "\n\"")
 end
 -------------------------------------------------------------------------------
 -- execCmd
