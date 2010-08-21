@@ -288,6 +288,10 @@ commands['cmd'][0]['noqban'] = "$LUA$ ban(<PART2ID>)" --TODO The BANFUNCTION...
 -- 			   Level  |
 --                   Part after Prefix
 -- Its possible to implement 2 commands with same commandname but different functions for different levels
+--
+-- commands['help'] incorporates the helptexts for each cmd
+-- commands['listing'][lvl] incorporates a listing of all cmds that level can execute, as strings ready to get printed to console
+--
 --]]
 
 -- current map
@@ -614,6 +618,7 @@ function et_RunFrame( _levelTime )
 		-- Added last kill of the round-- this fails when no kills have been done
 		if (lastkill ~= nil) then
 			execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , lastkill)
+			et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"^2A total of ^7" .. killcount ..  " ^2Persons died by various reasons during this map\"" )
 		end
 		--TODO: Should we call the save to the DB right here?
 	end
@@ -1996,6 +2001,82 @@ function pussyFactCheck( _victim, _killer, _mod )
 		end -- teamkill end
 
 	end -- pussy end
+end
+
+-------------------------------------------------------------------------------
+-- listCMDs
+-- Retuns a list of available Noq CMDs
+-------------------------------------------------------------------------------
+function listCMDs( _Client )
+	
+	local lvl = tonumber(et.G_shrubbot_level( _Client ) )
+		if commands["listing"][lvl] ~= nil then
+			local yaAR = commands["listing"][lvl]
+			-- i need goto.
+			for i=0,#yaAR, +4 do
+				if i > (#yaAR - (#yaAR %4)) then
+
+					if #yaAR %4 == 1 then
+						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i  .. "\"" )	
+					elseif #yaAR %4 == 2 then
+						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i+1) .. "\"" )	
+					elseif #yaAR %4 == 3 then
+						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i+1) .. yaAR.(i+2) .. "\"" )	
+					end
+
+			else
+				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i+1) .. yaAR.(i+2) .. yaAR.(i+3) .. "\"" )	
+			end
+		end	
+			
+		else -- we need to generate the listing first
+
+			local CMDs
+			local mxlength
+			
+			for i=lvl, 0, -1 do
+				for index, cmd in pairs(commands["cmd"][i]) do 
+					if CMDs.index ~= nil then
+					else
+					CMDs.index = index
+						if index.len > mxlength then
+						mxlength = index.len
+						end
+					end
+				end	
+			end
+			
+			local formatter = "%- ".. (mxlength + 2) .."s" 
+			
+			local i = 0
+			local yaAr
+			for index, cmd in pairs(CMDs) do
+				
+				yaAr.i = string.format(formatter, index) 
+				
+				if i%4 == 0 then
+					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i-1) .. yaAR.(i-2) .. yaAR.(i-3) .. "\"" )	
+				end
+				i++
+			end
+			
+			if i%4 ~= 0 then
+				if i%4 == 1 then
+						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i  .. "\"" )	
+		
+				elseif i%4 == 2 then
+				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i-1) .. "\"" )	
+		
+				elseif i%4 == 3 then
+				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i-1) .. yaAR.(i-2) .. "\"" )	
+				end
+			end
+			
+			commands["listing"][lvl] = yaAR
+			
+		
+		end
+	
 end
 
 -------------------------------------------------------------------------------
