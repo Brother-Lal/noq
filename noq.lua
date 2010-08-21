@@ -710,13 +710,10 @@ function et_ConsoleCommand( _command )
 	-- csay - say something to clients console .. usefull for EXEC_APPEND!
 	if string.lower(et.trap_Argv(0)) == "csay" then
 		-- local _argc = tonumber(et.trap_Argc())
-		if (et.trap_Argc() < 2) then 
+		if (et.trap_Argc() >= 3) then 
 			_targetid = tonumber(et.trap_Argv(1))
 			if slot[_targetid] ~= nil then
-				-- local msg = ""
-				-- for i=2,(_argc-1),1 do
-				-- 	msg = msg .. et.trap_Argv(i) .." "
-				-- end
+
 				et.trap_SendServerCommand( _targetid,"print \"" .. et.trap_Argv(2) .."\"")
 			end
 		end
@@ -1274,7 +1271,7 @@ function gotCmd( _clientNum, _command, _vsay)
 		if commands["cmd"][i][cmd] ~= nil then
 			if cmd == 'help' then
 				if argw == "" then
-					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^For NOQ help type !cmdlist.. \"")	
+					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^FFor NOQ help type !cmdlist.. \"")	
 					-- TODO: add the help -- quite some work formatting and all.. :/ 
 				else
 					for i=lvl, 0, -1 do
@@ -1486,6 +1483,7 @@ function parseconf()
 	commands["cmd"] = {}
 	commands["syn"] = {}
 	commands["hlp"] = {}
+	commands["listing"] = {}
 	for i=0, 31, 1 do
 		commands["cmd"][i] = {}
 		commands["syn"][i] = {}
@@ -2010,37 +2008,40 @@ end
 function listCMDs( _Client )
 	
 	local lvl = tonumber(et.G_shrubbot_level( _Client ) )
+	
+		local allcmds = "\""
+	
 		if commands["listing"][lvl] ~= nil then
 			local yaAR = commands["listing"][lvl]
 			-- i need goto.
-			for i=0,#yaAR, +4 do
-				if i > (#yaAR - (#yaAR %4)) then
-
-					if #yaAR %4 == 1 then
-						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i  .. "\"" )	
-					elseif #yaAR %4 == 2 then
-						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i+1) .. "\"" )	
-					elseif #yaAR %4 == 3 then
-						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i+1) .. yaAR.(i+2) .. "\"" )	
+			for i=0, #yaAR,4 do
+				if  #yaAR - i < 4  then
+ 
+					if # yaAR %4 == 1 then
+						allcmds = allcmds .. yaAR[i] .. "\n" 
+					elseif # yaAR %4 == 2 then
+						allcmds = allcmds .. yaAR.i .. yaAR[i+1] .. "\n" 
+					elseif # yaAR %4 == 3 then
+						allcmds = allcmds .. yaAR.i .. yaAR[i+1] .. yaAR[i+2].. "\n" 
 					end
 
-			else
-				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i+1) .. yaAR.(i+2) .. yaAR.(i+3) .. "\"" )	
-			end
+				else
+					allcmds = allcmds .. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\n" 
+				end
 		end	
 			
 		else -- we need to generate the listing first
 
-			local CMDs
-			local mxlength
+			local CMDs = {}
+			local mxlength = 7
 			
 			for i=lvl, 0, -1 do
 				for index, cmd in pairs(commands["cmd"][i]) do 
 					if CMDs.index ~= nil then
 					else
-					CMDs.index = index
-						if index.len > mxlength then
-						mxlength = index.len
+					CMDs[index] = index
+						if #index > mxlength then
+						mxlength = #index
 						end
 					end
 				end	
@@ -2049,34 +2050,45 @@ function listCMDs( _Client )
 			local formatter = "%- ".. (mxlength + 2) .."s" 
 			
 			local i = 0
-			local yaAr
+			local yaAR = {}
 			for index, cmd in pairs(CMDs) do
 				
-				yaAr.i = string.format(formatter, index) 
+				yaAR[i] = string.format(formatter, index) 
 				
-				if i%4 == 0 then
-					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i-1) .. yaAR.(i-2) .. yaAR.(i-3) .. "\"" )	
+				if i%4 == 0 and i ~= 0 then
+					allcmds = allcmds .. yaAR[i] .. yaAR[i-1] .. yaAR[i-2] .. yaAR[i-3] .. "\n" 
 				end
-				i++
+				i = i + 1
 			end
+			
+			
 			
 			if i%4 ~= 0 then
 				if i%4 == 1 then
-						et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i  .. "\"" )	
+					allcmds = allcmds .. yaAR[i-1] .. "\n" 
 		
 				elseif i%4 == 2 then
-				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i-1) .. "\"" )	
+					allcmds = allcmds .. yaAR[i-1] .. yaAR[i-2].. "\n" 
 		
 				elseif i%4 == 3 then
-				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. "clientnum".. "\"" .. yaAR.i .. yaAR.(i-1) .. yaAR.(i-2) .. "\"" )	
+					allcmds = allcmds .. yaAR[i-1] .. yaAR[i-2] .. yaAR[i-3].. "\n" 
 				end
 			end
 			
+			et.G_LogPrint("Parsed ".. i .. " commands for lvl " .. lvl .."\n")
 			commands["listing"][lvl] = yaAR
 			
 		
 		end
+		
+		
+	--et.G_LogPrint(allcmds)
+	-- Gives an overflow. 1024 byte buffer aren't enough for 157 commands:(
 	
+	--TODO: Find a way to output that amount of info to the player.	
+	--et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay " .. allcmds.. "\"")
+	et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".._Client.."\" I parsed " .. #commands["listing"][lvl] .." commands for you. To much to display:( \n\"")
+
 end
 
 -------------------------------------------------------------------------------
