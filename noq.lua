@@ -1,4 +1,3 @@
-
 -- The NOQ - No Quarter Lua next generation game manager
 --
 -- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
@@ -313,7 +312,7 @@ if mail == "1" then
 	smtp = require("socket.smtp")
 end
 
-team = { "AXIS" , "ALLIES" , "SPECTATOR" }
+team = { [0]="CONN","AXIS" , "ALLIES" , "SPECTATOR" }
 class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
 
 -------------------------------------------------------------------------------
@@ -338,7 +337,7 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	lastpoll = (et.trap_Milliseconds() / 1000) - 110
 	
 	-- IlDuca: TEST for mail function
-	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo è un test, speriamo funzioni!!")
+	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo Ã¨ un test, speriamo funzioni!!")
 end
 
 function et_ClientConnect( _clientNum, _firstTime, _isBot )
@@ -2005,31 +2004,15 @@ end
 -- listCMDs
 -- Retuns a list of available Noq CMDs
 -------------------------------------------------------------------------------
-function listCMDs( _Client )
+function listCMDs( _Client ,... )
 	
 	local lvl = tonumber(et.G_shrubbot_level( _Client ) )
 	
-		local allcmds = "\""
-	
+		local allcmds = "\"^F"
+		local yaAR = {}
+		
 		if commands["listing"][lvl] ~= nil then
-			local yaAR = commands["listing"][lvl]
-			-- i need goto.
-			for i=0, #yaAR,4 do
-				if  #yaAR - i < 4  then
- 
-					if # yaAR %4 == 1 then
-						allcmds = allcmds .. yaAR[i] .. "\n" 
-					elseif # yaAR %4 == 2 then
-						allcmds = allcmds .. yaAR.i .. yaAR[i+1] .. "\n" 
-					elseif # yaAR %4 == 3 then
-						allcmds = allcmds .. yaAR.i .. yaAR[i+1] .. yaAR[i+2].. "\n" 
-					end
 
-				else
-					allcmds = allcmds .. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\n" 
-				end
-		end	
-			
 		else -- we need to generate the listing first
 
 			local CMDs = {}
@@ -2050,30 +2033,16 @@ function listCMDs( _Client )
 			local formatter = "%- ".. (mxlength + 2) .."s" 
 			
 			local i = 0
-			local yaAR = {}
+			
 			for index, cmd in pairs(CMDs) do
 				
 				yaAR[i] = string.format(formatter, index) 
 				
-				if i%4 == 0 and i ~= 0 then
-					allcmds = allcmds .. yaAR[i] .. yaAR[i-1] .. yaAR[i-2] .. yaAR[i-3] .. "\n" 
-				end
+
 				i = i + 1
 			end
 			
 			
-			
-			if i%4 ~= 0 then
-				if i%4 == 1 then
-					allcmds = allcmds .. yaAR[i-1] .. "\n" 
-		
-				elseif i%4 == 2 then
-					allcmds = allcmds .. yaAR[i-1] .. yaAR[i-2].. "\n" 
-		
-				elseif i%4 == 3 then
-					allcmds = allcmds .. yaAR[i-1] .. yaAR[i-2] .. yaAR[i-3].. "\n" 
-				end
-			end
 			
 			et.G_LogPrint("Parsed ".. i .. " commands for lvl " .. lvl .."\n")
 			commands["listing"][lvl] = yaAR
@@ -2082,13 +2051,44 @@ function listCMDs( _Client )
 		end
 		
 		
-	--et.G_LogPrint(allcmds)
-	-- Gives an overflow. 1024 byte buffer aren't enough for 157 commands:(
+		yaAR = commands["listing"][lvl]
+		number = #yaAR
+		
+		if arg[1] ~= "" then
+		 _page = tonumber(arg[1])
+		else
+		_page = 0
+		end
+		
+		if (_page*20) > number then
+			et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".._Client.."\" ^FPlease specify a page between ^20 ^Fand ^2" .. string.format("%.0f", ( number / 20 -1) ) )
+		end
+			
+			
+			
+		for i=(_page*20), (_page*20 + 20),4 do
+			if  number - i < 4  then
+				if number %4 == 1 then
+					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. "\n\"" )
+					break
+				elseif number %4 == 2 then
+					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR.i .. yaAR[i+1] .. "\n\"")
+					break 
+				elseif number %4 == 3 then
+					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR.i .. yaAR[i+1] .. yaAR[i+2].. "\n\"" )
+					break
+				end
+			else
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\n\"") 
+			end
+	end		
+		
+	et.trap_SendConsoleCommand(et.EXEC_NOW, "csay ".._Client.."\"^F I parsed " .. number .." commands for you. Access all by adding a page between ^20 ^Fand ^2" .. string.format("%.0f", ( number / 20 -1) ) .. " ^Fto your listingcommand.\"")
 	
-	--TODO: Find a way to output that amount of info to the player.	
-	--et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay " .. allcmds.. "\"")
-	et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".._Client.."\" I parsed " .. #commands["listing"][lvl] .." commands for you. To much to display:( \n\"")
-
+	-- TODO: FIX LUA-OUPUT IN C. There is some serious shit going on. Let that intact, it prevenst strange failures:
+	--      Ok, not all failures: try to di !cmdlist at the last page......
+	et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _Client.. "\" \n \"")
+	et.trap_SendConsoleCommand(et.EXEC_NOW, "")
 end
 
 -------------------------------------------------------------------------------
