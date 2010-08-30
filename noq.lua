@@ -1647,15 +1647,20 @@ function checkBalance( _force )
 	local axis = {} -- is this a field required?
 	local allies = {} -- is this a field required?
 
-	for i=0, maxclients, 1 do
-		-- slot[i]["team"] should return nil if slot does not exist or -1 if not set (see runframe, closeteam)
-		if slot[i]["team"] ~= nil and slot[i]["team"] ~= -1 then
-			if slot[i]["team"] == team["AXIS"] then
+	local numclients = 0
+
+	for i=0, et.trap_Cvar_Get( "sv_maxclients" ), 1 do				
+		
+		if et.gentity_get(i,"classname") == "player" then
+			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
+			if team == 1 then
 				table.insert(axis,i)
-			elseif slot[i]["team"] == team["ALLIES"] then
+			end 
+			if team == 2 then
 				table.insert(allies,i)
 			end
-			-- debugPrint("print","SlotID: " ..i.. " team:" .. slot[i]["team"])
+			
+			numclients = numclients + 1
 		end
 	end
     
@@ -1691,7 +1696,7 @@ function checkBalance( _force )
 		return
 	end
 
-	if math.abs(numaxis - numallies) >= 2 then
+	if math.abs(numaxis - numallies) >= 3 then
 		
 		evener = evener +1
 		if _force == true and evener >= 3  then
