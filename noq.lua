@@ -1649,7 +1649,7 @@ function checkBalance( _force )
 
 	local numclients = 0
 
-	for i=0, et.trap_Cvar_Get( "sv_maxclients" ), 1 do				
+	for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do				
 		
 		if et.gentity_get(i,"classname") == "player" then
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
@@ -1704,7 +1704,7 @@ function checkBalance( _force )
 			local cmd =  "!put ".. gtable[rand] .." "..teamchar[smallerteam].." \n"  
 			--et.G_Print( "CMD: ".. cmd .. "\n") 
 			et.trap_SendConsoleCommand( et.EXEC_APPEND, cmd ) 
-			et.trap_SendServerCommand(-1 , "chat \"^2EVENER: ^7Thank you, ".. slot[rand]["netname"] .." ^7for helping to even the teams. \" ")
+			et.trap_SendServerCommand(-1 , "chat \"^2EVENER: ^7Thank you, ".. slot[gtable[rand]]["netname"] .." ^7for helping to even the teams. \" ")
 		else
 			et.trap_SendConsoleCommand( et.EXEC_APPEND, "chat \"^2EVENER: ^1Teams seem unfair, would someone from ^2".. team[greaterteam] .."^1 please switch to ^2"..team[smallerteam].."^1?  \" " )
 		end
