@@ -307,6 +307,9 @@ lastevener = 0
 -- Poll restriction
 lastpoll = 0
 
+-- vsay disabler
+vsaydisabled == false
+
 -- mail setup
 if mail == "1" then
 	smtp = require("socket.smtp")
@@ -445,7 +448,18 @@ function et_ClientCommand( _clientNum, _command )
 
 
 	debugPrint("print","Got a Clientcommand: ".. arg0)
+	
+	if vsaydisabled == true and arg0 == "vsay" then
+		-- No vsays please.
+		et.trap_SendServerCommand( _clientNum, "cp \"^1Global voicechat disabled\"")
+		return 1
+	end
 
+	if slot[_clientNum]['vsaydisabled'] == true and arg0 == "vsay" then
+		-- No vsays please.
+		et.trap_SendServerCommand( _clientNum, "cp \"^1Youre global voicechats are disabled\"")
+		return 1
+	end
 
 	-- switch to disable the !commands 
 	if usecommands ~= 0 then
@@ -556,6 +570,7 @@ function et_ClientCommand( _clientNum, _command )
 			end
 		end
 	end
+	
 end
 
 function et_ShutdownGame( _restart )
@@ -765,6 +780,7 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["killer"] 	= -1
 	slot[_clientNum]["deadwep"] = "nothing"
 	slot[_clientNum]["selfkills"]	= 0
+	slot[_clientNum]["vsaydisabled"]	= false
 	
 	slot[_clientNum]["death"] 	= 0
 	slot[_clientNum]["uci"] 	= 0
