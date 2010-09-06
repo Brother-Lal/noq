@@ -308,7 +308,7 @@ lastevener = 0
 lastpoll = 0
 
 -- vsay disabler
-vsaydisabled == false
+vsaydisabled = false
 
 -- mail setup
 if mail == "1" then
@@ -1127,30 +1127,34 @@ end
 -- This function really dumps everything by calling our two helper functions
 -------------------------------------------------------------------------------
 function WriteClientDisconnect( _clientNum, _now, _timediff )
-	if slot[_clientNum]["team"] == false then
-		slot[_clientNum]["uci"] = et.gentity_get( _clientNum ,"sess.uci")
-		-- In this case the player never entered the game world, he disconnected during connection time
-		
-		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
-		DBCon:SetPlayerSessionWCD( slot[_clientNum]["pkey"], _clientNum, map, slot[_clientNum]["ip"], "0", slot[_clientNum]["start"], timehandle('N'), timehandle('D','N',slot[_clientNum]["start"]), slot[_clientNum]["uci"] )
-		
-		
-		et.G_LogPrint( "Noq: saved player ".._clientNum.." to Database\n" ) 
-	else
-		-- The player disconnected during a valid game session. We have to close his playing time
-		-- If "team" == -1 means we already closed the team time, so we don't have to do it again
-		-- This is needed to stop team time at map end, when debriefing starts
-		if slot[_clientNum]["team"] ~= -1 then
-			closeTeam ( _clientNum )
-		end
-						
-		-- Write to session if player was in game
-		saveSession ( _clientNum )
-		savePlayer ( _clientNum )
-		et.G_LogPrint( "Noq: saved player and session ".._clientNum.." to Database\n" )
+	if tonumber(et.trap_Cvar_Get( "gamestate" )) ~= 1 then 	-- in warmup no db interaction
 
-	end	
-	slot[_clientNum]["ntg"] = false
+		if slot[_clientNum]["team"] == false then
+			slot[_clientNum]["uci"] = et.gentity_get( _clientNum ,"sess.uci")
+			-- In this case the player never entered the game world, he disconnected during connection time
+			
+			-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
+			DBCon:SetPlayerSessionWCD( slot[_clientNum]["pkey"], _clientNum, map, slot[_clientNum]["ip"], "0", slot[_clientNum]["start"], timehandle('N'), timehandle('D','N',slot[_clientNum]["start"]), slot[_clientNum]["uci"] )
+			
+			
+			et.G_LogPrint( "Noq: saved player ".._clientNum.." to Database\n" ) 
+		else
+			-- The player disconnected during a valid game session. We have to close his playing time
+			-- If "team" == -1 means we already closed the team time, so we don't have to do it again
+			-- This is needed to stop team time at map end, when debriefing starts
+			if slot[_clientNum]["team"] ~= -1 then
+				closeTeam ( _clientNum )
+			end
+							
+			-- Write to session if player was in game
+			saveSession ( _clientNum )
+			savePlayer ( _clientNum )
+			et.G_LogPrint( "Noq: saved player and session ".._clientNum.." to Database\n" )
+
+		end	
+		slot[_clientNum]["ntg"] = false
+		
+	end
 end
 
 -------------------------------------------------------------------------------
