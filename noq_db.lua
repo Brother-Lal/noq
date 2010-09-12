@@ -108,17 +108,21 @@ DBCon = {
 		if thisGuid2 ~= nil then
 		query = query .. " AND guid2='" .. thisGuid2 .. "'"
 		end
-		
-		
+
 		--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
 		self.cur = assert (self.con:execute(query))
-		self.row = self.cur:fetch ({}, "a")
-		self.cur:close()
-		if self.row then
-			--nothing in :(
-			return nil
+		local numrows = self.cur:numrows()
+		local pms = {}
+		if numrows ~= 0 then
+			
+			for i=1, numrows +1, i+1 do
+			pms[i] = self.cur:fetch ({}, "a")
+			
+			end
+			self.cur:close()
+			return pms
 		else
-			return self.row
+			return nil
 		end
 	end,
 	

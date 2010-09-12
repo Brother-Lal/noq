@@ -1757,7 +1757,7 @@ function checkOffMesg (_clientNum)
 
 	if slot[_clientNum]["user"] ~= "" then
 	-- he is registered
-		local OM = DBCon:GetLogTypefor("5", nil, slot[_clientNum]['pkey'])
+		local OM = DBCon:GetLogTypefor("5", nil, slot[_clientNum]["pkey"])
 		
 		if OM ~= nil then
 			-- he has OMs!!!!!!!!1!!!!
@@ -1765,7 +1765,7 @@ function checkOffMesg (_clientNum)
 			local sndin = et.G_SoundIndex( "sound/misc/pm.wav" )
 			et.G_Sound( _clientNum, sndin )
 			
-			for mesnum = 1, #OM, 1 do
+			for mesnum = 1, #OM+1, 1 do
 				local xml = OM[mesnum].textxml
 				local pos = string.find(xml, "<msg>", 1)
 				local msg = string.sub(xml , pos[1] , (#xml- 12))
@@ -1779,11 +1779,11 @@ function checkOffMesg (_clientNum)
 			end
 		
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay" .. _clientNum .. "\"^3No new OfflineMessages \n\"")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new OfflineMessages \n\"\n")
 		end
 		
 	else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay" .. _clientNum .. "\"^3To use Offlinemessages, please register\n\"")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use Offlinemessages, please register\n\"\n")
 	end
 
 end
