@@ -417,7 +417,10 @@ function et_ClientBegin( _clientNum )
 				end
 				slot[_clientNum]["setxp"] = nil
 			end
-		end	
+		end
+		
+		checkOffMesg(_clientNum)
+	   
 	end -- end databasecheck
 end
 
@@ -1746,8 +1749,46 @@ function greetClient( _clientNum )
 	end
 end
 
+-------------------------------------------------------------------------------
+-- checkOffMesg - checks for OfflineMessages
+-- Player needs to be registered to use OM
+-------------------------------------------------------------------------------
+function checkOffMesg (_clientNum)
+
+	if slot[_clientNum]["user"] ~= ""
+	-- he is registered
+		local OM = DBCon:GetLogTypefor("5", nil, slot[_clientNum]['pkey'])
+		if OM ~= nil then
+			-- he has OMs!!!!!!!!1!!!!
+			et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1NEW OFFLINEMESSAGES ^3***\n\"")
+			local sndin = et.G_SoundIndex( "sound/misc/pm.wav" )
+			et.G_Sound( _clientNum, sndin )
+			
+			for mesnum = 1, #OM, 1 do
+				local xml = OM[mesnum].textxml
+				local pos = string.find(xml, "<msg>", 1)
+				local msg = string.sub(xml , pos[1] , (#xml- 12))
+				pos = string.find(xml, "<from>.*</from>", 1)
+				local from = string.sub(xml, pos[1], pos[2])
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\n\"")
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R" OM[mesnum].id " ^3***\n\"")
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .."^3***\n\"")
+				
+				
+			end
+		
+		else
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay" .. _clientNum .. "\"^3No new OfflineMessages \n\"")
+		end
+		
+	else
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay" .. _clientNum .. "\"^3To use Offlinemessages, please register\n\"")
+	end
+
+end
+
 --***************************************************************************
--- Here start the commands usualy called trough the new command-system
+-- Here start the commands usually called trough the new command-system
 -- they should not change internals, they are more informative 
 --***************************************************************************
 -- Current available:

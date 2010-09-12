@@ -93,6 +93,34 @@ DBCon = {
 				VALUES ('".. thisGuid .."', 3, '<name>".. thisName .."</name>')"))
 		end
 	end,
+
+
+	-------------------------------------------------------------------------------
+	-- GetLogTypefor
+	-- Searches your type to guid out of the DB
+	-------------------------------------------------------------------------------
+	['GetLogTypefor'] = function( self, thisType, thisGuid , thisGuid2 )
+		local query = "SELECT * FROM log WHERE type='" .. thisType .. "'" 
+		
+		if thisGuid ~= nil then
+		query = query .. " AND WHERE guid1='" .. thisGuid .. "'"
+		end
+		if thisGuid2 ~= nil then
+		query = query .. " AND WHERE guid2='" .. thisGuid2 .. "'"
+		end
+		
+		
+		--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
+		self.cur = assert (self.con:execute(query))
+		self.row = self.cur:fetch ({}, "a")
+		self.cur:close()
+		if self.row then
+			--nothing in :(
+			return nil
+		else
+			return self.row
+		end
+	end,
 	
 	-------------------------------------------------------------------------------
 	-- createNewPlayer
