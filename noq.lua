@@ -1755,9 +1755,10 @@ end
 -------------------------------------------------------------------------------
 function checkOffMesg (_clientNum)
 
-	if slot[_clientNum]["user"] ~= ""
+	if slot[_clientNum]["user"] ~= "" then
 	-- he is registered
 		local OM = DBCon:GetLogTypefor("5", nil, slot[_clientNum]['pkey'])
+		
 		if OM ~= nil then
 			-- he has OMs!!!!!!!!1!!!!
 			et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1NEW OFFLINEMESSAGES ^3***\n\"")
@@ -1771,7 +1772,7 @@ function checkOffMesg (_clientNum)
 				pos = string.find(xml, "<from>.*</from>", 1)
 				local from = string.sub(xml, pos[1], pos[2])
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\n\"")
-				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R" OM[mesnum].id " ^3***\n\"")
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R".. OM[mesnum].id .." ^3***\n\"")
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .."^3***\n\"")
 				
 				

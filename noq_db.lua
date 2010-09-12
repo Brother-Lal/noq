@@ -103,10 +103,10 @@ DBCon = {
 		local query = "SELECT * FROM log WHERE type='" .. thisType .. "'" 
 		
 		if thisGuid ~= nil then
-		query = query .. " AND WHERE guid1='" .. thisGuid .. "'"
+		query = query .. " AND guid1='" .. thisGuid .. "'"
 		end
 		if thisGuid2 ~= nil then
-		query = query .. " AND WHERE guid2='" .. thisGuid2 .. "'"
+		query = query .. " AND guid2='" .. thisGuid2 .. "'"
 		end
 		
 		
