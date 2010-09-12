@@ -115,7 +115,7 @@ DBCon = {
 		local pms = {}
 		if numrows ~= 0 then
 			
-			for i=1, numrows +1, i+1 do
+			for i=1, numrows +1, 1 do
 			pms[i] = self.cur:fetch ({}, "a")
 			
 			end

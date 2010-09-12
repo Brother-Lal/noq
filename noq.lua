@@ -1761,19 +1761,19 @@ function checkOffMesg (_clientNum)
 		
 		if OM ~= nil then
 			-- he has OMs!!!!!!!!1!!!!
-			et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1NEW OFFLINEMESSAGES ^3***\n\"")
+			et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
 			local sndin = et.G_SoundIndex( "sound/misc/pm.wav" )
 			et.G_Sound( _clientNum, sndin )
 			
-			for mesnum = 1, #OM+1, 1 do
+			for mesnum = 1, #OM, 1 do
 				local xml = OM[mesnum].textxml
-				local pos = string.find(xml, "<msg>", 1)
-				local msg = string.sub(xml , pos[1] , (#xml- 12))
-				pos = string.find(xml, "<from>.*</from>", 1)
-				local from = string.sub(xml, pos[1], pos[2])
-				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\n\"")
-				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R".. OM[mesnum].id .." ^3***\n\"")
-				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .."^3***\n\"")
+				local posstart , posend = string.find(xml, "<msg>", 1)
+				local msg = string.sub(xml , posstart+5 , (#xml- 11))
+				posstart , posend = string.find(xml, "<from>.*</from>", 1)
+				local from = string.sub(xml, posstart+6, posend-7)
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\"")
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R".. OM[mesnum].id .." ^3***\"")
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .." ^3***\"")
 				
 				
 			end
