@@ -1812,19 +1812,19 @@ function sendOffMesg (_sender,_receiver, _msg)
 				--                	type	sent					receiver		text
 				DBCon:SetLogEntry(	"5",	slot[_sender]['pkey'],	player['pkey'],	message)
 				
-				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\n\"\n")
-				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 '".. _msg .."'\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 '".. _msg .."'\n\"\n")
 		
 			else
-				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\n\"\n")
 			end
 		
 		else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Check your syntax: ^R'/command receiver message'.\n\"\n")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/command receiver message'.\n\"\n")
 		end
 		
 	else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use Offlinemessages, please register\n\"\n")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3To use Offlinemessages, please register\n\"\n")
 	end
 
 end
