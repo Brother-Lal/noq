@@ -564,14 +564,24 @@ function et_ClientCommand( _clientNum, _command )
 		end
 	end
 	
-	-- check for Offlinemsgs
-	if arg0 == "checkmsg" then
+	-- check for OfflineMesgs
+	if arg0 == "mail" then
 	checkOffMesg (_clientNum)
+	return 1
 	end
 	
-	-- send Offlinemesgs
+	-- send OfflineMesgs
 	if arg0 == "om" then
 	sendOffMesg (_clientNum,arg1 , arg2)
+	return 1
+	end
+	
+	--erase OfflineMesgs
+	if arg0 == "rmom" then
+	arg1 = string.gsub(arg1,"\'", "\\\'")
+	DBCon:DelOM(arg1)
+	et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
+	return 1
 	end
 	
 	-- read in the commandsfile 
@@ -1778,7 +1788,7 @@ function checkOffMesg (_clientNum)
 			for mesnum = 1, #OM, 1 do
 				local xml = OM[mesnum].textxml
 				local posstart , posend = string.find(xml, "<msg>", 1)
-				local msg = string.sub(xml , posstart+5 , (#xml- 11))
+				local msg = string.sub(xml , posstart+5 , (#xml- 12))
 				posstart , posend = string.find(xml, "<from>.*</from>", 1)
 				local from = string.sub(xml, posstart+6, posend-7)
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\"")
@@ -1800,6 +1810,12 @@ end
 -- Player needs to be registered to use OM
 -------------------------------------------------------------------------------
 function sendOffMesg (_sender,_receiver, _msg)
+
+	--TODO: Escape function
+	_sender = string.gsub(_sender,"\'", "\\\'")
+	_receiver = string.gsub(_receiver,"\'", "\\\'")
+	_msg = string.gsub(_msg,"\'", "\\\'")
+	
 	if slot[_sender]["user"] ~= "" then
 		-- he is registered
 		

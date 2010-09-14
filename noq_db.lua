@@ -133,7 +133,17 @@ DBCon = {
 	['SetLogEntry'] = function( self, thisType, thisGuid , thisGuid2, thisXmltext )
 	
 	self.cur = assert (self.con:execute("INSERT INTO log (guid1, guid2, type, textxml)		\
-				VALUES ('".. thisGuid .."','".. thisGuid2 .."', '".. thisType .."', '".. ThisXmltext .."')"))
+				VALUES ('".. thisGuid .."','".. thisGuid2 .."', '".. thisType .."', '".. thisXmltext .."')"))
+		
+	end,
+	
+	-------------------------------------------------------------------------------
+	-- SetLogEntry
+	-- Searches your type to guid out of the DB
+	-------------------------------------------------------------------------------
+	['DelOM'] = function( self, thisid, thisguid)
+	
+	self.cur = assert (self.con:execute("DELETE FROM log WHERE id='"..thisid.."' AND guid2='"..thisguid.."'"))
 		
 	end,
 	
