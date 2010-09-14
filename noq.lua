@@ -1802,18 +1802,25 @@ end
 function sendOffMesg (_sender,_receiver, _msg)
 	if slot[_sender]["user"] ~= "" then
 		-- he is registered
-		player = DBCon:GetPlayerbyReg(_receiver)
-		if player ~= nil then
-			-- Reveiver is existing
-			message = "<OfM><from>"..slot[_sender]["user"].."</from><to>".._player["user"].."</to><figure></figure><msg>".._msg.."</msg></OfM>"
-			--                	type	sent					receiver		text
-			DBCon:SetLogEntry(	"5",	slot[_sender]['pkey'],	player['pkey'],	message)
+		
+		if _receiver ~= "" and _msg ~= "" then
 			
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\n\"\n")
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 '".. _msg .."'\n\"\n")
-	
+			player = DBCon:GetPlayerbyReg(_receiver)
+			if player ~= nil then
+				-- Reveiver is existing
+				message = "<OfM><from>"..slot[_sender]["user"].."</from><to>".. player["user"] .."</to><figure></figure><msg>".._msg.."</msg></OfM>"
+				--                	type	sent					receiver		text
+				DBCon:SetLogEntry(	"5",	slot[_sender]['pkey'],	player['pkey'],	message)
+				
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 '".. _msg .."'\n\"\n")
+		
+			else
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\n\"\n")
+			end
+		
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\n\"\n")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Check your syntax: ^R'/command receiver message'.\n\"\n")
 		end
 		
 	else
