@@ -491,6 +491,17 @@ function et_ClientCommand( _clientNum, _command )
 		--local arg2 = string.lower(et.trap_Argv(2)) -- password - see start of et_ClientCommand
 		local name = string.gsub(arg1,"\'", "\\\'")
 		if arg1 ~= "" and arg2 ~= "" then
+			local testreg = DBCon:GetPlayerbyReg(name)
+			if testreg ~= nil then
+				if testreg['pkey'] == slot[_clientNum]['pkey'] then
+					slot[_clientNum]["user"] = name
+					DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
+					et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Successfully reset password\n\"\n")
+				end
+			
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3This nick is already registered\n\"\n")
+			end
+		
 			slot[_clientNum]["user"] = name
 			DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
 			
