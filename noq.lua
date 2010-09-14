@@ -497,9 +497,11 @@ function et_ClientCommand( _clientNum, _command )
 					slot[_clientNum]["user"] = name
 					DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
 					et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Successfully reset password\n\"\n")
+					return 1
 				end
 			
 			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3This nick is already registered\n\"\n")
+			return 1
 			end
 		
 			slot[_clientNum]["user"] = name
