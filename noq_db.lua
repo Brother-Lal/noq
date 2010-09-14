@@ -127,6 +127,28 @@ DBCon = {
 	end,
 	
 	-------------------------------------------------------------------------------
+	-- SetLogEntry
+	-- Searches your type to guid out of the DB
+	-------------------------------------------------------------------------------
+	['SetLogEntry'] = function( self, thisType, thisGuid , thisGuid2, thisXmltext )
+	
+	self.cur = assert (self.con:execute("INSERT INTO log (guid1, guid2, type, textxml)		\
+				VALUES ('".. thisGuid .."','".. thisGuid2 .."', '".. thisType .."', '".. ThisXmltext .."')"))
+		
+	end,
+	
+	-------------------------------------------------------------------------------
+	-- GetPlayerbyReg
+	-- Searches Player by registered Name 
+	-------------------------------------------------------------------------------
+	['GetPlayerbyReg'] = function( self, name )
+		self.cur = assert (self.con:execute("SELECT * FROM player WHERE user='".. name .."' LIMIT 1"))
+		player = self.cur:fetch ({}, "a")
+		self.cur:close()
+		return player
+	end,
+	
+	-------------------------------------------------------------------------------
 	-- createNewPlayer
 	-- Create a new Player: write to Database, set Xp 0
 	-- maybe could also be used to reset Player, as pkey is unique

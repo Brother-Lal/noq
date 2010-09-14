@@ -564,6 +564,16 @@ function et_ClientCommand( _clientNum, _command )
 		end
 	end
 	
+	-- check for Offlinemsgs
+	if arg0 == "checkmsg" then
+	checkOffMesg (_clientNum)
+	end
+	
+	-- send Offlinemesgs
+	if arg0 == "om" then
+	sendOffMesg (_clientNum,arg1 , arg2)
+	end
+	
 	-- read in the commandsfile 
 	if usecommands ~= 0 then
 		if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
@@ -1773,13 +1783,37 @@ function checkOffMesg (_clientNum)
 				local from = string.sub(xml, posstart+6, posend-7)
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\"")
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R".. OM[mesnum].id .." ^3***\"")
-				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .." ^3***\"")
-				
-				
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .." ^3***\n\"")
 			end
-		
 		else
 			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new OfflineMessages \n\"\n")
+		end
+	else
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use Offlinemessages, please register\n\"\n")
+	end
+
+end
+
+
+-------------------------------------------------------------------------------
+-- sendOffMesg - sends a Offlinemessage
+-- Player needs to be registered to use OM
+-------------------------------------------------------------------------------
+function sendOffMesg (_sender,_receiver, _msg)
+	if slot[_sender]["user"] ~= "" then
+		-- he is registered
+		player = DBCon:GetPlayerbyReg(_receiver)
+		if player ~= nil then
+			-- Reveiver is existing
+			message = "<OfM><from>"..slot[_sender]["user"].."</from><to>".._player["user"].."</to><figure></figure><msg>".._msg.."</msg></OfM>"
+			--                	type	sent					receiver		text
+			DBCon:SetLogEntry(	"5",	slot[_sender]['pkey'],	player['pkey'],	message)
+			
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\n\"\n")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3 '".. _msg .."'\n\"\n")
+	
+		else
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\n\"\n")
 		end
 		
 	else
