@@ -579,7 +579,7 @@ function et_ClientCommand( _clientNum, _command )
 	--erase OfflineMesgs
 	if arg0 == "rmom" then
 	arg1 = string.gsub(arg1,"\'", "\\\'")
-	DBCon:DelOM(arg1)
+	DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
 	return 1
 	end
@@ -1796,10 +1796,10 @@ function checkOffMesg (_clientNum)
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .." ^3***\n\"")
 			end
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new OfflineMessages \n\"\n")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new offlinemessages \n\"\n")
 		end
 	else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use Offlinemessages, please register\n\"\n")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use offlinemessages, please register\n\"\n")
 	end
 
 end
@@ -2196,10 +2196,10 @@ function listCMDs( _Client ,... )
 					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. "\n\"" )
 					break
 				elseif number %4 == 2 then
-					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR.i .. yaAR[i+1] .. "\n\"")
+					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. "\n\"")
 					break 
 				elseif number %4 == 3 then
-					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR.i .. yaAR[i+1] .. yaAR[i+2].. "\n\"" )
+					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR[i] .. yaAR[i+1] .. yaAR[i+2].. "\n\"" )
 					break
 				end
 			else
