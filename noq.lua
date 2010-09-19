@@ -3,7 +3,7 @@
 -- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
 -- Both are supported and in case of sqlite there is no extra sqlite installation needed.
 --
--- NQ Lua team 2009-2010 - No warrenty :)
+-- NQ Lua team 2009-2010 - No warranty :)
  
 -- NQ Lua team is:
 -- IlDuca
