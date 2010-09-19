@@ -449,7 +449,6 @@ function et_ClientCommand( _clientNum, _command )
 	local arg2 = string.lower(et.trap_Argv(2))
 	local callershrublvl = et.G_shrubbot_level(_clientNum)
 
-
 	debugPrint("print","Got a Clientcommand: ".. arg0)
 	
 	if vsaydisabled == true and arg0 == "vsay" then
@@ -549,7 +548,6 @@ function et_ClientCommand( _clientNum, _command )
 				--compare to the value that is given in config where nextmap votes are allowed
 				if nextmapVoteTime == 0 then
 					debugPrint("print","Nextmap vote limiter is disabled!")
-
 					return 0
 				elseif mapTime / 1000 > nextmapVoteTime then
 					--if not allowed send error msg and return 1	
@@ -579,22 +577,22 @@ function et_ClientCommand( _clientNum, _command )
 	
 	-- check for OfflineMesgs
 	if arg0 == "mail" then
-	checkOffMesg (_clientNum)
-	return 1
+		checkOffMesg (_clientNum)
+		return 1
 	end
 	
 	-- send OfflineMesgs
 	if arg0 == "om" then
-	sendOffMesg (_clientNum,arg1 , arg2)
-	return 1
+		sendOffMesg (_clientNum,arg1 , arg2)
+		return 1
 	end
 	
 	--erase OfflineMesgs
 	if arg0 == "rmom" then
-	arg1 = string.gsub(arg1,"\'", "\\\'")
-	DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
-	et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
-	return 1
+		arg1 = string.gsub(arg1,"\'", "\\\'")
+		DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
+		return 1
 	end
 	
 	-- read in the commandsfile 
@@ -675,7 +673,6 @@ function et_RunFrame( _levelTime )
 end
 
 function et_Obituary( _victim, _killer, _mod )
-
 	debugPrint("cpm", "Victim: ".._victim .. " Killer " .._killer .." MOD: ".. meansofdeath[_mod])
 	if _killer == 1022 then
 		-- this is for a kill by falling or similar trough the world. Mapmortar etc also.
@@ -685,8 +682,7 @@ function et_Obituary( _victim, _killer, _mod )
 		
 		-- update kill vars (victim only)
 		
-	else -- all non world kills
-		 
+	else -- all non world kills 
 		pussyFactCheck( _victim, _killer, _mod )
 
 		slot[_killer]["victim"] = _victim
@@ -695,9 +691,7 @@ function et_Obituary( _victim, _killer, _mod )
 		slot[_victim]["killer"] = _killer
 		slot[_victim]["deadwep"] = string.sub(meansofdeath[_mod], 5)
 		
-
 		lastkiller = _killer
-		
 		
 		-- update client vars ...
 		
@@ -1705,8 +1699,7 @@ function checkBalance( _force )
 
 	local numclients = 0
 
-	for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do				
-		
+	for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do					
 		if et.gentity_get(i,"classname") == "player" then
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
 			if team == 1 then
@@ -1741,7 +1734,6 @@ function checkBalance( _force )
 
 
 	if math.abs(numaxis - numallies) >= 5 then
-		
 		evener = evener +1
 		if _force == true and evener >= 2  then
 			et.trap_SendConsoleCommand( et.EXEC_NOW, "!shuffle " )
@@ -1753,7 +1745,6 @@ function checkBalance( _force )
 	end
 
 	if math.abs(numaxis - numallies) >= 3 then
-		
 		evener = evener +1
 		if _force == true and evener >= 3  then
 			local rand = math.random(# gtable)
@@ -1787,7 +1778,6 @@ end
 -- Player needs to be registered to use OM
 -------------------------------------------------------------------------------
 function checkOffMesg (_clientNum)
-
 	if slot[_clientNum]["user"] ~= "" then
 	-- he is registered
 		local OM = DBCon:GetLogTypefor("5", nil, slot[_clientNum]["pkey"])
@@ -1823,7 +1813,6 @@ end
 -- Player needs to be registered to use OM
 -------------------------------------------------------------------------------
 function sendOffMesg (_sender,_receiver, _msg)
-
 	--TODO: Escape function
 	_sender = string.gsub(_sender,"\'", "\\\'")
 	_receiver = string.gsub(_receiver,"\'", "\\\'")
@@ -1849,7 +1838,7 @@ function sendOffMesg (_sender,_receiver, _msg)
 			end
 		
 		else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/command receiver message'.\n\"\n")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/command receiver message'.\n\"\n")
 		end
 		
 	else
@@ -1877,7 +1866,6 @@ end
 -- _arg for first call is amount of months, second call OK to confirm
 -------------------------------------------------------------------------------
 function cleanSession(_callerID, _arg)
-
 	if arg == "" then
 		et.trap_SendServerCommand(_callerID, "print \"\n Argument: first call: months to keep records, second call: OK  \n\"")
 		return
@@ -2009,7 +1997,6 @@ end
 -- thks to hose!
 -------------------------------------------------------------------------------
 function teamdamage( myclient, slotnumber ) -- TODO: change this to (_myclient, _slotnumber) 
-	
 	local teamdamage 	= et.gentity_get (slotnumber, "sess.team_damage")		
 	local damage 		= et.gentity_get(slotnumber, "sess.damage_given")
 
@@ -2142,82 +2129,72 @@ end
 -- Retuns a list of available Noq CMDs
 -------------------------------------------------------------------------------
 function listCMDs( _Client ,... )
-	
 	local lvl = tonumber(et.G_shrubbot_level( _Client ) )
 	
-		local allcmds = "\"^F"
-		local yaAR = {}
+	local allcmds = "\"^F"
+	local yaAR = {}
+	
+	if commands["listing"][lvl] ~= nil then
+
+	else -- we need to generate the listing first
+		local CMDs = {}
+		local mxlength = 7
 		
-		if commands["listing"][lvl] ~= nil then
-
-		else -- we need to generate the listing first
-
-			local CMDs = {}
-			local mxlength = 7
-			
-			for i=lvl, 0, -1 do
-				for index, cmd in pairs(commands["cmd"][i]) do 
-					if CMDs.index ~= nil then
-					else
-					CMDs[index] = index
-						if #index > mxlength then
-						mxlength = #index
-						end
+		for i=lvl, 0, -1 do
+			for index, cmd in pairs(commands["cmd"][i]) do 
+				if CMDs.index ~= nil then
+				else
+				CMDs[index] = index
+					if #index > mxlength then
+					mxlength = #index
 					end
-				end	
-			end
-			
-			local formatter = "%- ".. (mxlength + 2) .."s" 
-			
-			local i = 0
-			
-			for index, cmd in pairs(CMDs) do
-				
-				yaAR[i] = string.format(formatter, index) 
-				
-
-				i = i + 1
-			end
-			
-			
-			
-			et.G_LogPrint("Parsed ".. i .. " commands for lvl " .. lvl .."\n")
-			commands["listing"][lvl] = yaAR
-			
-		
-		end
-		
-		
-		yaAR = commands["listing"][lvl]
-		number = #yaAR
-		
-		if arg[1] ~= "" then
-		 _page = tonumber(arg[1])
-		else
-		_page = 0
-		end
-		
-		if (_page*20) > number then
-			et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".._Client.."\" ^FPlease specify a page between ^20 ^Fand ^2" .. string.format("%.0f", ( number / 20 -1) ) )
-		end
-			
-			
-			
-		for i=(_page*20), (_page*20 + 20),4 do
-			if  number - i < 4  then
-				if number %4 == 1 then
-					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. "\n\"" )
-					break
-				elseif number %4 == 2 then
-					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. "\n\"")
-					break 
-				elseif number %4 == 3 then
-					et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR[i] .. yaAR[i+1] .. yaAR[i+2].. "\n\"" )
-					break
 				end
-			else
-				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\n\"") 
+			end	
+		end
+		
+		local formatter = "%- ".. (mxlength + 2) .."s" 
+		
+		local i = 0
+		
+		for index, cmd in pairs(CMDs) do
+			yaAR[i] = string.format(formatter, index) 
+			i = i + 1
+		end
+		
+		et.G_LogPrint("Parsed ".. i .. " commands for lvl " .. lvl .."\n")
+		commands["listing"][lvl] = yaAR	
+	end
+	
+	
+	yaAR = commands["listing"][lvl]
+	number = #yaAR
+	
+	if arg[1] ~= "" then
+		_page = tonumber(arg[1])
+	else
+		_page = 0
+	end
+	
+	if (_page*20) > number then
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".._Client.."\" ^FPlease specify a page between ^20 ^Fand ^2" .. string.format("%.0f", ( number / 20 -1) ) )
+	end
+		
+		
+	for i=(_page*20), (_page*20 + 20),4 do
+		if  number - i < 4  then
+			if number %4 == 1 then
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. "\n\"" )
+				break
+			elseif number %4 == 2 then
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. "\n\"")
+				break 
+			elseif number %4 == 3 then
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR[i] .. yaAR[i+1] .. yaAR[i+2].. "\n\"" )
+				break
 			end
+		else
+			et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\n\"") 
+		end
 	end		
 		
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "csay ".._Client.."\"^F I parsed " .. number .." commands for you. Access all by adding a page between ^20 ^Fand ^2" .. string.format("%.0f", ( number / 20 -1) ) .. " ^Fto your listingcommand.\"")
