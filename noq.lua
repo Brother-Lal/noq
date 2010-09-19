@@ -459,7 +459,7 @@ function et_ClientCommand( _clientNum, _command )
 
 	if slot[_clientNum]['vsaydisabled'] == true and arg0 == "vsay" then
 		-- No vsays please.
-		et.trap_SendServerCommand( _clientNum, "cp \"^1Youre global voicechats are disabled\"")
+		et.trap_SendServerCommand( _clientNum, "cp \"^1Your global voicechats are disabled\"")
 		return 1
 	end
 
