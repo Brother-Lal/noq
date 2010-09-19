@@ -103,21 +103,19 @@ DBCon = {
 		local query = "SELECT * FROM log WHERE type='" .. thisType .. "'" 
 		
 		if thisGuid ~= nil then
-		query = query .. " AND guid1='" .. thisGuid .. "'"
+			query = query .. " AND guid1='" .. thisGuid .. "'"
 		end
 		if thisGuid2 ~= nil then
-		query = query .. " AND guid2='" .. thisGuid2 .. "'"
+			query = query .. " AND guid2='" .. thisGuid2 .. "'"
 		end
 
 		--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
 		self.cur = assert (self.con:execute(query))
 		local numrows = self.cur:numrows()
 		local pms = {}
-		if numrows ~= 0 then
-			
+		if numrows ~= 0 then		
 			for i=1, numrows +1, 1 do
-			pms[i] = self.cur:fetch ({}, "a")
-			
+				pms[i] = self.cur:fetch ({}, "a")
 			end
 			self.cur:close()
 			return pms
@@ -185,7 +183,6 @@ DBCon = {
 		
 		local name = string.gsub(player["netname"],"\'", "\\\'")
 		
-
 		local sessquery = "INSERT INTO session (pkey, slot, map, ip, netname, cleanname, valid, start, end, sstime, axtime, altime, sptime, xp0, xp1, xp2, xp3, xp4, xp5, xp6, xptot, acc, kills, tkills, death) VALUES ('"
 			..player["pkey"].."', '"
 			..slot.."', '"
