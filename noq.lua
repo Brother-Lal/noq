@@ -242,15 +242,15 @@ debug_getInfoFromTable(noqvartable)
 -- ["acc"] = 0
 -- ["kills"] = 0 
 -- ["tkills"] = 0 teamkills you did
--- ["tkills"] = 0 the amount you got teamkilled
+-- ["tkilled"] = 0 the amount you got teamkilled
 -- ["death"] = 0
 -- ["uci"] = 0
 -- Added Fields during ingame session in slot[clientNum]
 --
 -- slot[clientNum]["victim"] = last victim of clientNum(ID)
--- slot[clientNum]["killwep"] = meansofdeathbumber
+-- slot[clientNum]["killwep"] = Name of the weapon last used to kill
 -- slot[clientNum]["killer"] = last person who killed clientNum(ID)
--- slot[clientNum]["deadwep"] =  meansfdeathnumber
+-- slot[clientNum]["deadwep"] =  Name of the weapon by wich he was killed last
 -- slot[clientNum]["lastTeamChange"] -- in seconds
 -- slot[clientNum]["selfkills"] Selfkills you did
 --
@@ -299,7 +299,7 @@ mapStartTime = 0;
 --Gamestate 1 ,2 , 3 = End of Map 
 gstate = nil
 
--- for the evener, an perhaps if you want a nifty message a total of bla persons where killed in this game.
+-- for the evener
 evener = 0
 killcount = 0
 lastevener = 0
@@ -321,7 +321,7 @@ class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
 -------------------------------------------------------------------------------
 -- load DB functions
 -------------------------------------------------------------------------------
--- dofile(scriptpath .. "noq_db.lua") -- would allow to load a lua script, like include in php I think
+-- dofile(scriptpath .. "noq_db.lua") -- would allow to load a lua script
 require(noqpath .. "noq_db")
 DBCon:DoConnect()
 
@@ -381,7 +381,7 @@ end
 --	- when you change team
 --	- when you are spectator and switch from "free look mode" to "follow player mode"
 -- IRATA: check et_ClientSpawn()
--- TODO/NOTE: Afaik we only need to check if ClientBegin is called once to keep 1.2.7 compatinility
+-- TODO/NOTE: Afaik we only need to check if ClientBegin is called once to keep 1.2.7 compatibility
 function et_ClientBegin( _clientNum )
 	-- TODO Move this functionality in an own function
 	-- Get the player name if its not set
