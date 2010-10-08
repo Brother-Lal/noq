@@ -1276,17 +1276,8 @@ function saveSession( _clientNum )
 	end 
 
 	-- If player was ingame, we really should save his XP to!
-	-- TODO: think about updating this into client structure
+	-- TODO: think about updating this into client structure at runtime
 	-- The final questions is: Do we need the XP stuff at runtime in the client structure ?
---[[
-	local battle	=	et.gentity_get(_clientNum,"sess.skillpoints",0) 
-	local engi		=	et.gentity_get(_clientNum,"sess.skillpoints",1)
-	local medic		=	et.gentity_get(_clientNum,"sess.skillpoints",2)
-	local signals	=	et.gentity_get(_clientNum,"sess.skillpoints",3)
-	local light		=	et.gentity_get(_clientNum,"sess.skillpoints",4)
-	local heavy		=	et.gentity_get(_clientNum,"sess.skillpoints",5)
-	local covert	=	et.gentity_get(_clientNum,"sess.skillpoints",6)
---]]
 	slot[_clientNum]["xp0"] = et.gentity_get(_clientNum,"sess.skillpoints",0)
 	slot[_clientNum]["xp1"] = et.gentity_get(_clientNum,"sess.skillpoints",1)
 	slot[_clientNum]["xp2"] = et.gentity_get(_clientNum,"sess.skillpoints",2)
@@ -1494,7 +1485,6 @@ function execCmd(_clientNum , _cmd, _argw)
 		tokall()
 		return	
 	else
-	
 	-- This allows Shell commands. WARNING: As long as lua waits for the command to complete, NQ+ET arent responding to anything, they are HALTED!
 	-- Response of the Script is piped into NQ-Console(via print, so no commands)
 		if string.sub(str, 1,5) == "$SHL$" then
@@ -1505,8 +1495,7 @@ function execCmd(_clientNum , _cmd, _argw)
 			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")	
 		else
 		-- well, at the end we send the command to the console
-		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
-		
+		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )	
 		end
 	end
 end
@@ -1544,7 +1533,7 @@ end
 -- Parses commandos from commandofile function
 -------------------------------------------------------------------------------
 function parseconf()
-	local	datei = io.open ( (scriptpath .. "noq_commands.cfg" ) ,"r") 
+	local datei = io.open ( (scriptpath .. "noq_commands.cfg" ) ,"r") 
 
 	-- Shrub uses only 31 Levels. at least wiki says TODO: VERIFY
 	commands["cmd"] = {}
@@ -1557,8 +1546,8 @@ function parseconf()
 		commands["hlp"][i] = {}
 	end
 	
-	nmr = 1
-	nmr2 = 1
+	local nmr = 1
+	local nmr2 = 1
 	local lasti = nil
 	local lastcmd = nil
 	for line in datei:lines() do
@@ -1710,11 +1699,9 @@ end
 -- Action is taken if its true.
 -------------------------------------------------------------------------------
 function checkBalance( _force )
-
 	-- TODO: Do we need extra tables to store this kind of data ?
 	local axis = {} -- is this a field required?
 	local allies = {} -- is this a field required?
-
 	local numclients = 0
 
 	for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do					
@@ -2051,7 +2038,7 @@ end
 -- displays all maps and marks the current one
 -------------------------------------------------------------------------------
 function showmaps()
-	ent = et.trap_Cvar_Get( "campaign_maps" ); -- TODO: create and use global var ? 
+	local ent = et.trap_Cvar_Get( "campaign_maps" ); -- TODO: create and use global var ? 
 	local tat34 = {}
 	local sep = ","
 
@@ -2148,7 +2135,6 @@ end
 -------------------------------------------------------------------------------
 function listCMDs( _Client ,... )
 	local lvl = tonumber(et.G_shrubbot_level( _Client ) )
-	
 	local allcmds = "\"^F"
 	local yaAR = {}
 	
