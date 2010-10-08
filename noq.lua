@@ -596,14 +596,29 @@ function et_ClientCommand( _clientNum, _command )
 	end
 	
 	-- read in the commandsfile 
-	if usecommands ~= 0 then
-		if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
-			if arg0 == "readthefile" then 
+	if arg0 == "readthefile" then 
+		if usecommands ~= 0 then
+			if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
 					parseconf()
 				return 1
 			end
 		end
 	end
+	
+	-- lock to team
+	if arg0 == "team" and slot[_clientNum]["locktoTeam"] ~= nil then
+		if arg1 ~= slot[_clientNum]["locktoTeam"] then
+			if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
+			slot[_clientNum]["locktoTeam"] = nil
+			slot[_clientNum]["lockedTeamTill"] = 0
+			else
+			et.trap_SendServerCommand( _clientNum, "cp \"^1You are locked to a team by an admin")
+			et.trap_SendServerCommand( _clientNum, "chat \"^1You are locked to a team by an admin")
+			return 1
+			end
+		end
+	end
+	
 	
 end
 
@@ -811,6 +826,9 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["deadwep"] = "nothing"
 	slot[_clientNum]["selfkills"]	= 0
 	slot[_clientNum]["vsaydisabled"]	= false
+	slot[_clientNum]["locktoTeam"] = nil
+	slot[_clientNum]["lockedTeamTill"] = 0
+	
 	
 	slot[_clientNum]["death"] 	= 0
 	slot[_clientNum]["uci"] 	= 0
