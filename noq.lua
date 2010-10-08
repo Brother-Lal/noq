@@ -316,6 +316,7 @@ if mail == "1" then
 end
 
 team = { [0]="CONN","AXIS" , "ALLIES" , "SPECTATOR" }
+teamchars = { ['r']="AXIS" , ['b']="ALLIES" , ['s']="SPECTATOR" }
 class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
 
 -------------------------------------------------------------------------------
@@ -612,8 +613,8 @@ function et_ClientCommand( _clientNum, _command )
 			slot[_clientNum]["locktoTeam"] = nil
 			slot[_clientNum]["lockedTeamTill"] = 0
 			else
-			et.trap_SendServerCommand( _clientNum, "cp \"^1You are locked to a team by an admin")
-			et.trap_SendServerCommand( _clientNum, "chat \"^1You are locked to a team by an admin")
+			et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+			et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
 			return 1
 			end
 		end
@@ -775,6 +776,18 @@ function et_ConsoleCommand( _command )
 
 				et.trap_SendServerCommand( _targetid,"print \"" .. et.trap_Argv(2) .."\"")
 			end
+		end
+	end
+	
+	-- plock - lock a player to a team
+	if string.lower(et.trap_Argv(0)) == "plock" then
+		if (et.trap_Argc() >= 4) then 
+		_targetid = tonumber(et.trap_Argv(1))
+		_targetteam = et.trap_Argv(2)
+		_locktime = tonumber(et.trap_Argv(3))
+		slot[_targetid]["locktoTeam"] = _targetteam
+		slot[_targetid]["lockedTeamTill"] = _locktime + (et.trap_Milliseconds() /1000 )
+		et.trap_SendServerCommand( -1,"chat \"^7"..slot[_targetid]["netname"].." ^3 is now locked to the ^1"..teamchars[_targetteam].."^3 team\"")
 		end
 	end
 	-- add more cmds here ...
@@ -1495,7 +1508,7 @@ function execCmd(_clientNum , _cmd, _argw)
 			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")	
 		else
 		-- well, at the end we send the command to the console
-		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )	
+		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
 		end
 	end
 end
@@ -2203,8 +2216,8 @@ function listCMDs( _Client ,... )
 		
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "csay ".._Client.."\"^F I parsed " .. number .." commands for you. Access all by adding a page between ^20 ^Fand ^2" .. string.format("%.0f", ( number / 20 -1) ) .. " ^Fto your listingcommand.\"")
 	
-	-- TODO: FIX LUA-OUPUT IN C. There is some serious shit going on. Let that intact, it prevenst strange failures:
-	--      Ok, not all failures: try to di !cmdlist at the last page......
+	-- TODO: FIX LUA-OUPUT IN C. There is some serious shit going on. Let that intact, it prevents strange failures:
+	--      Ok, not all failures: try to do !cmdlist at the last page......
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _Client.. "\" \n \"")
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "")
 end
