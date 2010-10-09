@@ -1832,7 +1832,6 @@ end
 -------------------------------------------------------------------------------
 function sendOffMesg (_sender,_receiver, _msg)
 	--TODO: Escape function
-	_sender = string.gsub(_sender,"\'", "\\\'")
 	_receiver = string.gsub(_receiver,"\'", "\\\'")
 	_msg = string.gsub(_msg,"\'", "\\\'")
 	
