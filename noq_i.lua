@@ -234,6 +234,7 @@ function createTablesDBMS()
 				kills 		INTEGER 		DEFAULT 0,		\
 				tkills 		INTEGER 		DEFAULT 0,		\
 				death 		INTEGER 		DEFAULT 0,		\
+				revives		INTEGER 		DEFAULT 0,		\
 				uci 		INTEGER 		DEFAULT 0)" )
 			et.G_Print(res .. "\n")
 
@@ -354,6 +355,7 @@ function createTablesDBMS()
 				kills 		SMALLINT 	DEFAULT 0,										\
 				tkills 		SMALLINT 	DEFAULT 0,										\
 				death 		SMALLINT 	DEFAULT 0,										\
+				revives 	SMALLINT 	DEFAULT 0,										\
 				uci 		TINYINT 	DEFAULT 0,										\
 				INDEX(`pkey`),															\
 				INDEX(`ip`),															\
