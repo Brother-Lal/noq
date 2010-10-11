@@ -584,7 +584,7 @@ function et_ClientCommand( _clientNum, _command )
 	
 	-- send OfflineMesgs
 	if arg0 == "om" then
-		sendOffMesg (_clientNum,arg1 , arg2)
+		sendOffMesg (_clientNum,arg1 , et.ConcatArgs( 2 ) )
 		return 1
 	end
 	
