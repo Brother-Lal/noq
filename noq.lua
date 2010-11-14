@@ -56,7 +56,7 @@
 -------------------------------------------------------------------------------
 
 -- LUA module version
-version 		= "1" -- see version table
+version 		= "1" -- see version table // FIXME: version is an int ! -> version 		= 1
 databasecheck 	= 1
 
 homepath 		= et.trap_Cvar_Get("fs_homepath") .. "/"
@@ -171,7 +171,7 @@ end
 
 -- common
 -- enables mail option, make sure all required libs are available
-mail 			= getConfig("mail") 
+mail 			= tonumber((getConfig("mail")) 
 recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
 commandprefix 	= getConfig("commandprefix")
@@ -311,7 +311,7 @@ lastpoll = 0
 vsaydisabled = false
 
 -- mail setup
-if mail == "1" then
+if mail == 1 then
 	smtp = require("socket.smtp")
 end
 
@@ -1670,7 +1670,7 @@ end
 -- mail functions
 -------------------------------------------------------------------------------
 function sendMail( _to, _subject, _text )
-	if mail == "1" then
+	if mail == 1 then
 		-- TODO: clean up
 		local mailserv = getConfig("mailserv")
 		local mailport = getConfig("mailport")

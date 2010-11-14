@@ -74,7 +74,7 @@ DBCon = {
 		self.cur = assert( self.con:execute("SELECT version FROM version ORDER BY id DESC LIMIT 1") )
 		self.row = self.cur:fetch ({}, "a")
 		self.cur:close()
-		return self.row.version
+		return self.row.version // FIXME: tonumber(self.row.version)
 	end,
 	
 	-------------------------------------------------------------------------------
