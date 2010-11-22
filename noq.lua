@@ -635,16 +635,22 @@ function et_ShutdownGame( _restart )
 		-- Cycle between all possible clients
 		local endgametime = timehandle('N')
 		
-		for i=0, maxclients, 1 do
-			-- TODO: check slot[] if its existingreco
-			if et.gentity_get(i,"classname") == "player" then
-	     		-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
-				local timediff = timehandle('D',endgametime,slot[i]["start"])
-				et.G_LogPrint( "Noq: saved player "..i.." to Database\n" ) 
-				WriteClientDisconnect( i , endgametime, timediff )
-				slot[i] = nil
+		if tonumber(et.trap_Cvar_Get( "gamestate" )) == 0 then
+		-- this is the case if the warmup end - thus we dont save a session here.
+		else
+		-- save only in intermission.		
+			for i=0, maxclients, 1 do
+				-- TODO: check slot[] if its existingreco
+				if et.gentity_get(i,"classname") == "player" then
+					-- TODO : check if this works. Is the output from 'D' option in the needed format for the database?
+					local timediff = timehandle('D',endgametime,slot[i]["start"])
+					et.G_LogPrint( "Noq: saved player "..i.." to Database\n" ) 
+					WriteClientDisconnect( i , endgametime, timediff )
+					slot[i] = nil
+				end
 			end
 		end
+		
 		DBCon:DoDisconnect()
 	end
 		
@@ -2001,8 +2007,8 @@ function rm_pbalias( _myClient, _hisClient )
 	end
 
 	-- some status info printed to stdout
-	et.trap_SendServerCommand(myClient, "print \"\nEntries processed: " .. lineCounter .. "\"")
-	et.trap_SendServerCommand(myClient, "print \"\nEntries deleted: " .. deleted .. "\"")
+	et.trap_SendServerCommand(_myClient, "print \"\nEntries processed: " .. lineCounter .. "\"")
+	et.trap_SendServerCommand(_myClient, "print \"\nEntries deleted: " .. deleted .. "\"")
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "pb_sv_restart")
 	
 	return 1

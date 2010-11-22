@@ -109,7 +109,7 @@ DBCon = {
 			query = query .. " AND guid2='" .. thisGuid2 .. "'"
 		end
 
-		--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
+		--Search the in the database 
 		self.cur = assert (self.con:execute(query))
 		local numrows = self.cur:numrows()
 		local pms = {}
@@ -136,8 +136,8 @@ DBCon = {
 	end,
 	
 	-------------------------------------------------------------------------------
-	-- SetLogEntry
-	-- Searches your type to guid out of the DB
+	-- DelOM
+	-- Deletes a entry by its ide and guid2(used for offlinemsgs)
 	-------------------------------------------------------------------------------
 	['DelOM'] = function( self, thisid, thisguid)
 	
@@ -157,7 +157,7 @@ DBCon = {
 	end,
 	
 	-------------------------------------------------------------------------------
-	-- createNewPlayer
+	-- DoCreateNewPlayer
 	-- Create a new Player: write to Database, set Xp 0
 	-- maybe could also be used to reset Player, as pkey is unique
 	-------------------------------------------------------------------------------
