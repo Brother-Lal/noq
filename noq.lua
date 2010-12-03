@@ -408,6 +408,7 @@ function et_ClientBegin( _clientNum )
 		
 		if slot[_clientNum]["new"] == true then
 			createNewPlayer ( _clientNum )
+			slot[_clientNum]["setxp"] = nil
 		else
 			-- if we have xprestore, we need to restore now!
 			if slot[_clientNum]["setxp"] == true then
@@ -822,7 +823,8 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	
 	--'static' clientfields
 	slot[_clientNum]["pkey"] 	= string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
-	slot[_clientNum]["ip"] 		= et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
+	slot[_clientNum]["ip"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
+	local s,local e,slot[_clientNum]["ip"] = string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
 	slot[_clientNum]["isBot"] 	= _isBot
 	slot[_clientNum]["conname"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
@@ -1492,6 +1494,9 @@ function execCmd(_clientNum , _cmd, _argw)
 	str = string.gsub(str, "<PART2GUID>", et.Info_ValueForKey( et.trap_GetUserinfo( otherplayer ), "cl_guid" ))
 	str = string.gsub(str, "<PART2LEVEL>", et.G_shrubbot_level (otherplayer) )
 	str = string.gsub(str, "<PART2NAME>", et.Q_CleanStr(et.gentity_get(otherplayer,"pers.netname")))
+
+	str = string.gsub(str, "<PART2IP>", slot[_clientNum]["ip"] )
+	
 
 	--added for !afk etc, use when assume is ok 
 	 str = string.gsub(str, "<PART2IDS>", otherplayer )

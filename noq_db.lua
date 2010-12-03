@@ -137,7 +137,7 @@ DBCon = {
 	
 	-------------------------------------------------------------------------------
 	-- DelOM
-	-- Deletes a entry by its ide and guid2(used for offlinemsgs)
+	-- Deletes a entry by its id and guid2(used for offlinemsgs)
 	-------------------------------------------------------------------------------
 	['DelOM'] = function( self, thisid, thisguid)
 	
