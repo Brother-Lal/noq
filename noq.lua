@@ -3,15 +3,19 @@
 -- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
 -- Both are supported and in case of sqlite there is no extra sqlite installation needed.
 --
--- NQ Lua team 2009-2010 - No warranty :)
+-- NQ Lua team 2009-2011 - No warranty :)
  
 -- NQ Lua team is:
--- IlDuca
--- Luborg
--- Hose
 -- ailmanki
 -- BubbaG1
+-- Hose
+-- IlDuca
 -- IRATA [*]
+-- Luborg
+
+-- Webpage: http://dev.kernwaffe.de/projects/noq/
+-- Wiki: 	http://dev.kernwaffe.de/projects/noq/wiki/
+
 
 -- Setup:
 -- - Make sure all required Lua SQL libs are on server and run properly. 
@@ -20,12 +24,12 @@
 --		SQLite will create a file "noquarter.sqlite" at this location.
 --
 -- - Copy the content of this path to fs_homepath/fs_game/nq/noq
--- - for example /home/<USER>/.etwolf/nq/noq (default case if fs_homepath is not set by admin))
+-- - for example /home/<USER>/.etwolf/nq/noq (default case if fs_homepath is not set by admin)
 -- 
 -- - Set lua_modules "noq/noq.lua noq/noq_i.lua"
 --   
 -- - Make the config your own. There is no need to change code in the NOQ. If you want to see changes use the forum
--- - Restart the server and check if all lua_modules noq_i.lua, noq_c.lua (optinonal) and noq.lua are registered.
+-- - Restart the server and check if all lua_modules noq_i.lua, noq_c.lua (optional) and noq.lua are registered.
 -- - Call /rcon !sqlcreate - Done. Your system is set up - you should remove noq_i.lua from lua_modules now.
 --
 -- Files:
@@ -57,7 +61,7 @@
 
 -- LUA module version
 version 		= "1" -- see version table // FIXME: version is an int ! -> version 		= 1
-databasecheck 	= 1
+
 
 homepath 		= et.trap_Cvar_Get("fs_homepath") .. "/"
 fs_game 		= et.trap_Cvar_Get("fs_game") .. "/"
@@ -150,7 +154,7 @@ noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 meansofdeath 	= assert(table.load( scriptpath .. "noq_mods.cfg")) -- all MODS 
 weapons 		= assert(table.load( scriptpath .. "noq_weapons.cfg")) -- all weapons
 mod				= assert(table.load( scriptpath .. "noq_mods_names.cfg")) -- mods by name
-w				= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- waepons by name
+w				= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- weapons by name
 -- end TODO
 greetings		= assert(table.load( scriptpath .. "noq_greetings.cfg")) -- all greetings, customize as wished
 
@@ -171,6 +175,7 @@ end
 
 -- common
 -- enables mail option, make sure all required libs are available
+databasecheck 	= tonumber((getConfig("useDB")) 
 mail 			= tonumber((getConfig("mail")) 
 recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
@@ -193,8 +198,8 @@ debug_getInfoFromTable(noqvartable)
 --[[-----------------------------------------------------------------------------
 -- DOCU of Datastructurs in this script
 --
--- The table slot[clientNum] is created each time someone connect and will store the current client informations
--- The current fields are:
+-- The table slot[clientNum] is created each time someone connects and will store the current client information
+-- The current fields are(with default values):
 -- 
 -- ["team"] = false
 --

@@ -8,6 +8,7 @@ return {
 	["dbpassword"]="dbpass",
 	["dbhostname"]="dbhost",
 	["dbport"]="3306",   	
+	["useDB"]="1",   	
 	["mail"] = "0",
 	["mailserv"] = "XXX",
 	["mailport"] = "25",
