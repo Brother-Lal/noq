@@ -447,7 +447,6 @@ function et_ClientDisconnect( _clientNum )
 		WriteClientDisconnect( _clientNum , endtime, timediff )
 	end
 	slot[_clientNum] = {}
-	slot[_clientNum]["ntg"] = false
 end
 
 function et_ClientCommand( _clientNum, _command )
@@ -1801,9 +1800,9 @@ end
 -- only call after netname is set!
 -------------------------------------------------------------------------------
 function greetClient( _clientNum )
-	local lvl = slot[_clientNum]["level"]
+	local lvl = tonumber(slot[_clientNum]["level"])
 	if greetings[lvl] ~= nil then
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "cpm " .. string.gsub(greetings[lvl], "<COLOR_PLAYER>", slot[_clientNum]["netname"]))
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "cpm " .. string.gsub(greetings[lvl], "<COLOR_PLAYER>", slot[_clientNum]["netname"]))
 	end
 end
 
