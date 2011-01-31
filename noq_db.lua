@@ -3,15 +3,16 @@
 -- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
 -- Both are supported and in case of sqlite there is no extra sqlite installation needed.
 --
--- NQ Lua team 2009-2010 - No warranty :)
+-- NQ Lua team 2009-2011 - No warranty :)
  
 -- NQ Lua team is:
--- IlDuca
--- Luborg
--- Hose
 -- ailmanki
 -- BubbaG1
+-- Hose
+-- IlDuca
 -- IRATA [*]
+-- Luborg
+
 
 -------------------------------------------------------------------------------
 -- DBMS
@@ -74,7 +75,7 @@ DBCon = {
 		self.cur = assert( self.con:execute("SELECT version FROM version ORDER BY id DESC LIMIT 1") )
 		self.row = self.cur:fetch ({}, "a")
 		self.cur:close()
-		return self.row.version // FIXME: tonumber(self.row.version)
+		return self.row.version -- FIXME: tonumber(self.row.version)
 	end,
 	
 	-------------------------------------------------------------------------------

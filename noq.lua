@@ -175,8 +175,8 @@ end
 
 -- common
 -- enables mail option, make sure all required libs are available
-databasecheck 	= tonumber((getConfig("useDB")) 
-mail 			= tonumber((getConfig("mail")) 
+databasecheck 	= tonumber((getConfig("useDB"))) 
+mail 			= tonumber((getConfig("mail"))) 
 recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
 color 			= getConfig("color")
 commandprefix 	= getConfig("commandprefix")
@@ -484,8 +484,8 @@ function et_ClientCommand( _clientNum, _command )
 		
 		if et.G_shrubbot_permission( _clientNum, "3" ) == 1 then -- and finally, a silent !command
 			if string.sub( arg0 , 1, 1) == commandprefix then
-				gotCmd ( _clientNum, _command, nil)
-				return 0
+				local returnvalue =  gotCmd ( _clientNum, _command, nil)
+				return returnvalue
 			end
 		end
 		 
@@ -829,7 +829,7 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	--'static' clientfields
 	slot[_clientNum]["pkey"] 	= string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
 	slot[_clientNum]["ip"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
-	local s,local e,slot[_clientNum]["ip"] = string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
+	slot[_clientNum]["ip"] = string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
 	slot[_clientNum]["isBot"] 	= _isBot
 	slot[_clientNum]["conname"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
