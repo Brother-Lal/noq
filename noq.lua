@@ -1,7 +1,7 @@
 -- The NOQ - No Quarter Lua next generation game manager
 --
 -- A Shrubbot replacement and also kind of new game manager and tracking system based on mysql or sqlite3. 
--- Both are supported and in case of sqlite there is no extra sqlite installation needed.
+-- Both are supported and in case of sqlite there is no extra sqlite installation needed. Use with NQ 1.2.9 and later only!
 --
 -- NQ Lua team 2009-2011 - No warranty :)
  
@@ -15,7 +15,8 @@
 
 -- Webpage: http://dev.kernwaffe.de/projects/noq/
 -- Wiki: 	http://dev.kernwaffe.de/projects/noq/wiki/
-
+--
+-- Please don't do any posts related to this script to the NQ forums (http://forums.shitstorm.org/index.php)
 
 -- Setup:
 -- - Make sure all required Lua SQL libs are on server and run properly. 
@@ -38,18 +39,18 @@
 -- noq_config.cfg 			- Stores all data to run & control the NOQ. Make this file your own!
 -- noq_commands.cfg 		- Commands definition file - Make this file your own! 
 --
--- noq_mods_names.cfg 		- Methods of death enum file - never touch!
--- noq_mods.cfg 			- Methods of death enum file - never touch!
--- noq_weapons.cfg 			- Weapon enum config file - never touch!
--- noq_weapons_names.cfg	- Weapon enum config file - never touch!
+-- noq_mods_names_<NQ_VERSION>.cfg 		- Methods of death enum file - never touch!
+-- noq_mods_<NQ_VERSION>.cfg 			- Methods of death enum file - never touch!
+-- noq_weapons_<NQ_VERSION>.cfg 		- Weapon enum config file - never touch!
+-- noq_weapons_names_<NQ_VERSION>.cfg	- Weapon enum config file - never touch!
+-- Note: Delete files not matching your version. Example: If you run NQ 1.2.9 delete the files with suffix 130
 --
 -- nqconst.lua 				- No Quarter constants
 -- noq_db.lua 				- No Quarter DB functions
 --
 
--- Notes: 
--- - Use with NQ 1.2.8 and later only	
--- - Again - you don't need to modyfiy any code in this script. If you disagree contact the dev team.
+-- Note: 	
+-- Again - you don't have to modyfiy any code in this script. If you disagree contact the dev team.
 
 
 -------------------------------------------------------------------------------
