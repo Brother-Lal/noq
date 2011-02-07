@@ -63,11 +63,13 @@
 -- LUA module version
 version 		= "1" -- see version table // FIXME: version is an int ! -> version 		= 1
 
+-- TODO get from 'version' cvar '/' for linux/mac, '\' for win
+pathSeparator   = "/"
 
-homepath 		= et.trap_Cvar_Get("fs_homepath") .. "/"
-fs_game 		= et.trap_Cvar_Get("fs_game") .. "/"
-pbpath 			= homepath .. "/pb/"
-noqpath			= "noq/"
+homepath 		= et.trap_Cvar_Get("fs_homepath") .. pathSeparator
+fs_game 		= et.trap_Cvar_Get("fs_game") .. pathSeparator
+pbpath 			= homepath .. "pb" .. pathSeparator
+noqpath			= "noq" .. pathSeparator
 scriptpath 		= homepath .. fs_game .. noqpath  -- full qualified path for the NOQ scripts
 
 -------------------------------------------------------------------------------
