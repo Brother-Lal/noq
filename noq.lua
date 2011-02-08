@@ -490,7 +490,7 @@ function et_ClientCommand( _clientNum, _command )
 				gotCmd ( _clientNum, _command, true)
 			end
 			-- return !!!
-		elseif if arg0 == "readthefile" then -- read in the commandsfile  
+		elseif arg0 == "readthefile" then -- read in the commandsfile  
 			if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
 				parseconf()
 				return 1
