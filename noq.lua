@@ -476,15 +476,28 @@ function et_ClientCommand( _clientNum, _command )
 
 	-- switch to disable the !commands 
 	if usecommands ~= 0 then
-		if arg0 == "say" and string.sub( arg1, 1,1) == commandprefix then -- this means normal say
-			debugPrint("print","Got saycommand: " .. _command)
-			local returnvalue = gotCmd( _clientNum, _command , false)
-			return returnvalue
+	
+		if arg0 == "say" then
+			if string.sub( arg1, 1,1) == commandprefix then -- this means normal say
+				debugPrint("print","Got saycommand: " .. _command)
+				local returnvalue = gotCmd( _clientNum, _command , false)
+				return returnvalue
+				-- return gotCmd( _clientNum, _command , false)
+			end
+			-- return !!!
+		elseif arg0 == "vsay" then 
+			if string.sub( arg2 , 1, 1) == commandprefix then -- this means a !command with vsay
+				gotCmd ( _clientNum, _command, true)
+			end
+			-- return !!!
+		elseif if arg0 == "readthefile" then -- read in the commandsfile  
+			if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
+				parseconf()
+				return 1
+			end
+			-- return !!!
 		end
 		
-		if arg0 == "vsay" and string.sub( arg2 , 1, 1) == commandprefix then -- this means a !command with vsay
-			gotCmd ( _clientNum, _command, true)
-		end
 		
 		if et.G_shrubbot_permission( _clientNum, "3" ) == 1 then -- and finally, a silent !command
 			if string.sub( arg0 , 1, 1) == commandprefix then
@@ -495,6 +508,9 @@ function et_ClientCommand( _clientNum, _command )
 		 
 	end
 
+
+	-- CMD chain ...
+	--
 	-- register command
 	if arg0 == "register" then
 		--local arg1 = string.lower(et.trap_Argv(1)) -- username - see start of et_ClientCommand
@@ -525,10 +541,9 @@ function et_ClientCommand( _clientNum, _command )
 			et.trap_SendServerCommand( _clientNum, "print \"^3Password will be your password for your webaccess  \n\"" ) 
 			return 1
 		end
-	end
 	
 	-- Voting restriction
-	if arg0 == "callvote" then
+	elseif arg0 == "callvote" then
 	   -- restriction is enabled	
 		if polldist ~= -1 then
 
@@ -570,10 +585,10 @@ function et_ClientCommand( _clientNum, _command )
 				
 			lastpoll = seconds
 		end
-	end
-	
+		-- return !!!
+		
 	-- /kill restriction
-	if arg0 == "kill" then	
+	elseif arg0 == "kill" then	
 		if maxSelfKills ~= -1 then
 			if slot[_clientNum]["selfkills"] > maxSelfKills then
 				et.trap_SendServerCommand( _clientNum, "cp \"^1You don't have any more selfkills left!") 
@@ -584,53 +599,43 @@ function et_ClientCommand( _clientNum, _command )
 			et.trap_SendServerCommand( _clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
 			return 0
 		end
-	end
-	
+		-- return !!!
+		
 	-- check for OfflineMesgs
-	if arg0 == "mail" then
+	elseif arg0 == "mail" then
 		checkOffMesg (_clientNum)
 		return 1
-	end
 	
 	-- send OfflineMesgs
-	if arg0 == "om" then
+	elseif arg0 == "om" then
 		sendOffMesg (_clientNum,arg1 , et.ConcatArgs( 2 ) )
 		return 1
-	end
 	
 	--erase OfflineMesgs
-	if arg0 == "rmom" then
+	elseif arg0 == "rmom" then
 		arg1 = string.gsub(arg1,"\'", "\\\'")
 		DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
 		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
 		return 1
-	end
-	
-	-- read in the commandsfile 
-	if arg0 == "readthefile" then 
-		if usecommands ~= 0 then
-			if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
-				parseconf()
-				return 1
-			end
-		end
-	end
 	
 	-- lock to team
-	if arg0 == "team" and slot[_clientNum]["locktoTeam"] ~= nil then
-		if arg1 ~= slot[_clientNum]["locktoTeam"] then
-			if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
-				slot[_clientNum]["locktoTeam"] = nil
-				slot[_clientNum]["lockedTeamTill"] = 0
-				-- TODO return!
-			else
-				et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-				et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-				return 1
+	elseif arg0 == "team" then
+		if slot[_clientNum]["locktoTeam"] ~= nil then
+			if arg1 ~= slot[_clientNum]["locktoTeam"] then
+				if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
+					slot[_clientNum]["locktoTeam"] = nil
+					slot[_clientNum]["lockedTeamTill"] = 0
+					-- TODO return!
+				else
+					et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+					et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+					return 1
+				end
 			end
+			-- return !!!
 		end
+		-- return !!!
 	end
-	
 	
 end
 
