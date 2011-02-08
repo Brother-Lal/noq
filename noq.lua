@@ -452,6 +452,8 @@ function et_ClientDisconnect( _clientNum )
 	slot[_clientNum] = {}
 end
 
+-- called for every clientcommand
+-- return 1 if intercepted, 0 if passthrough
 function et_ClientCommand( _clientNum, _command )
 	local arg0 = string.lower(et.trap_Argv(0))
 	local arg1 = string.lower(et.trap_Argv(1))
@@ -608,7 +610,7 @@ function et_ClientCommand( _clientNum, _command )
 	if arg0 == "readthefile" then 
 		if usecommands ~= 0 then
 			if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
-					parseconf()
+				parseconf()
 				return 1
 			end
 		end
@@ -618,12 +620,13 @@ function et_ClientCommand( _clientNum, _command )
 	if arg0 == "team" and slot[_clientNum]["locktoTeam"] ~= nil then
 		if arg1 ~= slot[_clientNum]["locktoTeam"] then
 			if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
-			slot[_clientNum]["locktoTeam"] = nil
-			slot[_clientNum]["lockedTeamTill"] = 0
+				slot[_clientNum]["locktoTeam"] = nil
+				slot[_clientNum]["lockedTeamTill"] = 0
+				-- TODO return!
 			else
-			et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-			et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-			return 1
+				et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+				et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+				return 1
 			end
 		end
 	end
@@ -762,6 +765,8 @@ function et_Obituary( _victim, _killer, _mod )
 	lastkill = _killer
 end
 
+-- called for every clientcommand
+-- return 1 if intercepted, 0 if passthrough
 function et_ConsoleCommand( _command )
 	-- debugPrint("cpm", "ConsoleCommand - command: " .. _command )
 	
