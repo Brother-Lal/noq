@@ -1,33 +1,32 @@
 \documentclass[12pt,a4paper]{article}
-\usepackage[english, english]{babel} % Neue Rechtschreibung f"ur Kapitel, trennung
-\usepackage[utf8]{inputenc} %eingabe mit noch mehr umlauten
+\usepackage[english, english]{babel} %English 
+\usepackage[utf8]{inputenc} %utf8 with more special chars
 \usepackage[T1]{fontenc}       % 
-\usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.3cm,bottom=2.3cm]{geometry} %Seitenr"ander
+\usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.3cm,bottom=2.3cm]{geometry} %Page-geometry
 
-\usepackage{color}			% falls Farbe verwendet werden soll...
-\usepackage{amsmath}		% verbesserter Mathe- Formelsatz
-\usepackage{graphicx}		% Graphik-unterst"utzung
-\usepackage{setspace}		% zeilenabstand
-\usepackage{amsfonts}		% schrift mit doppelstrich
-%\usepackage{yfonts}			% frakturschreibweise
+\usepackage{color}			% Colors
+\usepackage{amsmath}		% Better Math
+\usepackage{graphicx}		% Using Pictures and graphs?
+\usepackage{setspace}		% define row distance
+\usepackage{amsfonts}		% fonts
 
-\usepackage{ifthen} % unterscheiden	
+\usepackage{ifthen} % We need some basic control
 
 \usepackage{listings} \lstset{ frame= single , breaklines=true} \lstset{language=} 
 
-% Kopf- und Fuzeile
+% Header and footer
 \usepackage{fancyhdr}
 \pagestyle{fancy}
  \fancyhead[L]{\thepage}
 %\fancyhf{}
 \renewcommand{\headrulewidth}{0.2pt}
-% Fußzeile links bzw. innen
+%Footer left
 \fancyfoot[L]{kernwaffe.de}
 %\fancyfoot[R]{}
 %\fancyfoot{}
-% Fuzeile rechts bzw. au\ss{}en 
+% Footer right
 \fancyhead[R]{Manual for NQ/NOQ}
-% Linie unten
+% Line in footer
 %\renewcommand{\footrulewidth}{0.2pt}
 \onehalfspacing
 
@@ -39,22 +38,10 @@
   {\normalfont\normalsize\bfseries}}
 \makeatother
 
-
-%\numberwithin{equation}{section}%Setzt den equation-Zaehler nach jedem Kapitel zurueck
-%\numberwithin{section}{part}%Setzt den equation-Zaehler nach jedem Kapitel zurueck
-
-\renewcommand{\theequation}{\arabic{section}.\arabic{equation}}%Definiert den Stil der Gleichungsangaben
-\newcommand{\eref}[1]{Gl. (\ref{#1})} %Referenz zu Gleichung
-\newcommand{\mref}[1]{(\ref{#1})} 	%Referenz zu Gleichung ohne Gl. 
-\newcommand{\pref}[1]{Abbildung \ref{#1}}
-\numberwithin{footnote}{page} %Fussnotenz"ahler auf jeder Seite zur"uckstellen
-\renewcommand{\thefootnote}{\arabic{footnote}} % Fussnoten-Stil:)
-
 \newcommand{\notice}[1]{\textcolor{red}{\em (#1)}} % for red notices while working
-\newcommand{\source}[2]{\footnote{Quelle \cite{#1}{, #2}}}
 
-\newboolean{onKW} %Deklaration
-\setboolean{onKW}{false} %Zuweisung
+\newboolean{onKW} %Declaration
+\setboolean{onKW}{false} %assignment
 %\ifthenelse{\boolean{onKW}}{}{}
 
 \author{ by luborg}  %Autor
@@ -63,17 +50,14 @@ Noquarter and NOQ\\
 \includegraphics{noquarter.jpg} \\
 \ifthenelse{\boolean{onKW}}{ Kernwaffe Edition }{ Open Edition }
 \\
-}			%Titel
-\date{ \copyright\today}				%Erstellungsdatum
+}			%title
+\date{ \copyright\today}				%date
 
 \begin{document}
 
-
 \maketitle
 
-
 \newpage
-
 
 \setcounter{page}{2}
 
@@ -83,13 +67,14 @@ Noquarter and NOQ\\
 \part{Noquarter}
 \section{Builtin Commands}
 
+%This are sections for Kw and open, so we differ
 \newcommand{\inclnqcmds}{\include{nqcmds} }
 \newcommand{\inclnqkwcmds}{\include{nqcmdskw} }
 
 \ifthenelse{\boolean{onKW}}{\inclnqcmds}{\inclnqkwcmds}
 
-
 \newpage
+
 \part{NOQ}
 \section{Featurelist}
 NOQ Features include, but are not limited to:
@@ -231,7 +216,7 @@ The output of the command is sent to the ingame chat.
 
 \paragraph{Lua Commands}
 
-Commands starting with \$LUA\$ will be parsed and executed a Lua-code in the LuaVM.
+Commands starting with \$LUA\$ will be parsed and executed as Lua-code in the LuaVM, thus able to access al of NOQ's and ET's informations and data structures.
 
 \begin{lstlisting}
  0 - showmaps = $LUA$ showmaps()
@@ -248,7 +233,7 @@ Some functions are predefined in the mod and therefore these builtin commands ca
 \subsection{Greetings}
 
 The NOQ can greet players individually, and he can announce publicly that a specific player just joined the game.
-Public announcements per level are saved in noq\_greetings.cfg (see for example and customize it), while the personal message is in the main config:
+Public announcements per level are saved in noq\_greetings.cfg (see for it for an example and customize it), while the personal message is in the main config:
 \\
 \begin{tabular}{l l|l}
 \hline & & \\
@@ -281,7 +266,6 @@ Config:\\
  \hline
 \end{tabular}
 
-	
 
 \subsection{The Evener}
 
@@ -397,8 +381,8 @@ Time is the time in seconds, after wich the player is able to leave the team aga
 
 \section{Commands}
 
+%This are sections for KW-use-only, not in svn.
 \newcommand{\inclkwcmds}{\include{kwcmds} }
-%adds a new section KWADMINS
 \newcommand{\inclkwadmins}{\include{kwadmins} }
 
 \ifthenelse{\boolean{onKW}}{\inclkwcmds}{}
