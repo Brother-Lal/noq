@@ -1,0 +1,408 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[english, english]{babel} % Neue Rechtschreibung f"ur Kapitel, trennung
+\usepackage[utf8]{inputenc} %eingabe mit noch mehr umlauten
+\usepackage[T1]{fontenc}       % 
+\usepackage[a4paper,left=1.5cm,right=1.5cm,top=2.3cm,bottom=2.3cm]{geometry} %Seitenr"ander
+
+\usepackage{color}			% falls Farbe verwendet werden soll...
+\usepackage{amsmath}		% verbesserter Mathe- Formelsatz
+\usepackage{graphicx}		% Graphik-unterst"utzung
+\usepackage{setspace}		% zeilenabstand
+\usepackage{amsfonts}		% schrift mit doppelstrich
+%\usepackage{yfonts}			% frakturschreibweise
+
+\usepackage{ifthen} % unterscheiden	
+
+\usepackage{listings} \lstset{ frame= single , breaklines=true} \lstset{language=} 
+
+% Kopf- und Fuzeile
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+ \fancyhead[L]{\thepage}
+%\fancyhf{}
+\renewcommand{\headrulewidth}{0.2pt}
+% Fußzeile links bzw. innen
+\fancyfoot[L]{kernwaffe.de}
+%\fancyfoot[R]{}
+%\fancyfoot{}
+% Fuzeile rechts bzw. au\ss{}en 
+\fancyhead[R]{Manual for NQ/NOQ}
+% Linie unten
+%\renewcommand{\footrulewidth}{0.2pt}
+\onehalfspacing
+
+%paragraph newline fix
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+  {-3.25ex\@plus -1ex \@minus -.2ex}%
+  {1.5ex \@plus .2ex}%
+  {\normalfont\normalsize\bfseries}}
+\makeatother
+
+
+%\numberwithin{equation}{section}%Setzt den equation-Zaehler nach jedem Kapitel zurueck
+%\numberwithin{section}{part}%Setzt den equation-Zaehler nach jedem Kapitel zurueck
+
+\renewcommand{\theequation}{\arabic{section}.\arabic{equation}}%Definiert den Stil der Gleichungsangaben
+\newcommand{\eref}[1]{Gl. (\ref{#1})} %Referenz zu Gleichung
+\newcommand{\mref}[1]{(\ref{#1})} 	%Referenz zu Gleichung ohne Gl. 
+\newcommand{\pref}[1]{Abbildung \ref{#1}}
+\numberwithin{footnote}{page} %Fussnotenz"ahler auf jeder Seite zur"uckstellen
+\renewcommand{\thefootnote}{\arabic{footnote}} % Fussnoten-Stil:)
+
+\newcommand{\notice}[1]{\textcolor{red}{\em (#1)}} % for red notices while working
+\newcommand{\source}[2]{\footnote{Quelle \cite{#1}{, #2}}}
+
+\newboolean{onKW} %Deklaration
+\setboolean{onKW}{false} %Zuweisung
+%\ifthenelse{\boolean{onKW}}{}{}
+
+\author{ by luborg}  %Autor
+\title{An Admins Manual \\
+Noquarter and NOQ\\
+\includegraphics{noquarter.jpg} \\
+\ifthenelse{\boolean{onKW}}{ Kernwaffe Edition }{ Open Edition }
+\\
+}			%Titel
+\date{ \copyright\today}				%Erstellungsdatum
+
+\begin{document}
+
+
+\maketitle
+
+
+\newpage
+
+
+\setcounter{page}{2}
+
+\tableofcontents   %TOC
+
+\newpage 
+\part{Noquarter}
+\section{Builtin Commands}
+
+\newcommand{\inclnqcmds}{\include{nqcmds} }
+\newcommand{\inclnqkwcmds}{\include{nqcmdskw} }
+
+\ifthenelse{\boolean{onKW}}{\inclnqcmds}{\inclnqkwcmds}
+
+
+\newpage
+\part{NOQ}
+\section{Featurelist}
+NOQ Features include, but are not limited to:
+
+\subsection{Database Connectivity}
+
+The NOQ has the possibility to use a DMBS as a backend for most of its advanced commands.
+This is strongly encouraged, as most features like bans, mutes and XPSave rely on this.
+\\
+The configpart for the DBMS:
+\\
+\\
+\begin{tabular}{l l|l}
+\hline & & \\
+&	["dbms"]="Type", 			& Possible: mySQL and SQLite \\
+&	["dbname"]="dbname", 		& Databasename, if Sqlite then name of DBFile\\
+&	["dbuser"]="dbuser", 		& Only needed for mySQL\\
+&	["dbpassword"]="dbpass", 	& Only needed for mySQL\\
+&	["dbhostname"]="dbhost", 	& Only needed for mySQL\\
+&	["dbport"]="3306",    		& Only needed for mySQL\\
+ & &  \\
+ \hline
+\end{tabular}	
+		
+
+\subsection{Bans/Mutes}
+If you have a DBMS activated, Mutes and Bans are automaticly active.
+Banning and muting is only possible trough a custom command or direct DB-Interaction till now.
+
+\subsection{XPSave}
+Also active as soon as a DBMS is accessible.
+The config has some options:
+\\
+\\
+\begin{tabular}{l l|l}
+\hline & & \\
+& 	["recordbots"] = "0", 	& This will toggle if bots are recorded into the DB. Values:(0/1)\\
+& 	["xprestore"] = "1",	& This will enable XPRestore out of database, wich works best on multiple Servers\\
+ & &  \\
+ \hline
+\end{tabular}
+
+\newpage
+
+\subsection{Custom Commands}
+
+The NOQ's most useful feature are its custom commands, wich are oriented at the ETAdminMod syntax, but are more powerful. They are defined in noq\_commands.cfg
+\\
+The basic Syntax is:
+
+  $[level] - commandname = [command]$
+\\
+mind the whitespace before the level!
+Comments can be done via
+$\#comment$
+\\
+All players with equal or higher level will be able to use the command. \\
+If you want ingame help for a command, you have to add a helptext(and optional the syntax):
+\begin{lstlisting}
+[level] - commandname = [command]
+help	= this is the helptext
+syntax	= here goes the syntax
+[level] - nextcommandname = [nextcommand]
+\end{lstlisting}
+Config options for Commands are:
+\begin{table}[h]
+\begin{tabular}{l l|l}
+\hline & & \\
+ &	 ["usecommands"] = "0", & General switch to disable/enable the commands. Values:(0/1)\\
+ & ["commandprefix"] = "!", & the prefix used to trigger the command. \\ 
+ & &  \\
+ \hline
+\end{tabular}
+\end{table}
+\\
+Like in ETAdminmod, you can use several placeholders, wich will be replaced by their value:
+\begin{table}[h]\footnotesize
+\begin{tabular}{l l|l}
+\hline & & \\
+ & $<$PARAMETER$>$					& text followed by the command.  \\
+ && \begin{small}
+(Can be used to enter multiple values.)
+\end{small} \\
+ & $<$CLIENT\_ID$>$					& the client id of the calling player.\\
+ & $<$PLAYER\_CLASS$>$ 				& class of calling player\\
+ & $<$PLAYER\_TEAM$>$ 				& side / team of calling player \\
+ & $<$PLAYER$>$						& Name of the calling player (without color codes)\\
+ & $<$COLOR\_PLAYER$>$				& Name of the calling player (with color codes)\\
+ & $<$GUID$>$						& Guid of the calling player\\
+ 
+ & $<$PLAYER\_ LAST\_VICTIM\_ID$>$ 		& 		\\
+ & $<$PLAYER\_ LAST\_VICTIM\_NAME$>$ 	&		\\
+ & $<$PLAYER\_ LAST\_VICTIM\_CNAME$>$ 	&		\\
+ & $<$PLAYER\_ LAST\_VICTIM\_WEAPON$>$ 	&		\\
+
+ & $<$PLAYER\_ LAST\_KILLER\_ID$>$ 		&		\\ 
+ & $<$PLAYER\_ LAST\_KILLER\_NAME$>$ 	& 		\\ 
+ & $<$PLAYER\_ LAST\_KILLER\_CNAME$>$ 	& 		\\ 
+ & $<$PLAYER\_ LAST\_KILLER\_WEAPON)$>$ & 		\\ 
+ 
+ & $<$PART2\_CLASS$>$					& class				\\
+ & $<$PART2\_TEAM$>$ 					& team				\\
+ & $<$PART2CNAME$>$						& colored name		\\
+ & $<$PART2ID$>$						& id				\\
+ & $<$PART2PBID$>$						& punkbuster slotnumber\\
+ & $<$PART2GUID$>$						& guid				\\
+ & $<$PART2LEVEL$>$						& adminlevel		\\
+ & $<$PART2NAME$>$						& name without color\\
+
+ & &  \\
+ \hline
+\end{tabular}
+\end{table}
+
+
+
+\paragraph{Serverconsole Commands}
+This is the basic type of command, wich is just a rework of Noquarters own custom commands.
+Both are directly executed at the serverconsole.
+Examples:
+
+\begin{lstlisting}
+ 2 - swap                    	= swap_teams
+ 0 - beer			= qsay A nice sexy waitress brings ^7<COLOR_PLAYER>^7 a nice cup of beer!
+\end{lstlisting}
+
+
+
+\paragraph{Shell Commands} 
+Commands starting with \$SHL\$ are shellcommands, and are executed in an OS-Shell.
+Especially handy on Linux.
+The output of the command is sent to the ingame chat.
+
+\begin{lstlisting}
+ 2 - showserverinfo                 = $SHL$ /usr/local/bin/show.pl <COLOR_PLAYER>
+\end{lstlisting}
+
+
+
+\paragraph{Lua Commands}
+
+Commands starting with \$LUA\$ will be parsed and executed a Lua-code in the LuaVM.
+
+\begin{lstlisting}
+ 0 - showmaps = $LUA$ showmaps()
+ 2 - evener = $LUA$ checkBalance(true) # this calls the Evener and allows him to take action
+ 0 - cmdlist = $LUA$ listCmds(<CLIENT_ID>, "<PARAMETER>") # !cmdlist command
+  0 - ratio = $LUA$ et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \" ^2Kills^7\\^1TKS ^2" .. et.gentity_get(<CLIENT_ID>, "sess.kills") .."^7\\^1".. et.gentity_get(<CLIENT_ID>, "sess.team_kills") .. "^7" ); 
+ # Yeah, thats a bigger one. It will show Kill/Death ratio
+\end{lstlisting}
+
+You may notice that in most examples just one function is called.
+Some functions are predefined in the mod and therefore these builtin commands can be easy renamed and unlock for different levels.
+
+
+\subsection{Greetings}
+
+The NOQ can greet players individually, and he can announce publicly that a specific player just joined the game.
+Public announcements per level are saved in noq\_greetings.cfg (see for example and customize it), while the personal message is in the main config:
+\\
+\begin{tabular}{l l|l}
+\hline & & \\
+ &	["persgamestartmessage"] = "Welcome", & the message wich is displayed for the joining player.	\\
+ & & \begin{tiny}
+please note that the playername is added at the end of the string, separated by a comma.
+\end{tiny} \\
+ &	["persgamestartmessagelocation"] = "cpm",			& the location where the message will be printed	\\ 
+ & &  \\
+ \hline
+\end{tabular}
+
+\subsection{Pussyfactor}
+
+For every kill, we add a value to the clients number, and to determine the the Pussyfactor, we divide that number trough the number of his kills multiplicated with 100.
+If we add 100 for an MP40/Thompsonkill, if the player does only those kills , he will stay at pussyfactor 1.
+If we add more or less(as 100) to the number, his pf will rise or decline.
+ \\
+Pussyfactor $<$ 1 		means he made "cool kills" = poison, goomba, knive
+Pussyfactor = 1 		means he makes normal kills
+Pussyfactor $>$ 1      means he does uncool kills (Panzerfaust, teamkills, arty?)
+\\
+As we add 100 for every normal kill, the pussyfactor approaches 1 after some time with "normal" kills.
+\\
+Config:\\ 
+\begin{tabular}{l l|l}
+\hline & & \\
+ & ["pussyfactor"] = "1", & enable/disable the pussyfactor Values:(0/1) \\
+  & &  \\
+ \hline
+\end{tabular}
+
+	
+
+\subsection{The Evener}
+
+NOQ's main mechanism to improve gameplay is the Evener. 
+Basically it checks all X seconds if teams are unfair, and then notifies or takes action.
+Stage one is a warning combined with a request to all players to even the teams.
+This will happen if the teams uneven, wich means 3 or more players difference.
+After 3 warnings action will be taken and a random player from bigger team will be moved to the smaller team.
+If the difference between teams is greater or equal to 5, teams will be shuffled after 1 warning.
+Config options are:
+\\
+\begin{tabular}{l l|l}
+\hline & & \\
+ & 	["evenerCheckallSec"] = "XX", & time in seconds between each evenercheck. 40 - 80 is recommended  \\
+  & &  \\
+ \hline
+\end{tabular}
+
+\subsection{Selfkill restriction}
+You can restrict selfkills on your server to a specific number.
+\\
+\begin{tabular}{l l|l}
+\hline & & \\
+ & 	["maxSelfKills"] = "X", & X is the number of selfkills you want to allow. -1 to disable  \\
+  & &  \\
+ \hline
+\end{tabular}
+
+
+\subsection{Poll restriction}
+Basic restrictions for votes are also avaiable, but a better system is in development.
+Till now, you have the option to define a min-distance between votes and restrict the nextmapvote to a specific time. Both restrictions don't work if the player has set the shrubbot flag "7".
+\\
+\begin{tabular}{l l|l}
+\hline & & \\
+ & 	["polldistance"] = "XXX",  & time in seconds between votes, -1 to disable \\
+ &	["nextmapVoteSec"] = "0", &  seconds after/before mapstart/end in wich nextmap vote is allowed.\\
+ & & 0 to disable \\
+  & &  \\
+ \hline
+\end{tabular}
+
+\subsection{Offlinemessages and register command}
+Offlinemessages are extended private messages wich are provided by NOQ.
+To use offlinemessages players need to register on the server via the clientconsole:
+\\
+\begin{lstlisting}
+]/register
+Syntax for the register Command: /register username password
+Username is your desired username (for web & offlinemessages)
+Password will be your password for your webaccess
+
+]/register name passwort
+Successfully registered. To reset password just re-register.
+\end{lstlisting}
+After registering the player can check if he has messages:
+\\
+\begin{lstlisting}
+]/mail
+No new offlinemessages
+\end{lstlisting}
+
+To write a offlinemessage use the new clientcommand "om"(analog to pm)
+\begin{lstlisting}
+]/om
+Check your syntax: '/command receiver message'.
+
+]/om name test
+ Following message was sent to 'name(lastusedname)'
+ 'test'
+\end{lstlisting}
+"lastusedname" is the name last used by the receiving player(wich also needs to be registered).
+As we just sent a message to player 'name' (wich are weself) we now should have mesages:
+\\
+\begin{lstlisting}
+]/mail
+
+*** NEW OFFLINEMESSAGES ***
+*** MESSAGE 1***
+*** From: name MSGID: XXXX ***
+*** Message: test ***
+\end{lstlisting}
+Even if the receiving player is offline or on another server, he will receive the message.
+To erase use "rmom":
+\\
+\begin{lstlisting}
+]/rmom XXXX
+Erased MessageID XXX
+\end{lstlisting}
+Now your inbox should be empty.
+
+If you join a server and hear the PM-messaging sound, you should check your inbox for mail.
+
+
+\subsection{New Servercommands}
+The NOQ also provides new Servercommands:
+
+\subsubsection{csay}
+\textbf{Usage:} \hfill csay [slot\#] text \linebreak
+\textbf{Description:} \linebreak
+csay will print a text to the console of a player:
+\begin{lstlisting}
+csay 0 "this is a test"
+\end{lstlisting}
+will print "this is a test" in the clientconsole of the player in slot 0.
+
+\subsubsection{plock}
+\textbf{Usage:} \hfill plock [slot\#] team(r/b/s) time \linebreak
+\textbf{Description:} \linebreak
+"plock" is the player analogon to the !lock command for teams, except it is the other way round:
+The player is locked to a specific team, and won't be able to leave it.
+Time is the time in seconds, after wich the player is able to leave the team again.
+
+\section{Commands}
+
+\newcommand{\inclkwcmds}{\include{kwcmds} }
+%adds a new section KWADMINS
+\newcommand{\inclkwadmins}{\include{kwadmins} }
+
+\ifthenelse{\boolean{onKW}}{\inclkwcmds}{}
+\ifthenelse{\boolean{onKW}}{\inclkwadmins}{}
+
+
+\end{document}

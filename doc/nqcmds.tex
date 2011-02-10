@@ -1,0 +1,253 @@
+\subsection{readconfig}
+\textbf{Flag:} \hfill G \linebreak
+\textbf{Usage:} \hfill !readconfig  \linebreak
+\textbf{Description:} \hfill reloads the shrubbot config file and refreshes user flags
+
+\subsection{time}
+\textbf{Flag:} \hfill C \linebreak\textbf{Usage:} \hfill !time [name|slot\#] (reason) \linebreak
+\textbf{Description:} \hfill displays the local time
+
+
+\subsection{setlevel}
+\textbf{Flag:} \hfill s \linebreak\textbf{Usage:} \hfill !setlevel [name|slot\#] [level) \linebreak
+\textbf{Description:} \hfill sets the admin level of a player
+ 
+\subsection{kick}
+\textbf{Flag:} \hfill k \linebreak\textbf{Usage:} \hfill !kick (command) \linebreak
+\textbf{Description:} \hfill kick a player with an optional reason
+
+\subsection{ban}
+\textbf{Flag:} \hfill b \linebreak\textbf{Usage:} \hfill !ban [name|slot\#] (time) (reason) \linebreak
+\textbf{Description:} \hfill ban a player by NAME/slot with an optional expiration time (seconds) and reason
+
+\subsection{banguid}
+\textbf{Flag:} \hfill b \linebreak\textbf{Usage:} \hfill !banguid [GUID] (time) (reason) \linebreak
+\textbf{Description:} \hfill ban a (perhaps not ingame) player by GUID with an optional expiration time (seconds) and reason
+
+\subsection{banip}
+\textbf{Flag:} \hfill b \linebreak\textbf{Usage:} \hfill !banip [IP] (time) (reason) \linebreak
+\textbf{Description:} \hfill ban a (perhaps not ingame) player by IP with an optional expiration time (seconds) and reason
+
+\subsection{unban}
+\textbf{Flag:} \hfill b \linebreak\textbf{Usage:} \hfill !unban [ban slot\#] \linebreak
+\textbf{Description:} \hfill unbans a player specified ban number as seen in !showbans
+
+\subsection{put}
+\textbf{Flag:} \hfill p \linebreak\textbf{Usage:} \hfill !put [name|slot\#] [r|b|s] \linebreak
+\textbf{Description:} \hfill move a player to a specified team
+
+\subsection{pause}
+\textbf{Flag:} \hfill Z \linebreak\textbf{Usage:} \hfill !pause  \linebreak
+\textbf{Description:} \hfill pauses the game for all players
+\linebreak
+\textbf{Comment} \hfill will resume game after 180 seconds
+
+\subsection{unpause}
+\textbf{Flag:} \hfill Z \linebreak\textbf{Usage:} \hfill !unpause  \linebreak
+\textbf{Description:} \hfill unpauses the game if it had been paused by !pause
+
+\subsection{listplayers}
+\textbf{Flag:} \hfill i \linebreak\textbf{Usage:} \hfill !listplayers  \linebreak
+\textbf{Description:} \hfill display a list of connected players, their slot numbers as well as their admin levels
+\linebreak
+\textbf{Comment} \hfill get the Punkbuster slotnumber by adding 1 to the normal slotnumber
+
+\subsection{listteams}
+\textbf{Flag:} \hfill I \linebreak\textbf{Usage:} \hfill !listteams  \linebreak
+\textbf{Description:} \hfill displays info about the teams
+
+\subsection{mute}
+\textbf{Flag:} \hfill m \linebreak\textbf{Usage:} \hfill !mute [name|slot\#] \linebreak
+\textbf{Description:} \hfill mutes a player
+\linebreak
+\textbf{Comment} \hfill If no time is entered, the player is muted for g\_defaultMute time. 
+
+\subsection{unmute}
+\textbf{Flag:} \hfill m \linebreak\textbf{Usage:} \hfill !unmute [name|slot\#] \linebreak
+\textbf{Description:} \hfill unmutes a muted player
+
+\subsection{showbans}
+\textbf{Flag:} \hfill B \linebreak\textbf{Usage:} \hfill !showbans (start at ban\#) ((banner) (banner's name)) ((find) (banned player)) ((reason) (reason for ban)) \linebreak
+\textbf{Description:} \hfill display a (partial) list of active bans
+
+\subsection{help}
+\textbf{Flag:} \hfill h \linebreak\textbf{Usage:} \hfill !help (command) \linebreak
+\textbf{Description:} \hfill display commands available to you or help on a specific command
+
+\subsection{admintest}
+\textbf{Flag:} \hfill a \linebreak\textbf{Usage:} \hfill !admintest  \linebreak
+\textbf{Description:} \hfill display your current admin level
+
+\subsection{cancelvote}
+\textbf{Flag:} \hfill c \linebreak\textbf{Usage:} \hfill !cancelvote  \linebreak
+\textbf{Description:} \hfill cancels the vote currently taking place
+
+\subsection{passvote}
+\textbf{Flag:} \hfill V \linebreak\textbf{Usage:} \hfill !passvote  \linebreak
+\textbf{Description:} \hfill passes the vote currently taking place
+
+\subsection{spec999}
+\textbf{Flag:} \hfill P \linebreak\textbf{Usage:} \hfill !spec999  \linebreak
+\textbf{Description:} \hfill moves 999 pingers to the spectator team
+\linebreak
+\textbf{Comment} \hfill also moves all players with ping higher as 500 to spec
+
+\subsection{shuffle}
+\textbf{Flag:} \hfill S \linebreak\textbf{Usage:} \hfill !shuffle  \linebreak
+\textbf{Description:} \hfill shuffle the teams to try and even them
+
+\subsection{rename}
+\textbf{Flag:} \hfill N \linebreak\textbf{Usage:} \hfill !rename [name|slot\#] [new name] \linebreak
+\textbf{Description:} \hfill renames a player
+
+\subsection{gib}
+\textbf{Flag:} \hfill g \linebreak\textbf{Usage:} \hfill !gib (name|slot\#) (reason) \linebreak
+\textbf{Description:} \hfill insantly gibs a player
+
+\subsection{slap}
+\textbf{Flag:} \hfill A \linebreak\textbf{Usage:} \hfill !slap [name|slot\#] (damage) (reason) \linebreak
+\textbf{Description:} \hfill give a player a specified amount of damage for a specified reason
+\linebreak
+\textbf{Comment} \hfill will never gib a player or kill him
+
+\subsection{burn}
+\textbf{Flag:} \hfill U \linebreak\textbf{Usage:} \hfill !burn [name|slot\#] (reason) \linebreak
+\textbf{Description:} \hfill burns a player taking some of his health
+
+\subsection{warn}
+\textbf{Flag:} \hfill R \linebreak\textbf{Usage:} \hfill !warn [name|slot\#] [reason] \linebreak
+\textbf{Description:} \hfill warns a player by displaying the reason
+
+\subsection{news}
+\textbf{Flag:} \hfill W \linebreak\textbf{Usage:} \hfill !news (mapname) \linebreak
+\textbf{Description:} \hfill play the map's news reel or another map's news reel if specified
+
+\subsection{lock}
+\textbf{Flag:} \hfill K \linebreak\textbf{Usage:} \hfill !lock [r|b|s|all] \linebreak
+\textbf{Description:} \hfill lock one or all of the teams from players joining
+
+\subsection{unlock}
+\textbf{Flag:} \hfill K \linebreak\textbf{Usage:} \hfill !unlock [r|b|s|all] \linebreak
+\textbf{Description:} \hfill unlock one or all locked teams
+
+\subsection{nade}
+\textbf{Flag:} \hfill x \linebreak\textbf{Usage:} \hfill !nade [name|slot\#] \linebreak
+\textbf{Description:} \hfill makes a player drop a bunch of grenades or all players
+
+\subsection{pip}
+\textbf{Flag:} \hfill z \linebreak\textbf{Usage:} \hfill !pip [name|slot\#] \linebreak
+\textbf{Description:} \hfill show sparks around a player or all players
+
+\subsection{pop}
+\textbf{Flag:} \hfill z \linebreak\textbf{Usage:} \hfill !pop [name|slot\#] \linebreak
+\textbf{Description:} \hfill pops the helmets of a player or all players
+
+\subsection{restart}
+\textbf{Flag:} \hfill r \linebreak\textbf{Usage:} \hfill !restart  \linebreak
+\textbf{Description:} \hfill restarts the current map
+
+\subsection{reset}
+\textbf{Flag:} \hfill r \linebreak\textbf{Usage:} \hfill !reset  \linebreak
+\textbf{Description:} \hfill resets the current match
+
+\subsection{fling}
+\textbf{Flag:} \hfill L \linebreak\textbf{Usage:} \hfill !fling [name|slot\#] \linebreak
+\textbf{Description:} \hfill flings a player in a random direction
+
+\subsection{throw}
+\textbf{Flag:} \hfill L \linebreak\textbf{Usage:} \hfill !throw [name|slot\#] \linebreak
+\textbf{Description:} \hfill throws a player forward
+
+\subsection{launch}
+\textbf{Flag:} \hfill L \linebreak\textbf{Usage:} \hfill !launch [name|slot\#] \linebreak
+\textbf{Description:} \hfill launch a player vertically
+
+\subsection{disorient}
+\textbf{Flag:} \hfill d \linebreak\textbf{Usage:} \hfill !disorient [name|slot\#] (reason) \linebreak
+\textbf{Description:} \hfill flips a player's view
+
+\subsection{orient}
+\textbf{Flag:} \hfill d \linebreak\textbf{Usage:} \hfill !orient [name|slot\#] \linebreak
+\textbf{Description:} \hfill unflips a disoriented player's view
+
+\subsection{resetxp}
+\textbf{Flag:} \hfill X \linebreak\textbf{Usage:} \hfill !resetxp [name|slot\#] (reason) \linebreak
+\textbf{Description:} \hfill reset a player's XP
+
+\subsection{resetmyxp}
+\textbf{Flag:} \hfill M \linebreak\textbf{Usage:} \hfill !resetmyxp  \linebreak
+\textbf{Description:} \hfill resets your own XP
+
+\subsection{nextmap}
+\textbf{Flag:} \hfill n \linebreak\textbf{Usage:} \hfill !nextmap  \linebreak
+\textbf{Description:} \hfill loads the next map
+
+\subsection{swap}
+\textbf{Flag:} \hfill w \linebreak\textbf{Usage:} \hfill !swap  \linebreak
+\textbf{Description:} \hfill swap teams
+
+\subsection{revive}
+\textbf{Flag:} \hfill v \linebreak\textbf{Usage:} \hfill !revive [name|slot\#] (reason) \linebreak
+\textbf{Description:} \hfill revives a dead player
+\linebreak
+\textbf{Comment} \hfill doesn't work on gibbed players
+
+\subsection{rocket}
+\textbf{Flag:} \hfill j \linebreak\textbf{Usage:} \hfill !rocket  \linebreak
+\textbf{Description:} \hfill have a rocket shoot from the player who uses this command
+
+\subsection{disguise}
+\textbf{Flag:} \hfill T \linebreak\textbf{Usage:} \hfill !disguise [name|slot\#] (class number) \linebreak
+\textbf{Description:} \hfill gives a player a disguise of the specified class
+
+\subsection{poison}
+\textbf{Flag:} \hfill U \linebreak\textbf{Usage:} \hfill !poison (name|slot\#) (reason) \linebreak
+\textbf{Description:} \hfill poisons a player
+
+\subsection{ammopack}
+\textbf{Flag:} \hfill J \linebreak\textbf{Usage:} \hfill !ammopack [name|slot\#] \linebreak
+\textbf{Description:} \hfill an ammo pack will spawn out of the player if they have enough chargebar
+
+\subsection{medpack}
+\textbf{Flag:} \hfill J \linebreak\textbf{Usage:} \hfill !medpack [name|slot\#] \linebreak
+\textbf{Description:} \hfill a health pack will spawn out of the player if they have enough chargebar
+
+\subsection{pants}
+\textbf{Flag:} \hfill t \linebreak\textbf{Usage:} \hfill !pants (name|slot\#) \linebreak
+\textbf{Description:} \hfill removes a player's pants!
+
+\subsection{give}
+\textbf{Flag:} \hfill e \linebreak\textbf{Usage:} \hfill !give [name|slot\#] item/thing \linebreak
+\textbf{Description:} \hfill gives a player something...
+\linebreak
+\textbf{Comment} \hfill if you specify a negativ ammount, you can also take (ammo/health)
+
+\subsection{dw}
+\textbf{Flag:} \hfill D \linebreak\textbf{Usage:} \hfill !dw (name|slot\#) \linebreak
+\textbf{Description:} \hfill drops a player's primary and secondary weapons!
+\linebreak
+\textbf{Comment} \hfill best for cheaters
+
+\subsection{finger}
+\textbf{Flag:} \hfill f \linebreak\textbf{Usage:} \hfill !finger [name|slot\#] \linebreak
+\textbf{Description:} \hfill gives specific information about a player
+
+\subsection{uptime}
+\textbf{Flag:} \hfill u \linebreak\textbf{Usage:} \hfill !uptime  \linebreak
+\textbf{Description:} \hfill displays server uptime
+
+\subsection{glow}
+\textbf{Flag:} \hfill o \linebreak\textbf{Usage:} \hfill !glow (name|slot\#) \linebreak
+\textbf{Description:} \hfill makes player(s) glow
+
+\subsection{freeze}
+\textbf{Flag:} \hfill E \linebreak\textbf{Usage:} \hfill !freeze (name|slot\#) \linebreak
+\textbf{Description:} \hfill freezes player(s) move
+\linebreak
+\textbf{Comment} \hfill also he will not take damage while frozen
+
+\subsection{unfreeze}
+\textbf{Flag:} \hfill E \linebreak\textbf{Usage:} \hfill !unfreeze (name|slot\#) \linebreak
+\textbf{Description:} \hfill makes player(s) moving again
+
+
