@@ -84,7 +84,7 @@ DBCon = {
 	-------------------------------------------------------------------------------
 	['SetPlayerAlias'] = function( self, thisName, thisGuid )
 		--Search the GUID in the database ( GUID is UNIQUE, so we just have 1 result, stop searching when we have it )
-		self.cur = assert (self.con:execute("SELECT * FROM log WHERE guid1='".. thisGuid .."' AND textxml='<name>".. thisName .."</name>' LIMIT 1"))
+		self.cur = assert (self.con:execute("SELECT * FROM log WHERE guid1='".. thisGuid .."' AND type='3' AND textxml='<name>".. thisName .."</name>' LIMIT 1"))
 		self.row = self.cur:fetch ({}, "a")
 		self.cur:close()
 		if self.row then
