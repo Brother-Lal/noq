@@ -221,13 +221,13 @@ Commands starting with \$LUA\$ will be parsed and executed as Lua-code in the Lu
 \begin{lstlisting}
  0 - showmaps = $LUA$ showmaps()
  2 - evener = $LUA$ checkBalance(true) # this calls the Evener and allows him to take action
- 0 - cmdlist = $LUA$ listCmds(<CLIENT_ID>, "<PARAMETER>") # !cmdlist command
+ 0 - cmdlist = $LUA$ listCMDs(<CLIENT_ID>, "<PARAMETER>"); # !cmdlist command
   0 - ratio = $LUA$ et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \" ^2Kills^7\\^1TKS ^2" .. et.gentity_get(<CLIENT_ID>, "sess.kills") .."^7\\^1".. et.gentity_get(<CLIENT_ID>, "sess.team_kills") .. "^7" ); 
  # Yeah, thats a bigger one. It will show Kill/Death ratio
 \end{lstlisting}
 
 You may notice that in most examples just one function is called.
-Some functions are predefined in the mod and therefore these builtin commands can be easy renamed and unlock for different levels.
+Some functions are predefined in the mod and therefore these builtin commands can be easy renamed and unlocked for different levels.
 
 
 \subsection{Greetings}
