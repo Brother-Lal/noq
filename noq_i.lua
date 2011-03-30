@@ -187,7 +187,7 @@ function createTablesDBMS()
 				banreason 	TEXT 			DEFAULT '',		\
 				bannedby 	TEXT 			DEFAULT '',		\
 				banexpire 	DATE 			DEFAULT '1000-01-01 00:00:00',	\
-				mutedreason TEXT			DEFAULT '',		\
+				mutedreason 	TEXT			DEFAULT '',		\
 				mutedby 	TEXT 			DEFAULT '',		\
 				muteexpire 	DATE 			DEFAULT '1000-01-01 00:00:00',	\
 				warnings 	INTEGER 		DEFAULT 0,		\

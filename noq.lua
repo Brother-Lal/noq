@@ -1066,7 +1066,7 @@ function checkMute ( _clientNum )
 			-- The mute is expired: clear the mute fields and continue
 			slot[_clientNum]["mutedby"] = ""
 			slot[_clientNum]["mutedreason"] = ""
-			slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
+			slot[_clientNum]["muteexpire"] = ""
 		else
 		    -- The mute is still valid: mute him!
 		    muteseconds = muteseconds * (-1)
