@@ -194,6 +194,11 @@ nextmapVoteTime	= tonumber(getConfig("nextmapVoteSec"))
 evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
+serverid 		= et.trap_Cvar_Get( "servid" ) 
+irchost			= getConfig("irchost")
+ircport 		= tonumber(getConfig("ircport"))
+
+
 
 -- Prints the configuration
 debug_getInfoFromTable(noqvartable)
@@ -323,6 +328,12 @@ if mail == 1 then
 	smtp = require("socket.smtp")
 end
 
+-- irc relay setup
+if irchost ~= "" then
+	socket = require("socket")
+	client = socket.udp()
+end
+
 team = { [0]="CONN","AXIS" , "ALLIES" , "SPECTATOR" }
 teamchars = { ['r']="AXIS" , ['b']="ALLIES" , ['s']="SPECTATOR" }
 class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
@@ -346,6 +357,10 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	if usecommands ~= 0 then
 		parseconf() 
 	end
+	if irchost ~= "" then
+	client:setpeername(irchost,ircport)
+	end
+	
 	lastpoll = (et.trap_Milliseconds() / 1000) - 110
 	
 	-- IlDuca: TEST for mail function
@@ -635,6 +650,11 @@ function et_ClientCommand( _clientNum, _command )
 			-- return !!!
 		end
 		-- return !!!
+	
+	elseif arg0 == "mirc" then
+	
+	msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
+	return 1
 	end
 	
 end
@@ -770,7 +790,7 @@ function et_Obituary( _victim, _killer, _mod )
 	lastkill = _killer
 end
 
--- called for every clientcommand
+-- called for every Servercommand
 -- return 1 if intercepted, 0 if passthrough
 function et_ConsoleCommand( _command )
 	-- debugPrint("cpm", "ConsoleCommand - command: " .. _command )
@@ -814,6 +834,11 @@ function et_ConsoleCommand( _command )
 		et.trap_SendServerCommand( -1,"chat \"^7"..slot[_targetid]["netname"].." ^3 is now locked to the ^1"..teamchars[_targetteam].."^3 team\"")
 		end
 	end
+	
+	if string.lower(et.trap_Argv(0)) == "noq_irc" then
+		sendtoIRCRelay(et.ConcatArgs( 1 ))
+	end
+	
 	-- add more cmds here ...
 end
 
@@ -1831,6 +1856,8 @@ function checkOffMesg (_clientNum)
 		if OM ~= nil then
 			-- he has OMs!!!!!!!!1!!!!
 			et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
+			et.trap_SendServerCommand(_clientNum, "cpm \"^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
+			et.trap_SendServerCommand(_clientNum, "chat \"^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
 			local sndin = et.G_SoundIndex( "sound/misc/pm.wav" )
 			et.G_Sound( _clientNum, sndin )
 			
@@ -1840,10 +1867,15 @@ function checkOffMesg (_clientNum)
 				local msg = string.sub(xml , posstart+5 , (#xml- 12))
 				posstart , posend = string.find(xml, "<from>.*</from>", 1)
 				local from = string.sub(xml, posstart+6, posend-7)
+				
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1MESSAGE ^R".. mesnum .."^3***\"")
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YFrom: ^R".. from .." ^YMSGID: ^R".. OM[mesnum].id .." ^3***\"")
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YDate: ".. OM[mesnum].createdate .." ^3***\"")
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^YMessage: ".. msg .." ^3***\n\"")
 			end
+			
+				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** Erase messages with /rmom MSGID ^3***\n\"")
+			
 		else
 			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new offlinemessages \n\"\n")
 		end
@@ -2247,6 +2279,83 @@ function listCMDs( _Client ,... )
 	--      Ok, not all failures: try to do !cmdlist at the last page......
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _Client.. "\" \n \"")
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "")
+end
+
+-------------------------------------------------------------------------------
+-- sendtoIRCRelay
+-- Will send a string to our IRC-Relay
+-- Used to communicate to an defined IRC-Channel
+-------------------------------------------------------------------------------
+function sendtoIRCRelay(_txt)
+
+    local res = client:send(_txt.."\n")
+
+    if not res then
+        debugPrint("logprint","send " .. "error")
+    else
+        debugPrint("logprint","send " .. _txt)
+    end
+
+end
+
+-------------------------------------------------------------------------------
+-- msgtoIRC(player , message)
+-- Used in LuaCMDs to send a message from player to IRC
+-- Player can be a number or the Playername
+-------------------------------------------------------------------------------
+function msgtoIRC(_client,_msg)
+	 
+	 _msg = string.gsub(_msg,'\\', "")
+	 
+	 	if type(_client) == "string" then
+	-- no direct call, it is string && therefor a name from the !command
+		sendtoIRCRelay(_client .. " on " .. serverid .. ": " .. _msg );
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \" ^3Sent your msg to IRC\n\"")
+		return
+		end
+	 	
+	 if type(_client) == "number" and slot[_client]["user"] ~= "" then
+		
+		sendtoIRCRelay(slot[_client]["user"] .. " on " .. serverid .. ": " .. _msg );
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1Sent: ^3".._msg.." ^3to IRC\n\"")
+		return
+	else
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1You need to be registered to send messages to IRC \n \"")
+		return
+	end
+	
+
+	
+end
+
+-------------------------------------------------------------------------------
+-- forAll(whom, what)
+-- will exec a function with parameter clientnum for all specified players
+-- whom can be: axis/r, allies/b, specs/s, all
+-- what is the function
+-------------------------------------------------------------------------------
+function forAll(_whom,_what)
+
+if _whom == "players" or _whom == "all" then  
+	_whom = nil
+elseif _whom == "axis" or _whom == "r" then
+	_whom = 1
+elseif _whom == "allies" or _whom == "b" then
+	_whom = 2
+elseif _whom == "specs" or _whom == "s" then
+	_whom = 3
+end
+
+for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do					
+		if et.gentity_get(i,"classname") == "player" then
+			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
+				if _whom == nil or team == _whom then
+					_what(i)
+				end
+		end
+end
+
+
 end
 
 -------------------------------------------------------------------------------

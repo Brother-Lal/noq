@@ -95,7 +95,7 @@ The configpart for the DBMS:
 &	["dbpassword"]="dbpass", 	& Only needed for mySQL\\
 &	["dbhostname"]="dbhost", 	& Only needed for mySQL\\
 &	["dbport"]="3306",    		& Only needed for mySQL\\
- & &  \\
+& &  \\
  \hline
 \end{tabular}	
 		
@@ -378,6 +378,23 @@ will print "this is a test" in the clientconsole of the player in slot 0.
 "plock" is the player analogon to the !lock command for teams, except it is the other way round:
 The player is locked to a specific team, and won't be able to leave it.
 Time is the time in seconds, after wich the player is able to leave the team again.
+
+\subsubsection{noq_irc}
+\textbf{Usage:} \hfill noq_irc text\linebreak
+\textbf{Description:} \linebreak
+Will send text to the IRC-relay, wich will pipe it as an puplic chat to an IRC-channel.
+
+\subsection{IRC-relay}
+Noq has the option to send small texts or updates to an IRC-Relay, wich then will forward those to an IRC-Channel.
+The relay consists of an ruby-script wich just holds an IRC-Connection open to prevent spamming with joins/leaves during server restart.
+
+\begin{tabular}{l l|l}
+\hline & & \\
+ & 	["irchost"] = "",  & host were relay is running i.e "irc.example.com" , leave blank to disable\\
+ &	["ircport"] = "1337", &  port were relay is listening\\
+ & & \\
+ \hline
+\end{tabular}
 
 \section{Commands}
 
