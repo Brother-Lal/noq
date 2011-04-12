@@ -176,25 +176,26 @@ end
 
 -- don't get often used vars from noqvartable ...
 
--- common
--- enables mail option, make sure all required libs are available
-databasecheck 	= tonumber((getConfig("useDB"))) 
-mail 			= tonumber((getConfig("mail"))) 
-recordbots 		= tonumber(getConfig("recordbots")) -- don't write session for bots
-color 			= getConfig("color")
-commandprefix 	= getConfig("commandprefix")
-debug 			= tonumber(getConfig("debug")) -- debug 0/1
+databasecheck 	= tonumber((getConfig("useDB")))  		-- Is DB on?
+mail 			= tonumber((getConfig("mail"))) 		-- Is Mail on?
+recordbots 		= tonumber(getConfig("recordbots")) 	-- don't write session for bots
+color 			= getConfig("color")					
+commandprefix 	= getConfig("commandprefix")			
+debug 			= tonumber(getConfig("debug")) 			-- debug 0/1
 -- moved to noq_db.lua
 -- debugquerries   = tonumber(getConfig("debugquerries"))
-usecommands		= tonumber(getConfig("usecommands"))
-xprestore 		= tonumber(getConfig("xprestore"))
-pussyfact 		= tonumber(getConfig("pussyfactor"))
+usecommands		= tonumber(getConfig("usecommands"))	-- are commands on?
+xprestore 		= tonumber(getConfig("xprestore"))		-- is xprestore on?
+pussyfact 		= tonumber(getConfig("pussyfactor"))	
 lognames 		= tonumber(getConfig("lognames"))
 nextmapVoteTime	= tonumber(getConfig("nextmapVoteSec"))
 evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
-polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, change in noq_config.cfg, -1 to disable
+polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
-serverid 		= et.trap_Cvar_Get( "servid" ) 
+serverid 		= getConfig("serverID")   -- Unique Server Identifier
+if serverid == "" then	
+	et.trap_Cvar_Get( "servid" ) 		  -- Unique Server Identifier, second option: as cvar.
+end
 irchost			= getConfig("irchost")
 ircport 		= tonumber(getConfig("ircport"))
 
@@ -273,7 +274,7 @@ debug_getInfoFromTable(noqvartable)
 slot = {}
 
 -- Note: Players are ents 0 - (sv_maxclients-1)
-maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 -- add 1 again if used in view
+maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 	-- add 1 again if used in view
 
 -- We do this for accessing the table with [][] syntax, dirty but it works
 for i=0, maxclients, 1 do				
@@ -283,7 +284,6 @@ end
 -- command table, initialised in parseconf
 commands = {}
 
- 
 --[[ 
 --For testing, the !owned known from ETadmin
 commands['cmd'][0]['owned'] = "print ^1Ha^3ha^5ha^3, i owned ^7<PLAYER_LAST_VICTIM_CNAME>^3 with my ^7<PLAYER_LAST_VICTIM_WEAPON>^7!!!"
@@ -308,7 +308,7 @@ commands['cmd'][0]['noqban'] = "$LUA$ ban(<PART2ID>)" --TODO The BANFUNCTION...
 
 -- current map
 map = ""
-mapStartTime = 0;
+mapStartTime = 0
 --Gamestate 1 ,2 , 3 = End of Map 
 gstate = nil
 
@@ -339,11 +339,12 @@ teamchars = { ['r']="AXIS" , ['b']="ALLIES" , ['s']="SPECTATOR" }
 class = { [0]="SOLDIER" , "MEDIC" , "ENGINEER" , "FIELD OPS" , "COVERT OPS" }
 
 -------------------------------------------------------------------------------
--- load DB functions
+-- load DB functions if needed
 -------------------------------------------------------------------------------
--- dofile(scriptpath .. "noq_db.lua") -- would allow to load a lua script
+if databasecheck == 1 then
 require(noqpath .. "noq_db")
 DBCon:DoConnect()
+end
 
 -------------------------------------------------------------------------------
 -- ET functions
@@ -352,16 +353,19 @@ DBCon:DoConnect()
 function et_InitGame( _levelTime, _randomSeed, _restart )
 	et.RegisterModname( "NOQ version " .. version .. " " .. et.FindSelf() )
     initNOQ()
-	getDBVersion()
+	if databasecheck == 1 then
+		getDBVersion()
+	end
 	mapStartTime = et.trap_Milliseconds()
 	if usecommands ~= 0 then
 		parseconf() 
 	end
 	if irchost ~= "" then
-	client:setpeername(irchost,ircport)
+		client:setpeername(irchost,ircport)
 	end
 	
-	lastpoll = (et.trap_Milliseconds() / 1000) - 110
+	-- 												|We allow votes not directly at start, lets wait some time
+	lastpoll = (et.trap_Milliseconds() / 1000) - 	(polldistance / 2)
 	
 	-- IlDuca: TEST for mail function
 	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo è un test, speriamo funzioni!!")
@@ -380,7 +384,6 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	if firstTime == 0 or isBot == 1 or getConfig("persgamestartmessage") == "" then 
 		return nil
 	end
-	
 	userInfo = et.trap_GetUserinfo( _clientNum ) 
 	et.trap_SendServerCommand(_clientNum, string.format("%s \"%s %s", getConfig("persgamestartmessagelocation") , getConfig("persgamestartmessage") , et.Info_ValueForKey( userInfo, "name" )))
 
@@ -422,7 +425,7 @@ function et_ClientBegin( _clientNum )
 		greetClient(_clientNum)
 	end
 	
-	-- Move the mute check here
+	-- Moved the mute check here
 	checkMute( _clientNum )
 	
 	if databasecheck == 1 then
@@ -449,6 +452,7 @@ function et_ClientBegin( _clientNum )
 	end -- end databasecheck
 end
 
+-- TODO: What does this do here? 
 -- Possible values are :
 --	- slot[_clientNum].team == nil -> the player connected and disconnected without join the gameworld = not-valid session
 --	- slot[_clientNum].gstate = 0 and gstate = 0 -> we have to update playing time and store all the player infos = valid session
@@ -499,18 +503,18 @@ function et_ClientCommand( _clientNum, _command )
 				return returnvalue
 				-- return gotCmd( _clientNum, _command , false)
 			end
-			-- return !!!
 		elseif arg0 == "vsay" then 
 			if string.sub( arg2 , 1, 1) == commandprefix then -- this means a !command with vsay
 				gotCmd ( _clientNum, _command, true)
 			end
-			-- return !!!
 		elseif arg0 == "readthefile" then -- read in the commandsfile  
 			if et.G_shrubbot_permission( _clientNum, "G" ) == 1 then -- has the right to read the config in.. So he also can read commands
 				parseconf()
+				et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay " .. _clientNum .. "\"^3Parsed commands.\n\"\n")
 				return 1
 			end
-			-- return !!!
+			et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay " .. _clientNum .. "\"^3Not enough rights to use this command.\n\"\n")
+			return 1
 		end
 		
 		
@@ -528,8 +532,8 @@ function et_ClientCommand( _clientNum, _command )
 	--
 	-- register command
 	if arg0 == "register" then
-		--local arg1 = string.lower(et.trap_Argv(1)) -- username - see start of et_ClientCommand
-		--local arg2 = string.lower(et.trap_Argv(2)) -- password - see start of et_ClientCommand
+		-- arg1 username - see start of et_ClientCommand
+		-- arg2 password - see start of et_ClientCommand
 		local name = string.gsub(arg1,"\'", "\\\'")
 		if arg1 ~= "" and arg2 ~= "" then
 			local testreg = DBCon:GetPlayerbyReg(name)
@@ -614,7 +618,6 @@ function et_ClientCommand( _clientNum, _command )
 			et.trap_SendServerCommand( _clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
 			return 0
 		end
-		-- return !!!
 		
 	-- check for OfflineMesgs
 	elseif arg0 == "mail" then
@@ -647,14 +650,12 @@ function et_ClientCommand( _clientNum, _command )
 					return 1
 				end
 			end
-			-- return !!!
+			
 		end
-		-- return !!!
 	
 	elseif arg0 == "mirc" then
-	
-	msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
-	return 1
+		msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
+		return 1
 	end
 	
 end
@@ -693,7 +694,6 @@ function et_ShutdownGame( _restart )
 	-- delete old sessions if set in config
 	local deleteSessionsOlderXMonths = tonumber(getConfig("deleteSessionsOlderXMonths"))
 	if  deleteSessionsOlderXMonths > 0 then
-		-- TODO: Implement this in noq_db.lua
 		DBCon:DoDeleteOldSessions( deleteSessionsOlderXMonths )
 	end
 end
@@ -851,12 +851,12 @@ function et_ClientSpawn( _clientNum, _revived )
 end
 
 -------------------------------------------------------------------------------
--- help functions
+-- helper functions
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
 -- initClient
--- Gets DbInfos and checks for Ban and Mute
+-- Gets DbInfos and checks for Ban and Mute, inits clientfields
 -- the very first action  
 -------------------------------------------------------------------------------
 function initClient ( _clientNum, _FirstTime, _isBot)
@@ -865,8 +865,8 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	
 	--'static' clientfields
 	slot[_clientNum]["pkey"] 	= string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
-	slot[_clientNum]["ip"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
-	slot[_clientNum]["ip"] = string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
+	slot[_clientNum]["ip"] 		= et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
+	slot[_clientNum]["ip"] 		= string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
 	slot[_clientNum]["isBot"] 	= _isBot
 	slot[_clientNum]["conname"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
@@ -1272,7 +1272,8 @@ end
 -- savePlayer
 -- Dumps into player table - NO SESSIONDUMPING
 -- call if you changed something important to secure it in database
--- eg Xp, Level, Ban, Mute, 
+-- eg Xp, Level, Ban, Mute
+-- is also called at every Disconnect
 -------------------------------------------------------------------------------
 function savePlayer ( _clientNum )
 	slot[_clientNum]["ip"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
@@ -1393,7 +1394,6 @@ function gotCmd( _clientNum, _command, _vsay)
 			if cmd == 'help' then
 				if argw == "" then
 					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^FFor NOQ help type !cmdlist.. \"")	
-					-- TODO: add the help -- quite some work formatting and all.. :/ 
 				else
 					for i=lvl, 0, -1 do
 						if commands["hlp"][i][argw] ~= nil then
@@ -1542,7 +1542,6 @@ function execCmd(_clientNum , _cmd, _argw)
 
 	--added for !afk etc, use when assume is ok 
 	 str = string.gsub(str, "<PART2IDS>", otherplayer )
-	--end
 	
 	-- This allows execution of lua-code in a normal Command. 
 	if string.sub(str, 1,5) == "$LUA$" then
@@ -1550,16 +1549,15 @@ function execCmd(_clientNum , _cmd, _argw)
 		local tokall = loadstring(string.sub(str,6))
 		tokall()
 		return	
-	else
+	elseif  string.sub(str, 1,5) == "$SHL$" then
 	-- This allows Shell commands. WARNING: As long as lua waits for the command to complete, NQ+ET arent responding to anything, they are HALTED!
 	-- Response of the Script is piped into NQ-Console(via print, so no commands)
-		if string.sub(str, 1,5) == "$SHL$" then
 			execthis = io.popen(string.sub(str,6))
-			readshit = execthis:read("*a")
+			myreturn = execthis:read("*a")
 			execthis:close()
-			readshit = string.gsub(readshit, "\n","\"\nqsay \"")
-			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. readshit .. " \"")	
-		else
+			myreturn = string.gsub(myreturn, "\n","\"\nqsay \"")
+			et.trap_SendConsoleCommand(et.EXEC_APPEND, "qsay \" ".. myreturn .. " \"")	
+	else
 		-- well, at the end we send the command to the console
 		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
 		end
@@ -1601,7 +1599,7 @@ end
 function parseconf()
 	local datei = io.open ( (scriptpath .. "noq_commands.cfg" ) ,"r") 
 
-	-- Shrub uses only 31 Levels. at least wiki says TODO: VERIFY
+	-- Shrub uses only 31 Levels. at least wiki says
 	commands["cmd"] = {}
 	commands["syn"] = {}
 	commands["hlp"] = {}
@@ -1885,7 +1883,6 @@ function checkOffMesg (_clientNum)
 
 end
 
-
 -------------------------------------------------------------------------------
 -- sendOffMesg - sends a Offlinemessage
 -- Player needs to be registered to use OM
@@ -1924,18 +1921,85 @@ function sendOffMesg (_sender,_receiver, _msg)
 
 end
 
+-------------------------------------------------------------------------------
+-- timeLeft
+-- Retuns rest of time to play
+-------------------------------------------------------------------------------
+function timeLeft()
+	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
+end
+
+-------------------------------------------------------------------------------
+-- pussyFactCheck
+-- adjusts the Pussyfactor after an kill trough et_obituary
+-- TODO: Add more cases for ugly teamkills (not only panzer ... knife, poison etc) 
+-- cool weapons get a value < 100 lame weapons/activities > 100
+-------------------------------------------------------------------------------
+function pussyFactCheck( _victim, _killer, _mod )
+	if pussyfact == 1 then
+		if slot[_killer]["team"] == slot[_victim]["team"] then -- teamkill
+			-- here it is teamkill
+			-- NOTE: teamkill is not counted as a kill, wich means all added here is even stronger in its weight
+			if _mod == mod["MOD_PANZERFAUST"] or _mod == mod["MOD_BAZOOKA"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 170
+			else
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 110
+			end
+		else -- no teamkill 
+			-- TODO sort this by coolness
+			if _mod == mod["MOD_KNIFE"] or _mod == mod["MOD_THROWKNIFE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 70
+			elseif _mod == mod["MOD_PANZERFAUST"] or _mod == mod["MOD_BAZOOKA"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 140
+			elseif _mod == mod["MOD_FLAMETHROWER"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 115
+			elseif _mod == mod["MOD_POISON"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 65
+			elseif _mod == mod["MOD_GOOMBA"] or _mod == mod["MOD_DYNAMITE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 60
+			elseif _mod == mod["MOD_KICKED"] or _mod == mod["MOD_BACKSTAB"] or _mod == mod["MOD_SHOVE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 40
+			elseif _mod == mod["MOD_K43_SCOPE"] or _mod == mod["MOD_FG42_SCOPE"] or _mod == mod["MOD_GARAND_SCOPE"] then
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 90
+			else
+				-- if we count 100 up, nothing changes. at least it should 
+				slot[_killer]["pf"] = slot[_killer]["pf"] + 100
+			end
+		end -- teamkill end
+
+	end -- pussy end
+end
+
+-------------------------------------------------------------------------------
+-- sendtoIRCRelay
+-- Will send a string to our IRC-Relay
+-------------------------------------------------------------------------------
+function sendtoIRCRelay(_txt)
+
+    local res = client:send(_txt.."\n")
+
+    if not res then
+        debugPrint("logprint","send " .. "error")
+    else
+        debugPrint("logprint","send " .. _txt)
+    end
+
+end
+
 --***************************************************************************
 -- Here start the commands usually called trough the new command-system
 -- they should not change internals, they are more informative 
 --***************************************************************************
--- Current available:
+-- Currently available:
 -- cleanSession
 -- pussyout
 -- checkBalance
 -- rm_pbalias
 -- teamdamage
 -- showmaps
-
+-- listcmds
+-- msgtoIRC
+-- forAll
 
 -------------------------------------------------------------------------------
 -- cleanSession
@@ -2153,53 +2217,7 @@ function showmaps()
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"".. ent2 .. "\"")
 end
 
--------------------------------------------------------------------------------
--- timeLeft
--- Retuns rest of time to play
--------------------------------------------------------------------------------
-function timeLeft()
-	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
-end
--------------------------------------------------------------------------------
--- pussyFactCheck
--- adjusts the Pussyfactor after an kill trough et_obituary
--- TODO: Add more cases for ugly teamkills (not only panzer ... knife, poison etc) 
--- cool weapons get a value < 100 lame weapons/activities > 100
--------------------------------------------------------------------------------
-function pussyFactCheck( _victim, _killer, _mod )
-	if pussyfact == 1 then
-		if slot[_killer]["team"] == slot[_victim]["team"] then -- teamkill
-			-- here it is teamkill
-			-- NOTE: teamkill is not counted as a kill, wich means all added here is even stronger in its weight
-			if _mod == mod["MOD_PANZERFAUST"] or _mod == mod["MOD_BAZOOKA"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 170
-			else
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 110
-			end
-		else -- no teamkill 
-			-- TODO sort this by coolness
-			if _mod == mod["MOD_KNIFE"] or _mod == mod["MOD_THROWKNIFE"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 70
-			elseif _mod == mod["MOD_PANZERFAUST"] or _mod == mod["MOD_BAZOOKA"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 140
-			elseif _mod == mod["MOD_FLAMETHROWER"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 115
-			elseif _mod == mod["MOD_POISON"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 65
-			elseif _mod == mod["MOD_GOOMBA"] or _mod == mod["MOD_DYNAMITE"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 60
-			elseif _mod == mod["MOD_KICKED"] or _mod == mod["MOD_BACKSTAB"] or _mod == mod["MOD_SHOVE"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 40
-			elseif _mod == mod["MOD_K43_SCOPE"] or _mod == mod["MOD_FG42_SCOPE"] or _mod == mod["MOD_GARAND_SCOPE"] then
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 90
-			else
-				-- if we count 100 up, nothing changes. at least it should 
-				slot[_killer]["pf"] = slot[_killer]["pf"] + 100
-			end
-		end -- teamkill end
 
-	end -- pussy end
-end
 
 -------------------------------------------------------------------------------
 -- listCMDs
@@ -2281,22 +2299,6 @@ function listCMDs( _Client ,... )
 	et.trap_SendConsoleCommand(et.EXEC_NOW, "")
 end
 
--------------------------------------------------------------------------------
--- sendtoIRCRelay
--- Will send a string to our IRC-Relay
--- Used to communicate to an defined IRC-Channel
--------------------------------------------------------------------------------
-function sendtoIRCRelay(_txt)
-
-    local res = client:send(_txt.."\n")
-
-    if not res then
-        debugPrint("logprint","send " .. "error")
-    else
-        debugPrint("logprint","send " .. _txt)
-    end
-
-end
 
 -------------------------------------------------------------------------------
 -- msgtoIRC(player , message)
