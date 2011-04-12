@@ -1617,7 +1617,7 @@ end
 -------------------------------------------------------------------------------
 function getPlayerId( _name )
     -- if it's nil, return nil
-    if (_name == "") or name == nil then
+    if (_name == "") or _name == nil then
         return nil
     end
 
