@@ -323,6 +323,9 @@ lastpoll = 0
 -- vsay disabler
 vsaydisabled = false
 
+-- reserved names array
+namearray = {}
+
 -- mail setup
 if mail == 1 then
 	smtp = require("socket.smtp")
@@ -355,6 +358,7 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
     initNOQ()
 	if databasecheck == 1 then
 		getDBVersion()
+		getresNames()
 	end
 	mapStartTime = et.trap_Milliseconds()
 	if usecommands ~= 0 then
@@ -365,7 +369,7 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	end
 	
 	-- 												|We allow votes not directly at start, lets wait some time
-	lastpoll = (et.trap_Milliseconds() / 1000) - 	(polldistance / 2)
+	lastpoll = (et.trap_Milliseconds() / 1000) - 	(polldist / 2)
 	
 	-- IlDuca: TEST for mail function
 	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo è un test, speriamo funzioni!!")
@@ -428,6 +432,7 @@ function et_ClientBegin( _clientNum )
 	-- Moved the mute check here
 	checkMute( _clientNum )
 	
+	
 	if databasecheck == 1 then
 		-- If we have db access, then we will create new Playerentry if necessary
 		-- TODO check for else case of the above if ... why updating Player XP if client is new ? (slot XP is set in createNewPlayer()
@@ -448,6 +453,23 @@ function et_ClientBegin( _clientNum )
 		end
 		
 		checkOffMesg(_clientNum)
+	   
+	   -- Reserved Name/Clantag support
+		if namearray then
+			local cleanname = et.Q_CleanStr(slot[_clientNum]["netname"])
+			for i,v in ipairs(namearray) do
+				if string.find( cleanname,v) then
+					if string.find(slot[_clientNum]["clan"],v) then
+						-- luck you - you are in the clan/have the name reserved for you
+					else
+						-- oops - rename him
+						et.trap_SendConsoleCommand(et.EXEC_APPEND, "!rename ".._clientNum.. " ".. string.gsub(cleanname,v) )
+						-- Todo: Kick?
+						et.trap_SendServerCommand( _clientNum, "cp \"^1Your tag/name is reserved, please change it.\"")
+					end
+				end
+			end
+		end
 	   
 	end -- end databasecheck
 end
@@ -811,9 +833,9 @@ function et_ConsoleCommand( _command )
 		-- if int check if slot .. ban
 		-- if not try to get player via part of name ...
 	
-	-- csay - say something to clients console .. usefull for EXEC_APPEND!
-	if string.lower(et.trap_Argv(0)) == "csay" then
-		-- local _argc = tonumber(et.trap_Argc())
+	local arg0 = string.lower(et.trap_Argv(0)) 
+	if arg0 == "csay" then
+		-- csay - say something to clients console .. usefull for EXEC_APPEND!
 		if (et.trap_Argc() >= 3) then 
 			_targetid = tonumber(et.trap_Argv(1))
 			if slot[_targetid] ~= nil then
@@ -821,10 +843,8 @@ function et_ConsoleCommand( _command )
 				et.trap_SendServerCommand( _targetid,"print \"" .. et.trap_Argv(2) .."\"")
 			end
 		end
-	end
-	
+	elseif arg0 == "plock" then
 	-- plock - lock a player to a team
-	if string.lower(et.trap_Argv(0)) == "plock" then
 		if (et.trap_Argc() >= 4) then 
 		_targetid = tonumber(et.trap_Argv(1))
 		_targetteam = et.trap_Argv(2)
@@ -833,10 +853,21 @@ function et_ConsoleCommand( _command )
 		slot[_targetid]["lockedTeamTill"] = _locktime + (et.trap_Milliseconds() /1000 )
 		et.trap_SendServerCommand( -1,"chat \"^7"..slot[_targetid]["netname"].." ^3 is now locked to the ^1"..teamchars[_targetteam].."^3 team\"")
 		end
-	end
-	
-	if string.lower(et.trap_Argv(0)) == "noq_irc" then
+	elseif arg0 == "noq_irc" then
 		sendtoIRCRelay(et.ConcatArgs( 1 ))
+	elseif  arg0 == "!setlevel"  or arg0 == commandprefix .. "setlevel" then
+		-- we need to set the level to be sure db is up-to-date
+		if (et.trap_Argc() ~= 3 ) then
+			et.G_Print("usage: !setlevel id/name level")
+		else
+			local plr = getPlayerId(et.trap_Argv(1))
+			if plr then
+				slot[plr]["lvl"] = tonumber(et.trap_Argv(2))
+				savePlayer( plr )
+				et.G_Print("NOQ: set " .. slot[plr]['netname'] .. " to level " .. tonumber(et.trap_Argv(2)) .. "\n" )
+			end
+			et.G_Print("NOQ: No corresponding player found to set level.")
+		end
 	end
 	
 	-- add more cmds here ...
@@ -1560,8 +1591,9 @@ function execCmd(_clientNum , _cmd, _argw)
 	else
 		-- well, at the end we send the command to the console
 		et.trap_SendConsoleCommand( et.EXEC_APPEND, "".. str .. "\n " )
-		end
+		
 	end
+	
 end
 
 -------------------------------------------------------------------------------
@@ -1922,12 +1954,32 @@ function sendOffMesg (_sender,_receiver, _msg)
 end
 
 -------------------------------------------------------------------------------
+-- getresNames
+-- get reserved Name patterns from the DB
+-------------------------------------------------------------------------------
+function getresNames()
+
+		local NMs = DBCon:GetLogTypefor("6", nil, nil)
+		
+		if NMs ~= nil then
+			for num = 1, #NMs, 1 do
+				namearray[num] = NMs[num].textxml
+			end
+		else
+			namearray = nil
+		end
+end		
+		
+
+-------------------------------------------------------------------------------
 -- timeLeft
 -- Retuns rest of time to play
 -------------------------------------------------------------------------------
 function timeLeft()
 	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
 end
+
+
 
 -------------------------------------------------------------------------------
 -- pussyFactCheck
@@ -1988,9 +2040,11 @@ end
 
 --***************************************************************************
 -- Here start the commands usually called trough the new command-system
--- they should not change internals, they are more informative 
+-- they shouldn't change internals, they are more informative or helpfull
 --***************************************************************************
 -- Currently available:
+-- setLevel
+-- addClan
 -- cleanSession
 -- pussyout
 -- checkBalance
@@ -2002,8 +2056,28 @@ end
 -- forAll
 
 -------------------------------------------------------------------------------
+-- setLevel(clientnum, level)
+-- changes a players level
+-------------------------------------------------------------------------------
+function setLevel(_clientNum, _level)
+		
+		slot[_clientNum]['lvl'] = _level
+		savePlayer( _clientNum )
+end
+
+-------------------------------------------------------------------------------
+-- addClan(clientnum, tag)
+-- adds a Clantag
+-------------------------------------------------------------------------------
+function addClan(_clientNum, _tag)
+		slot[_clientNum]['clan'] = slot[_clientNum]['clan'] .. " "  .. _level
+		savePlayer( _clientNum )
+end
+
+
+-------------------------------------------------------------------------------
 -- cleanSession
--- cleans the Sessiontable from values older than X months
+-- cleans the sessiontable from values older than X months
 -- _arg for first call is amount of months, second call OK to confirm
 -------------------------------------------------------------------------------
 function cleanSession(_callerID, _arg)
@@ -2309,14 +2383,14 @@ function msgtoIRC(_client,_msg)
 	 
 	 _msg = string.gsub(_msg,'\\', "")
 	 
-	 	if type(_client) == "string" then
-	-- no direct call, it is string && therefor a name from the !command
+	if type(_client) == "string" then
+		-- no direct call, it is string && therefore a name from the !command
 		sendtoIRCRelay(_client .. " on " .. serverid .. ": " .. _msg );
 		et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \" ^3Sent your msg to IRC\n\"")
 		return
-		end
+	end
 	 	
-	 if type(_client) == "number" and slot[_client]["user"] ~= "" then
+	if type(_client) == "number" and slot[_client]["user"] ~= "" then
 		
 		sendtoIRCRelay(slot[_client]["user"] .. " on " .. serverid .. ": " .. _msg );
 		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1Sent: ^3".._msg.." ^3to IRC\n\"")
@@ -2338,15 +2412,15 @@ end
 -------------------------------------------------------------------------------
 function forAll(_whom,_what)
 
-if _whom == "players" or _whom == "all" then  
-	_whom = nil
-elseif _whom == "axis" or _whom == "r" then
-	_whom = 1
-elseif _whom == "allies" or _whom == "b" then
-	_whom = 2
-elseif _whom == "specs" or _whom == "s" then
-	_whom = 3
-end
+	if _whom == "players" or _whom == "all" then  
+		_whom = nil
+	elseif _whom == "axis" or _whom == "r" then
+		_whom = 1
+	elseif _whom == "allies" or _whom == "b" then
+		_whom = 2
+	elseif _whom == "specs" or _whom == "s" then
+		_whom = 3
+	end
 
 for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do					
 		if et.gentity_get(i,"classname") == "player" then
