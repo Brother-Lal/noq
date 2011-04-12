@@ -749,7 +749,7 @@ function et_RunFrame( _levelTime )
 		
 		-- Added last kill of the round-- this fails when no kills have been done
 		if (lastkill ~= nil) then
-			execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , lastkill)
+			execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , {[1]=lastkill})
 			et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"^2A total of ^7" .. killcount ..  " ^2Persons died by various reasons during this map\"" )
 		end
 		--TODO: Should we call the save to the DB right here?
