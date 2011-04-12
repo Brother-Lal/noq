@@ -1429,9 +1429,13 @@ function gotCmd( _clientNum, _command, _vsay)
 		cmd = t[1]
 		table.remove(t ,1 )
 		argw = t
+		if t[1] == nil then t[1] = "" end
+		if t[2] == nil then t[2] = "" end
+		if t[3] == nil then t[3] = "" end
+		
 	end
 
-	-- We search trough the commands-array for a suitable command
+	-- We search trought the commands-array for a suitable command
 	for i=lvl, 0, -1 do
 		if commands["cmd"][i][cmd] ~= nil then
 			if cmd == 'help' then
