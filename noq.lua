@@ -192,9 +192,9 @@ nextmapVoteTime	= tonumber(getConfig("nextmapVoteSec"))
 evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
-serverid 		= getConfig("serverID")   -- Unique Server Identifier
-if serverid == "" then	
-	et.trap_Cvar_Get( "servid" ) 		  -- Unique Server Identifier, second option: as cvar.
+serverid = et.trap_Cvar_Get( "servid" ) 		  -- Unique Server Identifier
+if serverid == ""then	
+	serverid 		= getConfig("serverID")   -- Unique Server Identifier
 end
 irchost			= getConfig("irchost")
 ircport 		= tonumber(getConfig("ircport"))
@@ -456,19 +456,7 @@ function et_ClientBegin( _clientNum )
 	   
 	   -- Reserved Name/Clantag support
 		if namearray then
-			local cleanname = et.Q_CleanStr(slot[_clientNum]["netname"])
-			for i,v in ipairs(namearray) do
-				if string.find( cleanname,v) then
-					if string.find(slot[_clientNum]["clan"],v) then
-						-- luck you - you are in the clan/have the name reserved for you
-					else
-						-- oops - rename him
-						et.trap_SendConsoleCommand(et.EXEC_APPEND, "!rename ".._clientNum.. " ".. string.gsub(cleanname,v) )
-						-- Todo: Kick?
-						et.trap_SendServerCommand( _clientNum, "cp \"^1Your tag/name is reserved, please change it.\"")
-					end
-				end
-			end
+			checkforResName(_clientNum)
 		end
 	   
 	end -- end databasecheck
@@ -678,6 +666,22 @@ function et_ClientCommand( _clientNum, _command )
 	elseif arg0 == "mirc" then
 		msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
 		return 1
+	elseif arg0 == "name" then
+		-- we also check here for the name
+		if namearray then
+			local cleanname = string.lower(et.Q_CleanStr(slot[_clientNum]["netname"]))
+			for i,v in ipairs(namearray) do
+				if string.find( cleanname,v) then
+					if string.find(slot[_clientNum]["clan"],v) then
+						-- luck you - you are in the clan/have the name reserved for you
+						et.G_Print("NOQ: Name for "..slot[_clientNum]["netname"].. " reserved and owned\n")
+					else
+						et.trap_SendServerCommand( _clientNum, "chat \"^1This tag/name is reserved or not allowed.\n\"")
+						return 1
+					end
+				end
+			end
+		end
 	end
 	
 end
@@ -1390,10 +1394,11 @@ end
 -- determines and prepares the arguments for our Shrubcmds
 -------------------------------------------------------------------------------
 function gotCmd( _clientNum, _command, _vsay)
-
+	local argw = {}
 	local arg0 = string.lower(et.trap_Argv(0))
 	local arg1 = string.lower(et.trap_Argv(1))
 	local arg2 = string.lower(et.trap_Argv(2))
+	local argcount = et.trap_Argc()  
 
 	local cmd
 	-- TODO: we should use level from Lua client model
@@ -1402,21 +1407,28 @@ function gotCmd( _clientNum, _command, _vsay)
 	
 	if _vsay == nil then -- silent cmd
 		cmd = string.sub(arg0 ,2)
-		argw = arg1
+		argw[1] = arg1
+		argw[2] = arg2
+		argw[3] = et.ConcatArgs( 3 )
 	elseif _vsay == false then -- normal say
 		cmd = string.sub(arg1 ,2)
-		argw = arg2
+		argw[1] = arg2
+		argw[2] = et.trap_Argv(3)
+		argw[3] = et.ConcatArgs( 4 )
 	else  -- its a vsay!
 		cmd = string.sub(arg2 ,2)
-		argw = string.lower(et.trap_Argv(3))
+		argw[1] = et.trap_Argv(3)
+		argw[2] = et.trap_Argv(4)
+		argw[3] = et.ConcatArgs( 5 )
 	end
 
 	-- thats a hack to clearly get the second parameter.
 	-- NQ-Gui chat uses cvars to pass the say-content
 	if string.find(cmd, " ") ~= nil then
-	t = justWords(cmd)
+		t = justWords(cmd)
 		cmd = t[1]
-		argw = t[2]
+		table.remove(t ,1 )
+		argw = t
 	end
 
 	-- We search trough the commands-array for a suitable command
@@ -1428,7 +1440,7 @@ function gotCmd( _clientNum, _command, _vsay)
 				else
 					for i=lvl, 0, -1 do
 						if commands["hlp"][i][argw] ~= nil then
-							helpCmd( _clientNum, argw, i) 
+							helpCmd( _clientNum, argw[1], i) 
 							return 1
 						end
 					end
@@ -1505,7 +1517,7 @@ function execCmd(_clientNum , _cmd, _argw)
 	end
 	
 	
-	local otherplayer = _argw
+	local otherplayer = _argw[1]
 	
 	local assume = false
 	otherplayer = getPlayerId(otherplayer)
@@ -1524,7 +1536,10 @@ function execCmd(_clientNum , _cmd, _argw)
 	local str = string.gsub(str, "<PLAYER>", et.Q_CleanStr(et.gentity_get(_clientNum,"pers.netname")))
 	local str = string.gsub(str, "<PLAYER_CLASS>", class[c])
 	local str = string.gsub(str, "<PLAYER_TEAM>", team[t])
-	local str = string.gsub(str, "<PARAMETER>", et.ConcatArgs( 2 ) )
+	local str = string.gsub(str, "<PARAMETER>", table.concat(_argw , " ") )
+	local str = string.gsub(str, "<P1>", _argw[1] )
+	local str = string.gsub(str, "<P2>", _argw[2] )
+	local str = string.gsub(str, "<P3>", _argw[3] )
 	local str = string.gsub(str, "<PLAYER_LAST_KILLER_ID>", lastkiller )
 	local str = string.gsub(str, "<PLAYER_LAST_KILLER_NAME>", et.Q_CleanStr( nlastkiller ))
 	local str = string.gsub(str, "<PLAYER_LAST_KILLER_CNAME>", nlastkiller )
@@ -1602,7 +1617,7 @@ end
 -------------------------------------------------------------------------------
 function getPlayerId( _name )
     -- if it's nil, return nil
-    if (_name == "") then
+    if (_name == "") or name == nil then
         return nil
     end
 
@@ -1870,7 +1885,7 @@ end
 function greetClient( _clientNum )
 	local lvl = tonumber(slot[_clientNum]["level"])
 	if greetings[lvl] ~= nil then
-		et.trap_SendConsoleCommand(et.EXEC_APPEND, "cpm " .. string.gsub(greetings[lvl], "<COLOR_PLAYER>", slot[_clientNum]["netname"]))
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "cpm " .. string.gsub(greetings[lvl], "<COLOR_PLAYER>", slot[_clientNum]["netname"]) .. "\n")
 	end
 end
 
@@ -1968,8 +1983,38 @@ function getresNames()
 		else
 			namearray = nil
 		end
-end		
+end
+
+-------------------------------------------------------------------------------
+-- getresNames
+-- get reserved Name patterns from the DB
+-------------------------------------------------------------------------------
+function reserveName(_name)
+	if _name ~= nil and _name ~= "" then
+		DBCOn:SetLogEntry(6, "" , "", _name )
+	end
+end
 		
+-------------------------------------------------------------------------------
+-- checkforResName(clientnum)
+-- check if the name is reserved
+-------------------------------------------------------------------------------
+function checkforResName(_clientNum)
+	local cleanname = string.lower(et.Q_CleanStr(slot[_clientNum]["netname"]))
+	for i,v in ipairs(namearray) do
+		if string.find( cleanname,v) then
+			if string.find(slot[_clientNum]["clan"],v) then
+				-- luck you - you are in the clan/have the name reserved for you
+				et.G_Print("NOQ: Name for "..slot[_clientNum]["netname"].. " reserved and owned\n")
+			else
+				-- oops - rename him
+				et.trap_SendConsoleCommand(et.EXEC_APPEND, "!rename ".._clientNum.. " ".. string.gsub(cleanname,v, "X") )
+				-- Todo: Kick?
+				et.trap_SendServerCommand( _clientNum, "chat \"^1Your tag/name is reserved or not allowed.\"")
+			end
+		end
+	end
+end					
 
 -------------------------------------------------------------------------------
 -- timeLeft
@@ -2070,7 +2115,7 @@ end
 -- adds a Clantag
 -------------------------------------------------------------------------------
 function addClan(_clientNum, _tag)
-		slot[_clientNum]['clan'] = slot[_clientNum]['clan'] .. " "  .. _level
+		slot[_clientNum]['clan'] = slot[_clientNum]['clan'] .. " "  .. _tag
 		savePlayer( _clientNum )
 end
 
