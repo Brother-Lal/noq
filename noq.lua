@@ -1995,7 +1995,7 @@ end
 -------------------------------------------------------------------------------
 function reserveName(_name)
 	if _name ~= nil and _name ~= "" then
-		DBCOn:SetLogEntry(6, "" , "", _name )
+		DBCon:SetLogEntry(6, "" , "", _name )
 		
 		if _otherplayer then
 			et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \"^3Added ".._name.." to the protected patterns.\"" ) 
