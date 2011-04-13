@@ -80,7 +80,6 @@ Noquarter and NOQ\\
 NOQ Features include, but are not limited to:
 
 \subsection{Database Connectivity}
-
 The NOQ has the possibility to use a DMBS as a backend for most of its advanced commands.
 This is strongly encouraged, as most features like bans, mutes and XPSave rely on this.
 \\
@@ -241,7 +240,7 @@ Some functions are predefined in the mod and therefore these builtin commands ca
 \subsection{Greetings}
 
 The NOQ can greet players individually, and he can announce publicly that a specific player just joined the game.
-Public announcements per level are saved in noq\_greetings.cfg (see for it for an example and customize it), while the personal message is in the main config:
+Public announcements per level are saved in noq\_greetings.cfg (see it for an example and customize), while the personal message is in the main config:
 \\
 \begin{tabular}{l l|l}
 \hline & & \\
@@ -257,12 +256,12 @@ please note that the playername is added at the end of the string, separated by 
 \subsection{Pussyfactor}
 
 For every kill, we add a value to the clients number, and to determine the the Pussyfactor, we divide that number trough the number of his kills multiplicated with 100.
-If we add 100 for an MP40/Thompsonkill, if the player does only those kills , he will stay at pussyfactor 1.
+If we add 100 for an MP40/Thompsonkill, if the player does only those kills he will stay at pussyfactor 1.
 If we add more or less(as 100) to the number, his pf will rise or decline.
  \\
-Pussyfactor $<$ 1 		means he made "cool kills" = poison, goomba, knive
-Pussyfactor = 1 		means he makes normal kills
-Pussyfactor $>$ 1      means he does uncool kills (Panzerfaust, teamkills, arty?)
+Pussyfactor $<$ 1 		means he did "cool kills" = poison, goomba, knive
+Pussyfactor = 1 		means he did normal kills
+Pussyfactor $>$ 1      means he did uncool kills (Panzerfaust, teamkills, arty?)
 \\
 As we add 100 for every normal kill, the pussyfactor approaches 1 after some time with "normal" kills.
 \\
@@ -369,8 +368,8 @@ If you join a server and hear the PM-messaging sound, you should check your inbo
 
 
 \subsection{Clantag/Name Protection}
-The NOQ can protect Clantags and names from being used by unpriviledged Users.
-This mechanism is automaticly enabled after adding at least one protected string.
+The NOQ can protect clantags and names from being used by unpriviledged players.
+This mechanism is automatically enabled after adding at least one protected string.
 To do this, add following commands to your commands.cfg:
 
 \begin{lstlisting}
@@ -386,7 +385,7 @@ NOQ: Added 'etplayer' to the protected patterns.
 \end{lstlisting}
 
 All playernames containing the string "etplayer" will now have this part renamed to "X".
-To allow a Player to use this pattern, add this pattern to him:
+To allow a player to use this pattern, add this pattern to him:
 
 
 \begin{lstlisting}
@@ -394,7 +393,7 @@ To allow a Player to use this pattern, add this pattern to him:
 NOQ: Added 'etplayer' to the patterns for Fullname.
 \end{lstlisting}
 
-Fullname is now able to use the pattern etplayer in his name. For the matching colorcodes are stripped from the name, but not the pattern, so don't use them.
+Fullname is now able to use the pattern 'etplayer' in his name. For the matching colorcodes are stripped from the name, but not the pattern, so don't use them.
 You can add multiple patterns for a player to use. If you use a regex/lua pattern, have in mind that the added string for the addClan command has to match the regex/pattern. 
 Oh, and if you use special chars that are no letters or numbers, watch out as they might have some additional meaning as a lua pattern matcher.
 Examples that can be used for reserved patterns:
@@ -402,8 +401,8 @@ Examples that can be used for reserved patterns:
 \begin{lstlisting}
 !protect luborg # will protect the name luborg
 !protect .*borg # will protect all names containing borg at the end
-!protect \\.es\\.	# will protect the .es. clantag, not the escape shlashes for the dots
-!protect .*		# will protect every name - making your server empty 
+!protect \.es\.	# will protect the .es. clantag, note the escape shlashes for the dots
+!protect .*	# will protect every name - making your server empty 
 \end{lstlisting}
 
 \subsection{New Servercommands}
@@ -425,8 +424,8 @@ will print "this is a test" in the clientconsole of the player in slot 0.
 The player is locked to a specific team, and won't be able to leave it.
 Time is the time in seconds, after wich the player is able to leave the team again.
 
-\subsubsection{noq_irc}
-\textbf{Usage:} \hfill noq_irc text\linebreak
+\subsubsection{noq\_irc}
+\textbf{Usage:} \hfill noq\_irc text\linebreak
 \textbf{Description:} \linebreak
 Will send text to the IRC-relay, wich will pipe it as an puplic chat to an IRC-channel.
 
