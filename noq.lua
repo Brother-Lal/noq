@@ -1990,12 +1990,20 @@ function getresNames()
 end
 
 -------------------------------------------------------------------------------
--- getresNames
--- get reserved Name patterns from the DB
+-- reserveName
+-- add a protected string to the Database
 -------------------------------------------------------------------------------
 function reserveName(_name)
 	if _name ~= nil and _name ~= "" then
 		DBCOn:SetLogEntry(6, "" , "", _name )
+		
+		if _otherplayer then
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \"^3Added ".._name.." to the protected patterns.\"" ) 
+			et.G_Print("NOQ: Added '".._name.."' to the protected patterns.\"" )
+		else
+			et.G_Print("NOQ: Added '".._name.."' to the protected patterns.\"" )
+		end
+	
 	end
 end
 		
@@ -2121,6 +2129,13 @@ end
 function addClan(_clientNum, _tag)
 		slot[_clientNum]['clan'] = slot[_clientNum]['clan'] .. " "  .. _tag
 		savePlayer( _clientNum )
+		
+		if otherplayer then
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \"^3Added ".._tag.." to the patterns for "..slot[_clientNum]['netname']..".\"" ) 
+			et.G_Print("NOQ: Added '".._tag.."' to the patterns for "..et.Q_CleanStr(slot[_clientNum]['netname'])..".\"" )
+		else
+			et.G_Print("NOQ: Added '".._tag.."' to the patterns for "..et.Q_CleanStr(slot[_clientNum]['netname'])..".\"" )
+		end
 end
 
 
@@ -2471,7 +2486,7 @@ function forAll(_whom,_what)
 		_whom = 3
 	end
 
-for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do					
+for i=0, maxclients, 1 do					
 		if et.gentity_get(i,"classname") == "player" then
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
 				if _whom == nil or team == _whom then

@@ -95,6 +95,7 @@ The configpart for the DBMS:
 &	["dbpassword"]="dbpass", 	& Only needed for mySQL\\
 &	["dbhostname"]="dbhost", 	& Only needed for mySQL\\
 &	["dbport"]="3306",    		& Only needed for mySQL\\
+& 	["useDB"]="1",				& 0 or 1 , 0 to disable all db interaction \\   
 & &  \\
  \hline
 \end{tabular}	
@@ -112,8 +113,8 @@ The config has some options:
 \begin{tabular}{l l|l}
 \hline & & \\
 & 	["recordbots"] = "0", 	& This will toggle if bots are recorded into the DB. Values:(0/1)\\
-& 	["xprestore"] = "1",	& This will enable XPRestore out of database, wich works best on multiple Servers\\
- & &  \\
+& 	["xprestore"] = "1",	& This will enable XPRestore out of database, wich works best on multiple servers\\
+& &  \\
  \hline
 \end{tabular}
 
@@ -125,7 +126,7 @@ The NOQ's most useful feature are its custom commands, wich are oriented at the 
 \\
 The basic Syntax is:
 
-  $[level] - commandname = [command]$
+  $ [level] - commandname = [command]$
 \\
 mind the whitespace before the level!
 Comments can be done via
@@ -143,9 +144,9 @@ Config options for Commands are:
 \begin{table}[h]
 \begin{tabular}{l l|l}
 \hline & & \\
- &	 ["usecommands"] = "0", & General switch to disable/enable the commands. Values:(0/1)\\
- & ["commandprefix"] = "!", & the prefix used to trigger the command. \\ 
- & &  \\
+&	["usecommands"] = "0", 		& General switch to disable/enable the commands. Values:(0/1)\\
+& 	["commandprefix"] = "!", 	& the prefix used to trigger the command. \\ 
+& &  \\
  \hline
 \end{tabular}
 \end{table}
@@ -183,6 +184,13 @@ Like in ETAdminmod, you can use several placeholders, wich will be replaced by t
  & $<$PART2GUID$>$						& guid				\\
  & $<$PART2LEVEL$>$						& adminlevel		\\
  & $<$PART2NAME$>$						& name without color\\
+ & $<$PART2IP$>$						& IP-adress			 \\
+
+
+ & $<$P1$>$								& parameter 1	 \\
+ & $<$P2$>$								& parameter 2	\\	
+ & $<$P3$>$								& parameter 3\\
+ & $<$PARAMETER$>$						& all parameters concatenated\\
 
  & &  \\
  \hline
@@ -359,6 +367,44 @@ Now your inbox should be empty.
 
 If you join a server and hear the PM-messaging sound, you should check your inbox for mail.
 
+
+\subsection{Clantag/Name Protection}
+The NOQ can protect Clantags and names from being used by unpriviledged Users.
+This mechanism is automaticly enabled after adding at least one protected string.
+To do this, add following commands to your commands.cfg:
+
+\begin{lstlisting}
+[level] - protect = $LUA$ reserveName("<PARAMETER>"); #(choose level and name to your good will)
+[level] - addclan = $LUA$ addClan(<PART2IDS>, "<P2>"); 
+\end{lstlisting}
+
+You then will be able to reserve a string or even a lua pattern: 
+
+\begin{lstlisting}
+!protect etplayer
+NOQ: Added 'etplayer' to the protected patterns.
+\end{lstlisting}
+
+All playernames containing the string "etplayer" will now have this part renamed to "X".
+To allow a Player to use this pattern, add this pattern to him:
+
+
+\begin{lstlisting}
+!addclan partofname etplayer
+NOQ: Added 'etplayer' to the patterns for Fullname.
+\end{lstlisting}
+
+Fullname is now able to use the pattern etplayer in his name. For the matching colorcodes are stripped from the name, but not the pattern, so don't use them.
+You can add multiple patterns for a player to use. If you use a regex/lua pattern, have in mind that the added string for the addClan command has to match the regex/pattern. 
+Oh, and if you use special chars that are no letters or numbers, watch out as they might have some additional meaning as a lua pattern matcher.
+Examples that can be used for reserved patterns:
+
+\begin{lstlisting}
+!protect luborg # will protect the name luborg
+!protect .*borg # will protect all names containing borg at the end
+!protect \\.es\\.	# will protect the .es. clantag, not the escape shlashes for the dots
+!protect .*		# will protect every name - making your server empty 
+\end{lstlisting}
 
 \subsection{New Servercommands}
 The NOQ also provides new Servercommands:
