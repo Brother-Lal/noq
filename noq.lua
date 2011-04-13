@@ -869,8 +869,9 @@ function et_ConsoleCommand( _command )
 				slot[plr]["lvl"] = tonumber(et.trap_Argv(2))
 				savePlayer( plr )
 				et.G_Print("NOQ: set " .. slot[plr]['netname'] .. " to level " .. tonumber(et.trap_Argv(2)) .. "\n" )
+			else
+				et.G_Print("NOQ: No corresponding player found to set level.")
 			end
-			et.G_Print("NOQ: No corresponding player found to set level.")
 		end
 	end
 	
