@@ -199,6 +199,7 @@ end
 irchost			= getConfig("irchost")
 ircport 		= tonumber(getConfig("ircport"))
 
+disableforce = false
 
 
 -- Prints the configuration
@@ -749,7 +750,7 @@ function et_RunFrame( _levelTime )
 		
 		-- Added last kill of the round-- this fails when no kills have been done
 		if (lastkill ~= nil) then
-			execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , {[1]=lastkill})
+			execCmd(lastkill, "chat \"^2And the last kill of the round goes to: ^7<COLOR_PLAYER>\"" , {[1]=lastkill,[2]=lastkill,[3]=lastkill})
 			et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"^2A total of ^7" .. killcount ..  " ^2Persons died by various reasons during this map\"" )
 		end
 		--TODO: Should we call the save to the DB right here?
@@ -797,6 +798,15 @@ function et_Obituary( _victim, _killer, _mod )
 			else -- cool kill
 				slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 				slot[_killer]["kills"] = tonumber(et.gentity_get(_killer,"sess.kills"))		
+			
+				slot[_victim]["kspree"] = 0
+				slot[_killer]["kspree"] = slot[_killer]["kspree"] + 1
+				-- force points - adding half of the killspree value
+				slot[_killer]["fpoints"] = slot[_killer]["fpoints"] + (slot[_killer]["kspree"] / 2) 
+				-- add 1 point for deaths to .. some haven't the luck of many kills
+				slot[_victim]["fpoints"] = slot[_victim]["fpoints"] + 1 
+				
+				
 			end
 		end
 			
@@ -918,6 +928,8 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["acc"] 	= 0
 	slot[_clientNum]["kills"] 	= 0
 	slot[_clientNum]["tkills"] 	= 0
+	slot[_clientNum]["kspree"] = 0		-- killingspree
+	slot[_clientNum]["fpoints"] = 10 	-- forcepoints
 	slot[_clientNum]["netname"] = false
 	slot[_clientNum]["victim"] 	= -1
 	slot[_clientNum]["killwep"] = "nothing"
@@ -2360,7 +2372,7 @@ end
 
 -------------------------------------------------------------------------------
 -- listCMDs
--- Retuns a list of available Noq CMDs
+-- Returns a list of available Noq CMDs
 -------------------------------------------------------------------------------
 function listCMDs( _Client ,... )
 	local lvl = tonumber(et.G_shrubbot_level( _Client ) )
@@ -2479,11 +2491,11 @@ function forAll(_whom,_what)
 
 	if _whom == "players" or _whom == "all" then  
 		_whom = nil
-	elseif _whom == "axis" or _whom == "r" then
+	elseif _whom == 1 or _whom == "r" or _whom == "axis" then
 		_whom = 1
-	elseif _whom == "allies" or _whom == "b" then
+	elseif _whom == 2 or _whom == "b" or _whom == "allies" then
 		_whom = 2
-	elseif _whom == "specs" or _whom == "s" then
+	elseif _whom == 3 or _whom == "s" or _whom == "specs" then
 		_whom = 3
 	end
 
@@ -2497,6 +2509,94 @@ for i=0, maxclients, 1 do
 end
 
 
+end
+
+-------------------------------------------------------------------------------
+-- some convenience Functions for !commands or mod-use
+-------------------------------------------------------------------------------
+
+function heal(_clientNum)
+		et.gentity_set(_clientNum,"health", et.gentity_get(_clientNum,"ps.stats", 4) )
+end
+
+function healthboost(_clientNum)
+	-- boost clienthealth +30 - no full heal, but perhaps more than allowed hp :)
+	et.gentity_set(_clientNum,"health", et.gentity_get(_clientNum,"health" ) + 30 )
+end
+
+function giveammo(_clientNum)
+
+	if et.gentity_get(_clientNum,"sess.sessionTeam") == 1 then
+	-- axis
+	et.gentity_set(_clientNum,"ps.ammo", 2, 64 )  -- luger 16
+	et.gentity_set(_clientNum,"ps.ammo", 3, 150 )  -- mp40 60
+	et.gentity_set(_clientNum,"ps.ammo", 9, 8 ) --nade 4
+	et.gentity_set(_clientNum,"ps.ammo", 36, 64 ) --akimbo luger
+	else
+	-- allies
+	et.gentity_set(_clientNum,"ps.ammo", 35, 64 ) --akimbo colt
+	et.gentity_set(_clientNum,"ps.ammo", 4, 8 ) 	--nade 4
+	et.gentity_set(_clientNum,"ps.ammo", 7, 64 )	-- colt 16
+	et.gentity_set(_clientNum,"ps.ammo", 8, 150 )  -- thompson
+
+	end
+	
+end
+
+function force(_clientNum, _what , _arg2)
+
+	if disableforce  then return end
+
+	if _what == "heal" then
+		if FPcheck(_clientNum, 15) then
+			heal(_clientNum)
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to heal himself.\n\"")
+		end
+	elseif _what == "push" then
+		if _arg2 ~= "" and FPcheck(_clientNum, 15) then
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"!fling " .. _arg2)
+		end
+	elseif _what == "ammo" then
+		if FPcheck(_clientNum, 15) then
+			giveammo(_clientNum)
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to replenish his ammo.\n\"")
+		end
+	elseif _what == "boost" then
+		if FPcheck(_clientNum, 15) then
+			healthboost(_clientNum)
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to boost his health.\n\"")
+		end
+	elseif _what == "team" then
+		
+		if   _arg2 == "heal" or _arg2 == "ammo" or _arg2 == "boost"  then
+			if  FPcheck(_clientNum, 50) then
+				if _arg2 == "boost" then
+					forAll(  tonumber(et.gentity_get(_clientNum,"sess.sessionTeam")) ,  healthboost)
+				elseif _arg2 == "ammo" then
+					forAll(  tonumber(et.gentity_get(_clientNum,"sess.sessionTeam")) ,  giveammo)
+				elseif _arg2 == "heal" then
+					forAll(  tonumber(et.gentity_get(_clientNum,"sess.sessionTeam")) ,  heal)
+				end	
+		et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to help his team with a ^2".._arg2..".\n\"")
+		end	
+		else
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\" ^3 You want to do .. what? heal, ammo, boost or push?  \n\"")
+		end
+	else
+		et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\" ^3 You want to do .. what? ^4heal^3, ^4ammo^3, ^4boost ^3or ^4push^3?  \n\"")	
+	end
+
+end
+
+function FPcheck(_clientNum, _amount)
+
+	if slot[_clientNum]["fpoints"] >= _amount then
+		slot[_clientNum]["fpoints"] = slot[_clientNum]["fpoints"] - _amount
+		return true
+	else
+		et.trap_SendConsoleCommand(et.EXEC_APPEND , "chat \" ^2To weak, the force in you is, young padawan .. Yes, hmmm. \n\"")
+		return false
+	end
 end
 
 -------------------------------------------------------------------------------
