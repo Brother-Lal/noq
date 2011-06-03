@@ -862,7 +862,7 @@ function et_ConsoleCommand( _command )
 			_targetid = tonumber(et.trap_Argv(1))
 			if slot[_targetid] ~= nil then
 
-				et.trap_SendServerCommand( _targetid,"print \"" .. et.trap_Argv(2) .."\"")
+				et.trap_SendServerCommand( _targetid,"print \"" .. et.trap_Argv(2) .."\n\"")
 			end
 		end
 	elseif arg0 == "plock" then
@@ -1011,6 +1011,7 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["suspect"] = DBCon.row.suspect
 		slot[_clientNum]["regdate"] = DBCon.row.regdate
 		slot[_clientNum]["createdate"] = DBCon.row.createdate -- first seen
+		slot[_clientNum]["updatedate"] = DBCon.row.updatedate -- last seen
 		--slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: noq - database; ailmanki: changed.. if the user is in db we get in from db, else from shrubbot.
 		slot[_clientNum]["level"] = DBCon.row.level
 		slot[_clientNum]["flags"] = DBCon.row.flags -- TODO: pump it into game
@@ -1461,11 +1462,11 @@ function gotCmd( _clientNum, _command, _vsay)
 	for i=lvl, 0, -1 do
 		if commands["cmd"][i][cmd] ~= nil then
 			if cmd == 'help' then
-				if argw == "" then
+				if argw[1] == "" then
 					et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _clientNum .. " \"^FFor NOQ help type !cmdlist.. \"")	
 				else
 					for i=lvl, 0, -1 do
-						if commands["hlp"][i][argw] ~= nil then
+						if commands["hlp"][i][argw[1]] ~= nil then
 							helpCmd( _clientNum, argw[1], i) 
 							return 1
 						end
@@ -1948,10 +1949,10 @@ function checkOffMesg (_clientNum)
 				et.trap_SendServerCommand(_clientNum, "print \"\n^3*** Erase messages with /rmom MSGID ^3***\n\"")
 			
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new offlinemessages \n\"\n")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3No new offlinemessages\"\n")
 		end
 	else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use offlinemessages, please register\n\"\n")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3To use offlinemessages, please register\"\n")
 	end
 
 end
@@ -1977,19 +1978,19 @@ function sendOffMesg (_sender,_receiver, _msg)
 				--                	type	sent					receiver		text
 				DBCon:SetLogEntry(	"5",	slot[_sender]['pkey'],	player['pkey'],	message)
 				
-				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\"\n")
 				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 '".. _msg .."'\n\"\n")
 		
 			else
-				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Nobody registered the name'".. _receiver .."', so i cannot send him a message.\"\n")
 			end
 		
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/command receiver message'.\n\"\n")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/command receiver message'.\"\n")
 		end
 		
 	else
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3To use Offlinemessages, please register\n\"\n")
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3To use Offlinemessages, please register\"\n")
 	end
 
 end
@@ -2155,22 +2156,22 @@ local mytype = type(_what)
 			end
 		end
 		
-	elseif _whom >= 0 and _whom <= 64 then
+	elseif _whom >= 0 and _whom <= 63 then
 		-- player
-		if mytype == "string" then
-				et.trap_SendConsoleCommand(et.EXEC_APPEND,"csay ".. _whom .. " \"".. _what .."\n\" " ) 
-		elseif mytype == "table" then
+		if mytype == "table" then
 			for i,v in ipairs(_what) do
-				et.trap_SendConsoleCommand(et.EXEC_APPEND,"csay ".. _whom .. " \"".. v .."\n\" " ) 
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"csay ".. _whom .. " \"".. v .."\"\n " ) 
 			end
+		elseif mytype == "string" then
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"csay ".. _whom .. " \"".. _what .."\"\n " ) 
 		end
 	else
 		--everybody
 		if mytype == "string" then
-				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. _what .."\n\" " ) 
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. _what .."\"\n " ) 
 		elseif mytype == "table" then
 			for i,v in ipairs(_what) do
-				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. v .."\n\" " ) 
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. v .."\"\n " ) 
 			end
 		end
 	
@@ -2204,14 +2205,14 @@ function printPlyrInfo(_whom, _about)
 
 	local mit = {}
 		
-		mit .=	"NOQ Info: "
-		mit .=  "Info about: " .. slot[_about]["cname"] .." (" .. slot[_about]["regname"] .. ") "
-		mit .= 	"First seen: " .. slot[_about]["createdate"]
-		mit .=  "Last seen:  " .. slot[_about]["updatedate"]
+		table.insert( mit , "^dNOQ Info: " )
+		table.insert( mit , "^dInfo about: ^7" .. slot[_about]["netname"] .." ^7(" .. slot[_about]["user"] .. ") " )
+		table.insert( mit , "^dFirst seen: ^r" .. slot[_about]["createdate"])
+		table.insert( mit , "^dLast seen:  ^r" .. slot[_about]["updatedate"])
 		if slot[_about]["mutedby"] ~= "" then
-		mit .=  "Muted by:   " .. slot[_about]["mutedby"]
-		mit .=  "Reason:     " .. slot[_about]["mutereason"]
-		mit .=  "Until:		 " .. slot[_about]["muteexpire"]
+		table.insert( mit , "^dMuted by:   ^7" .. slot[_about]["mutedby"])
+		table.insert( mit , "^dReason:     ^r" .. slot[_about]["mutereason"])
+		table.insert( mit , "^dUntil:	   ^r" .. slot[_about]["muteexpire"])
 		end
 		
 		nPrint(_whom,mit)
@@ -2318,7 +2319,7 @@ function pussyout( _clientNum )
 
 	-- TODO: do we need to number here =
 	et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \""..slot[tonumber(_clientNum)]["netname"].."^3's pussyfactor is at: ".. realpf ..".Higher is worse. \"" ) 
-	et.G_LogPrint("NOQ: PUSSY:"..slot[tonumber(_clientNum)]["netname"].." at ".. realpf .."\n")
+	et.G_LogPrint("NOQ: PUSSY: "..slot[tonumber(_clientNum)]["netname"].." at ".. realpf .."\n")
 end
 
 -------------------------------------------------------------------------------
@@ -2519,17 +2520,17 @@ function listCMDs( _Client ,... )
 	for i=(_page*20), (_page*20 + 20),4 do
 		if  number - i < 4  then
 			if number %4 == 1 then
-				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. "\n\"" )
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. "\"" )
 				break
 			elseif number %4 == 2 then
-				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. "\n\"")
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. "\"")
 				break 
 			elseif number %4 == 3 then
-				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR[i] .. yaAR[i+1] .. yaAR[i+2].. "\n\"" )
+				et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F"..yaAR[i] .. yaAR[i+1] .. yaAR[i+2].. "\"" )
 				break
 			end
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\n\"") 
+			et.trap_SendConsoleCommand(et.EXEC_NOW , "csay ".._Client.."\"^F".. yaAR[i] .. yaAR[i+1] .. yaAR[i+2] .. yaAR[i+3].. "\"") 
 		end
 	end		
 		
@@ -2561,10 +2562,10 @@ function msgtoIRC(_client,_msg)
 	if type(_client) == "number" and slot[_client]["user"] ~= "" then
 		
 		sendtoIRCRelay(slot[_client]["user"] .. " on " .. serverid .. ": " .. _msg );
-		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1Sent: ^3".._msg.." ^3to IRC\n\"")
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1Sent: ^3".._msg.." ^3to IRC\"")
 		return
 	else
-		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1You need to be registered to send messages to IRC \n \"")
+		et.trap_SendConsoleCommand(et.EXEC_APPEND, "csay ".. _client .. "\" ^1You need to be registered to send messages to IRC  \"")
 		return
 	end
 	
