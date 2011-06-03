@@ -161,6 +161,8 @@ w				= assert(table.load( scriptpath .. "noq_weapons_names.cfg")) -- weapons by 
 -- end TODO
 greetings		= assert(table.load( scriptpath .. "noq_greetings.cfg")) -- all greetings, customize as wished
 
+tkweight		= {} -- TODO: external table
+
 -- Gets varvalue else null
 function getConfig ( varname )
 	local value = noqvartable[varname]
@@ -193,12 +195,13 @@ evenerdist 		= tonumber(getConfig("evenerCheckallSec"))
 polldist 		= tonumber(getConfig("polldistance")) -- time in seconds between polls, -1 to disable
 maxSelfKills 	= tonumber(getConfig("maxSelfKills")) -- Selfkill restriction: -1 to disable
 serverid = et.trap_Cvar_Get( "servid" ) 		  -- Unique Server Identifier
-if serverid == ""then	
+if serverid == "" then	
 	serverid 		= getConfig("serverID")   -- Unique Server Identifier
 end
 irchost			= getConfig("irchost")
 ircport 		= tonumber(getConfig("ircport"))
 
+-- disable the !force command hardcoded.
 disableforce = false
 
 
@@ -795,6 +798,11 @@ function et_Obituary( _victim, _killer, _mod )
 				-- TODO: check if death/kills need an update here
 				slot[_killer]["tkills"] = slot[_killer]["tkills"] + 1		
 				slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1			
+				
+				if not tkweight[_mod] ~= nil then tk = 1 else tk = tkweight[_mod] end
+				slot[_killer]["tkpoints"] = slot["tkpoints"] + tk
+				checkTKPoints(_killer)
+			
 			else -- cool kill
 				slot[_victim]["death"] = tonumber(et.gentity_get(_victim,"sess.deaths"))
 				slot[_killer]["kills"] = tonumber(et.gentity_get(_killer,"sess.kills"))		
@@ -928,6 +936,7 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	slot[_clientNum]["acc"] 	= 0
 	slot[_clientNum]["kills"] 	= 0
 	slot[_clientNum]["tkills"] 	= 0
+	slot[_clientNum]["tkpoints"] = 0
 	slot[_clientNum]["kspree"] = 0		-- killingspree
 	slot[_clientNum]["fpoints"] = 10 	-- forcepoints
 	slot[_clientNum]["netname"] = false
@@ -2043,7 +2052,7 @@ end
 
 -------------------------------------------------------------------------------
 -- timeLeft
--- Retuns rest of time to play
+-- Returns rest of time to play
 -------------------------------------------------------------------------------
 function timeLeft()
 	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
@@ -2092,6 +2101,18 @@ function pussyFactCheck( _victim, _killer, _mod )
 	end -- pussy end
 end
 
+
+-------------------------------------------------------------------------------
+-- checkTKPoints
+-- Check if we need to punish a teamkiller
+-------------------------------------------------------------------------------
+function checkTKPoints(_clientNum)
+
+
+
+end
+
+
 -------------------------------------------------------------------------------
 -- sendtoIRCRelay
 -- Will send a string to our IRC-Relay
@@ -2108,11 +2129,61 @@ function sendtoIRCRelay(_txt)
 
 end
 
+
+-------------------------------------------------------------------------------
+-- nPrint(_whom , _what)
+-- Will print _what to _whom
+-- _whom can be: 	-1  	-	 	Console
+-- 					 0 - 64 -		Player(private)
+--					 65		- 		Everyone
+--					 
+-- _what can be:
+--					String
+--					Array of Strings
+--					
+-- Note: Please dont use an table of tables - it will fail dispalying strange numbers :)
+-------------------------------------------------------------------------------
+function nPrint(_whom, _what)
+local mytype = type(_what)
+	if _whom == -1 then
+		--console
+		if mytype == "string" then
+			et.G_LogPrint(_what)
+		elseif mytype == "table" then
+			for i,v in ipairs(_what) do
+			et.G_LogPrint(v)
+			end
+		end
+		
+	elseif _whom >= 0 and _whom <= 64 then
+		-- player
+		if mytype == "string" then
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"csay ".. _whom .. " \"".. _what .."\n\" " ) 
+		elseif mytype == "table" then
+			for i,v in ipairs(_what) do
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"csay ".. _whom .. " \"".. v .."\n\" " ) 
+			end
+		end
+	else
+		--everybody
+		if mytype == "string" then
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. _what .."\n\" " ) 
+		elseif mytype == "table" then
+			for i,v in ipairs(_what) do
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. v .."\n\" " ) 
+			end
+		end
+	
+	end
+end
+
+
 --***************************************************************************
 -- Here start the commands usually called trough the new command-system
 -- they shouldn't change internals, they are more informative or helpfull
 --***************************************************************************
 -- Currently available:
+-- printPlyrInfo
 -- setLevel
 -- addClan
 -- cleanSession
@@ -2124,6 +2195,28 @@ end
 -- listcmds
 -- msgtoIRC
 -- forAll
+
+-------------------------------------------------------------------------------
+-- printPlyrInfo(_whom, _about)
+-- will print Info about player _about to player _whom
+-------------------------------------------------------------------------------
+function printPlyrInfo(_whom, _about)
+
+	local mit = {}
+		
+		mit .=	"NOQ Info: "
+		mit .=  "Info about: " .. slot[_about]["cname"] .." (" .. slot[_about]["regname"] .. ") "
+		mit .= 	"First seen: " .. slot[_about]["createdate"]
+		mit .=  "Last seen:  " .. slot[_about]["updatedate"]
+		if slot[_about]["mutedby"] ~= "" then
+		mit .=  "Muted by:   " .. slot[_about]["mutedby"]
+		mit .=  "Reason:     " .. slot[_about]["mutereason"]
+		mit .=  "Until:		 " .. slot[_about]["muteexpire"]
+		end
+		
+		nPrint(_whom,mit)
+		
+end
 
 -------------------------------------------------------------------------------
 -- setLevel(clientnum, level)
@@ -2368,8 +2461,6 @@ function showmaps()
 	et.trap_SendConsoleCommand(et.EXEC_APPEND, "chat \"".. ent2 .. "\"")
 end
 
-
-
 -------------------------------------------------------------------------------
 -- listCMDs
 -- Returns a list of available Noq CMDs
@@ -2515,15 +2606,27 @@ end
 -- some convenience Functions for !commands or mod-use
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+-- heal(ClientNum)
+-- heal a Player 
+-------------------------------------------------------------------------------
 function heal(_clientNum)
 		et.gentity_set(_clientNum,"health", et.gentity_get(_clientNum,"ps.stats", 4) )
 end
 
+-------------------------------------------------------------------------------
+-- healthboost(ClientNum)
+-- boost a clients HP by 30, even over the maximum
+-------------------------------------------------------------------------------
 function healthboost(_clientNum)
 	-- boost clienthealth +30 - no full heal, but perhaps more than allowed hp :)
 	et.gentity_set(_clientNum,"health", et.gentity_get(_clientNum,"health" ) + 30 )
 end
 
+-------------------------------------------------------------------------------
+-- giveammo(ClientNum)
+-- Fill a clients mainweapons with ammo
+-------------------------------------------------------------------------------
 function giveammo(_clientNum)
 
 	if et.gentity_get(_clientNum,"sess.sessionTeam") == 1 then
@@ -2543,6 +2646,11 @@ function giveammo(_clientNum)
 	
 end
 
+
+-------------------------------------------------------------------------------
+-- force(ClientNum, command, whom/command)
+-- Starwars themed gimmicks
+-------------------------------------------------------------------------------
 function force(_clientNum, _what , _arg2)
 
 	if disableforce  then return end
@@ -2554,7 +2662,7 @@ function force(_clientNum, _what , _arg2)
 		end
 	elseif _what == "push" then
 		if _arg2 ~= "" and FPcheck(_clientNum, 15) then
-			et.trap_SendConsoleCommand(et.EXEC_APPEND,"!fling " .. _arg2)
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"!fling " .. getPlayerId(_arg2) )
 		end
 	elseif _what == "ammo" then
 		if FPcheck(_clientNum, 15) then
@@ -2577,7 +2685,7 @@ function force(_clientNum, _what , _arg2)
 				elseif _arg2 == "heal" then
 					forAll(  tonumber(et.gentity_get(_clientNum,"sess.sessionTeam")) ,  heal)
 				end	
-		et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to help his team with a ^2".._arg2..".\n\"")
+			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to help his team with a ^2".._arg2..".\n\"")
 		end	
 		else
 			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\" ^3 You want to do .. what? heal, ammo, boost or push?  \n\"")
@@ -2588,6 +2696,11 @@ function force(_clientNum, _what , _arg2)
 
 end
 
+
+-------------------------------------------------------------------------------
+-- fpcheck(_clientNum, amountneeded )
+-- check: Is the force with you?
+-------------------------------------------------------------------------------
 function FPcheck(_clientNum, _amount)
 
 	if slot[_clientNum]["fpoints"] >= _amount then
