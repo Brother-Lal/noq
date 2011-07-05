@@ -800,7 +800,7 @@ function et_Obituary( _victim, _killer, _mod )
 				slot[_victim]["tkilled"] = slot[_victim]["tkilled"] + 1			
 				
 				if not tkweight[_mod] ~= nil then tk = 1 else tk = tkweight[_mod] end
-				slot[_killer]["tkpoints"] = slot["tkpoints"] + tk
+				slot[_killer]["tkpoints"] = slot[_killer]["tkpoints"] + tk
 				checkTKPoints(_killer)
 			
 			else -- cool kill
@@ -1037,7 +1037,7 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["mutedby"] = ""
 		slot[_clientNum]["muteexpire"] = "1000-01-01 00:00:00"
 		
-		-- Go to Clientbegin and say it's new
+		-- Go to Clientbegin and say he's new
 		slot[_clientNum]["new"] = true
 	end
 end
@@ -1085,7 +1085,7 @@ end
 -- checkBan
 -- Check if player is banned and kick him
 -- TODO : would be cool to inform admins about bans through mail
--- TODO : add something that track a just-unbanned player ( for time bans )
+-- TODO : add something that tracks a just-unbanned player ( for time bans )
 --        in order to warn online admins and maybe the player himself
 -- NOTE : do something like checkMute with an own LUA function?
 ------------------------------------------------------------------------------- 
@@ -1131,9 +1131,9 @@ end
 -- Called in clientBegin in order to print the warning message to the player
 -- The mute is done through ET, calculating the time between NOW and muteexpire
 -- and setting the seconds to the game's mute system. Expired check is done with
--- the field mutedby; muteexpire is cleared in the database when cleintDisconnect
+-- the field mutedby; muteexpire is cleared in the database when clientDisconnect
 -- TODO : would be cool to inform admins about mutes through mail
--- TODO : add something that track a just-unmuted player ( for time mute )
+-- TODO : add something that tracks a just-unmuted player ( for time mute )
 --        in order to warn online admins and maybe the player himself
 -------------------------------------------------------------------------------
 function checkMute ( _clientNum )
@@ -1143,7 +1143,7 @@ function checkMute ( _clientNum )
 		    et.MutePlayer( _clientNum, -1, slot[_clientNum]["mutedreason"] )
 		    return nil
 		end
-		muteseconds = timehandle( 'DS', 'N', slot[_clientNum]["muteexpire"] )
+		local muteseconds = timehandle( 'DS', 'N', slot[_clientNum]["muteexpire"] )
 	    -- Check if the mute is still valid
 	    if  muteseconds > 0 then
 			-- The mute is expired: clear the mute fields and continue
@@ -1161,7 +1161,7 @@ function checkMute ( _clientNum )
 end
 
 -------------------------------------------------------------------------------
--- creatNewPlayer
+-- createNewPlayer
 -- Create a new Player: write to Database, set Xp 0
 -- maybe could also be used to reset Player, as pkey is unique
 -------------------------------------------------------------------------------
@@ -1170,6 +1170,7 @@ function createNewPlayer ( _clientNum )
 	local conname = string.gsub(slot[_clientNum]["conname"],"\'", "\\\'")
 	-- This player is a new one: create a new database entry with our Infos
 	DBCon:DoCreateNewPlayer( slot[_clientNum]["pkey"], slot[_clientNum]["isBot"], name, slot[_clientNum]["start"], slot[_clientNum]["start"], conname)
+	--[[ Commented out - what did that here?
 	slot[_clientNum]["xp0"] = et.gentity_get(_clientNum,"sess.skillpoints",0)
 	slot[_clientNum]["xp1"] = et.gentity_get(_clientNum,"sess.skillpoints",1)
 	slot[_clientNum]["xp2"] = et.gentity_get(_clientNum,"sess.skillpoints",2)
@@ -1179,9 +1180,13 @@ function createNewPlayer ( _clientNum )
 	slot[_clientNum]["xp6"] = et.gentity_get(_clientNum,"sess.skillpoints",6)
 	slot[_clientNum]["xptot"] = slot[_clientNum]["xp0"] + slot[_clientNum]["xp1"] + slot[_clientNum]["xp2"] + slot[_clientNum]["xp3"] + slot[_clientNum]["xp4"] + slot[_clientNum]["xp5"] + slot[_clientNum]["xp6"]
 	slot[_clientNum]["suspect"] = 0
+	--]]
+	
 	slot[_clientNum]["new"] = nil
+	slot[_clientNum]["xpset"] = true
 	
 	-- And now we will get all our default values 
+	-- but why?
 	updatePlayerInfo (_clientNum)
 end
 
@@ -1427,12 +1432,14 @@ function gotCmd( _clientNum, _command, _vsay)
 	-- TODO: we should use level from Lua client model
 	local lvl = tonumber(et.G_shrubbot_level( _clientNum ) )
 	local realcmd
+	local silent = false --to check in subfunctions if its a silen cmd
 	
 	if _vsay == nil then -- silent cmd
 		cmd = string.sub(arg0 ,2)
 		argw[1] = arg1
 		argw[2] = arg2
 		argw[3] = et.ConcatArgs( 3 )
+		silent = true
 	elseif _vsay == false then -- normal say
 		cmd = string.sub(arg1 ,2)
 		argw[1] = arg2
@@ -1543,7 +1550,6 @@ function execCmd(_clientNum , _cmd, _argw)
 		nlastkiller = et.gentity_get(lastkiller, "pers.netname")
 	end
 	
-	
 	local otherplayer = _argw[1]
 	
 	local assume = false
@@ -1552,7 +1558,6 @@ function execCmd(_clientNum , _cmd, _argw)
 		otherplayer = _clientNum
 		assume = true
 	end
-
 
 	local t = tonumber(et.gentity_get(_clientNum,"sess.sessionTeam"))
 	local c = tonumber(et.gentity_get(_clientNum,"sess.latchPlayerType"))
@@ -1590,8 +1595,7 @@ function execCmd(_clientNum , _cmd, _argw)
 	--local str = string.gsub(str, "<RANDOM_TEAM>", randomTeam)
 	--local teamnumber = tonumber(et.gentity_get(PlayerID,"sess.sessionTeam"))
 	--local classnumber = tonumber(et.gentity_get(PlayerID,"sess.latchPlayerType"))
-	
-	
+		
 --		if otherplayer == _clientNum then -- "light security" to not ban or kick yourself (use only ids to ban or kick, then its safe)
 	if assume == true then
 		str = string.gsub(str, "<PART2PBID>", "65" )
@@ -1609,10 +1613,8 @@ function execCmd(_clientNum , _cmd, _argw)
 	str = string.gsub(str, "<PART2GUID>", et.Info_ValueForKey( et.trap_GetUserinfo( otherplayer ), "cl_guid" ))
 	str = string.gsub(str, "<PART2LEVEL>", et.G_shrubbot_level (otherplayer) )
 	str = string.gsub(str, "<PART2NAME>", et.Q_CleanStr(et.gentity_get(otherplayer,"pers.netname")))
-
 	str = string.gsub(str, "<PART2IP>", slot[_clientNum]["ip"] )
 	
-
 	--added for !afk etc, use when assume is ok 
 	 str = string.gsub(str, "<PART2IDS>", otherplayer )
 	
@@ -1823,10 +1825,10 @@ function sendMail( _to, _subject, _text )
 		}
 
 		if (e) then
-		   et.G_LogPrint("Could not send email: "..e.. "\n")
+		   et.G_LogPrint("NOQ: Could not send email: "..e.. "\n")
 		end
 	else
-		et.G_LogPrint("Mails disabled.\n")
+		et.G_LogPrint("NOQ: Mails disabled.\n")
 	end
 end
 
@@ -2059,8 +2061,6 @@ function timeLeft()
 	return tonumber(et.trap_Cvar_Get("timelimit"))*1000 - ( et.trap_Milliseconds() - mapStartTime) -- TODO: check this!
 end
 
-
-
 -------------------------------------------------------------------------------
 -- pussyFactCheck
 -- adjusts the Pussyfactor after an kill trough et_obituary
@@ -2102,7 +2102,6 @@ function pussyFactCheck( _victim, _killer, _mod )
 	end -- pussy end
 end
 
-
 -------------------------------------------------------------------------------
 -- checkTKPoints
 -- Check if we need to punish a teamkiller
@@ -2112,7 +2111,6 @@ function checkTKPoints(_clientNum)
 
 
 end
-
 
 -------------------------------------------------------------------------------
 -- sendtoIRCRelay
@@ -2130,7 +2128,6 @@ function sendtoIRCRelay(_txt)
 
 end
 
-
 -------------------------------------------------------------------------------
 -- nPrint(_whom , _what)
 -- Will print _what to _whom
@@ -2142,7 +2139,7 @@ end
 --					String
 --					Array of Strings
 --					
--- Note: Please dont use an table of tables - it will fail dispalying strange numbers :)
+-- Note: Please dont use an table of tables - it will fail displaying strange numbers :)
 -------------------------------------------------------------------------------
 function nPrint(_whom, _what)
 local mytype = type(_what)
@@ -2205,14 +2202,39 @@ function printPlyrInfo(_whom, _about)
 
 	local mit = {}
 		
+		-- silent cmds dont display the !finger from shrub afterwards....
+		if silent then
+		table.insert( mit , "^dInfo about: ^r" .. slot[_about]["netname"] )
+		table.insert( mit , "^dSlot:       ^r" .. _about )
+		table.insert( mit , "^dGuid:       ^r" .. slot[_about]["pkey"] )
+		table.insert( mit , "^dIP:         ^r" .. slot[_about]["ip"] )
+		end
+		
 		table.insert( mit , "^dNOQ Info: " )
-		table.insert( mit , "^dInfo about: ^7" .. slot[_about]["netname"] .." ^7(" .. slot[_about]["user"] .. ") " )
+		
+		if slot[_about]["user"] ~= "" then
+		table.insert( mit , "^dUsername:   ^r" .. slot[_about]["user"] )
+		end
+		
 		table.insert( mit , "^dFirst seen: ^r" .. slot[_about]["createdate"])
 		table.insert( mit , "^dLast seen:  ^r" .. slot[_about]["updatedate"])
+		table.insert( mit , "^dSpree:      ^r" .. slot[_about]["kspree"] )
+		
+		if slot[_about]["locktoTeam"] ~= nil then
+		table.insert( mit , "^dTeamlock:   ^r" .. teamchars[slot[_about]["locktotTeam"]]  )
+			if slot[_about]["lockedTeamTill"] != 0 then
+		table.insert( mit , "^dSecs remain:^r" .. (slot[_clientNum]["lockedTeamTill"] - (et.trap_Milliseconds() /1000 )) )		
+			end
+		end
+		
 		if slot[_about]["mutedby"] ~= "" then
 		table.insert( mit , "^dMuted by:   ^7" .. slot[_about]["mutedby"])
 		table.insert( mit , "^dReason:     ^r" .. slot[_about]["mutereason"])
 		table.insert( mit , "^dUntil:	   ^r" .. slot[_about]["muteexpire"])
+		end
+	
+		if slot[_about]["vsaydisabled"] then
+		table.insert( mit , "^dHe is not allowed to use vsays")
 		end
 		
 		nPrint(_whom,mit)

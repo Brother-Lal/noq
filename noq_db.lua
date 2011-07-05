@@ -51,6 +51,10 @@ DBCon = {
 			self.env = assert( luasql.sqlite3() )
 			-- this opens OR creates a sqlite db - if this file is loaded db is created -fix this?
 			self.con = assert( self.env:connect( self.dbname ) )
+		elseif self.dbms == "postgreSQL" then
+			require "luasql.postgresql"
+			self.env = assert( luasql.postgresql() )
+			self.con = assert( self.env:connect(self.dbname, getConfig("dbuser"), getConfig("dbpassword"), getConfig("dbhostname"), getConfig("dbport")) )
 		else
 			-- stop script
 			error("DBMS not supported.")
