@@ -213,7 +213,7 @@ debug_getInfoFromTable(noqvartable)
 --
 -- The table slot[clientNum] is created each time someone connects and will store the current client information
 -- The current fields are(with default values):
--- 
+-h- 
 -- ["team"] = false
 --
 -- ["id"] = nil
@@ -598,20 +598,60 @@ function et_ClientCommand( _clientNum, _command )
 
 				--check the time that the map is running already
 				mapTime = et.trap_Milliseconds() - mapStartTime
+<<<<<<< .mine
+				-- maptime in seconds
+				mapTime = mapTime / 1000
+				et.G_Print("maptime = " .. mapTime .."\n")
+				--get timelimit of the map (in minutes)
+				mapTimelimit = tonumber(et.trap_Cvar_Get("timelimit"))
+				mapTimelimit = mapTimelimit * 60
+				et.G_Print("maptimelimit = " .. mapTimelimit .."\n")
+
+				if debug == 1 then
+					et.G_Print("maptime = " .. mapTime .."\n")
+					et.G_Print("mapstarttime = " .. mapStartTime/1000 .."\n")
+				end
+=======
 				
 				debugPrint("print","maptime = " .. mapTime)
 				debugPrint("print","maptime in seconds = " .. mapTime/1000 )
 				debugPrint("print","mapstarttime = " .. mapStartTime)
 				debugPrint("print","mapstarttime in seconds = " .. mapStartTime/1000)
 				
+>>>>>>> .r185
+				
 				--compare to the value that is given in config where nextmap votes are allowed
+				-- possible values: 
+				-- 0 = disablied
+				-- positive value: during the first $value seconds
+				-- negative value: during the last abs($value) seconds of the map
 				if nextmapVoteTime == 0 then
 					debugPrint("print","Nextmap vote limiter is disabled!")
+					lastpoll = seconds
 					return 0
-				elseif mapTime / 1000 > nextmapVoteTime then
+				elseif mapTime > nextmapVoteTime and nextmapVoteTime > 0 then
 					--if not allowed send error msg and return 1	
-					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime/1000 .. " seconds!\"")
+					if debug == 1 then
+						et.G_Print("entered alternative: nextmapvotetime > 0")
+					end
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime .. " seconds!\"")
+					lastpoll = seconds
 					return 1
+---[[	
+				elseif nextmapVoteTime < 0 and mapTime + math.abs(nextmapVoteTime) <= mapTimelimit then
+					-- timelimit + nextmapVoteTime = zeit, ab der der vote gehen soll
+					-- vergl. restzeit mit abs(nextmapVoteTime) 
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the last " .. math.abs(nextmapVoteTime) / 60 .." minutes of the map!\n\"")
+					if debug == 1 then
+						et.G_Print ("entered alternative: nextmapvotetime < 0\n\"")
+						et.G_Print ("Nextmap vote is only allowed during the last " .. math.abs(nextmapVoteTime) .." seconds of the map!\n\"")
+						et.G_Print ("Current timelimit = " .. mapTimelimit .. " seconds!\n\"")	
+					end
+					lastpoll = seconds
+					return 1
+--]]
+				elseif debug == 1 then
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"no branch entered!\"")
 				end
 				
 			end
@@ -2193,6 +2233,7 @@ end
 -- listcmds
 -- msgtoIRC
 -- forAll
+-- showTkTable
 
 -------------------------------------------------------------------------------
 -- printPlyrInfo(_whom, _about)
@@ -2613,17 +2654,62 @@ function forAll(_whom,_what)
 		_whom = 3
 	end
 
-for i=0, maxclients, 1 do					
+	for i=0, maxclients, 1 do					
 		if et.gentity_get(i,"classname") == "player" then
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
-				if _whom == nil or team == _whom then
-					_what(i)
-				end
+			if _whom == nil or team == _whom then
+				_what(i)
+			end
 		end
+	end
 end
 
+-------------------------------------------------------------------------------
+-- showTkTable -----
+-- prints the current TopTen of teamkillers to the caller's console, 
+-- sorted by teamkills and teamdamage
+-- @author: hose
+-------------------------------------------------------------------------------
+function showTkTable(_myClient) 
+	
+	-- tkTable stores the damage stats of all players
+	local tkTable = {}
+	
+	-- building up the teamkiller table
+	for i=0, maxclients , 1 do
+		if et.gentity_get(i, "inuse") == 1 then
+			table.insert(tkTable, getDamageStats(i))
+		end
+	end --end for loop
 
+	-- sort the table by teamkills and within that by teamdamage
+	-- TODO: not sure how to handle a nil object there. i guess it s wrong
+	-- 			to return false, but it works (does not work without)
+	table.sort(tkTable, 
+		function(_tk1, _tk2)
+			if _tk1 == nil then 
+				return false
+			elseif _tk2 == nil then 
+				return false
+			elseif _tk1["teamkills"] == _tk2["teamkills"] then
+				return _tk1["teamdamage"] > _tk2["teamdamage"]
+			else 
+				return _tk1["teamkills"] > _tk2["teamkills"] 
+			end
+		end) -- end the sorting function
+
+	-- print the top ten table to the caller's console
+	et.trap_SendServerCommand(_myClient, "print \"Slot|     Name      | Class    | Tks | TD given \n\"")
+    loopcount = 0	
+	for ind, val in ipairs(tkTable) do
+		printTkStats(_myClient, val)
+		loopcount = loopcount + 1
+		if loopcount >= 10 then 
+			break 
+		end
+	end
 end
+
 
 -------------------------------------------------------------------------------
 -- some convenience Functions for !commands or mod-use
@@ -2734,6 +2820,43 @@ function FPcheck(_clientNum, _amount)
 		return false
 	end
 end
+
+-------------------------------------------------------------------------------
+-- getDamageStats(_clientNum)
+-- processes a player's data regarding tk, damage, teamdamage etc
+-- helper function for showTkTable()
+-- returns a table of several values for the _clientNum to the caller function
+-------------------------------------------------------------------------------
+function getDamageStats(_clientNum)
+
+	tkStats = {}
+
+	tkStats["name"] = et.gentity_get(_clientNum, "pers.netname")
+	tkStats["srvslot"] = _clientNum
+--	tkStats["team"] = et.gentity_get(_clientNum, "sess.sessionTeam")
+	tkStats["class"] =  et.gentity_get(_clientNum, "sess.playerType")
+--	tkStats["kills"] =  et.gentity_get(_clientNum, "sess.kills")
+	tkStats["teamkills"] =  et.gentity_get(_clientNum, "sess.team_kills")
+	tkStats["teamdamage"] =  et.gentity_get(_clientNum, "sess.team_damage")
+--	tkStats["damage"] =  et.gentity_get(_clientNum, "sess.damage_given")
+
+	return tkStats
+	
+end
+
+-------------------------------------------------------------------------------
+-- printTkStats(_myClient, _tkStats)
+-- 
+-- helper function to print tkTable entries in function showtkTable
+--
+-- _tkStats: is a table holding several values (td, tk etc)
+-- _myClient: nomen est omen 
+-------------------------------------------------------------------------------
+
+function printTkStats(_myClient, _tkStats)
+	et.trap_SendServerCommand(_myClient, "print \"^w" .. string.format("%-4s", _tkStats["srvslot"]) .."|" ..string.format("%-15s", et.Q_CleanStr(_tkStats["name"])) .. "|"  ..string.format("%-10s",  class[_tkStats["class"]]) .. "|" ..string.format("%-5s",  _tkStats["teamkills"]) .. "|" ..string.format("%-10s",  _tkStats["teamdamage"])  ..  "\n\"")
+end
+
 
 -------------------------------------------------------------------------------
 -- Here does End, kthxbye 
