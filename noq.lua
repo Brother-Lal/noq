@@ -213,7 +213,7 @@ debug_getInfoFromTable(noqvartable)
 --
 -- The table slot[clientNum] is created each time someone connects and will store the current client information
 -- The current fields are(with default values):
--h- 
+-- 
 -- ["team"] = false
 --
 -- ["id"] = nil
@@ -598,60 +598,20 @@ function et_ClientCommand( _clientNum, _command )
 
 				--check the time that the map is running already
 				mapTime = et.trap_Milliseconds() - mapStartTime
-<<<<<<< .mine
-				-- maptime in seconds
-				mapTime = mapTime / 1000
-				et.G_Print("maptime = " .. mapTime .."\n")
-				--get timelimit of the map (in minutes)
-				mapTimelimit = tonumber(et.trap_Cvar_Get("timelimit"))
-				mapTimelimit = mapTimelimit * 60
-				et.G_Print("maptimelimit = " .. mapTimelimit .."\n")
-
-				if debug == 1 then
-					et.G_Print("maptime = " .. mapTime .."\n")
-					et.G_Print("mapstarttime = " .. mapStartTime/1000 .."\n")
-				end
-=======
 				
 				debugPrint("print","maptime = " .. mapTime)
 				debugPrint("print","maptime in seconds = " .. mapTime/1000 )
 				debugPrint("print","mapstarttime = " .. mapStartTime)
 				debugPrint("print","mapstarttime in seconds = " .. mapStartTime/1000)
 				
->>>>>>> .r185
-				
 				--compare to the value that is given in config where nextmap votes are allowed
-				-- possible values: 
-				-- 0 = disablied
-				-- positive value: during the first $value seconds
-				-- negative value: during the last abs($value) seconds of the map
 				if nextmapVoteTime == 0 then
 					debugPrint("print","Nextmap vote limiter is disabled!")
-					lastpoll = seconds
 					return 0
-				elseif mapTime > nextmapVoteTime and nextmapVoteTime > 0 then
+				elseif mapTime / 1000 > nextmapVoteTime then
 					--if not allowed send error msg and return 1	
-					if debug == 1 then
-						et.G_Print("entered alternative: nextmapvotetime > 0")
-					end
-					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime .. " seconds!\"")
-					lastpoll = seconds
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime/1000 .. " seconds!\"")
 					return 1
----[[	
-				elseif nextmapVoteTime < 0 and mapTime + math.abs(nextmapVoteTime) <= mapTimelimit then
-					-- timelimit + nextmapVoteTime = zeit, ab der der vote gehen soll
-					-- vergl. restzeit mit abs(nextmapVoteTime) 
-					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the last " .. math.abs(nextmapVoteTime) / 60 .." minutes of the map!\n\"")
-					if debug == 1 then
-						et.G_Print ("entered alternative: nextmapvotetime < 0\n\"")
-						et.G_Print ("Nextmap vote is only allowed during the last " .. math.abs(nextmapVoteTime) .." seconds of the map!\n\"")
-						et.G_Print ("Current timelimit = " .. mapTimelimit .. " seconds!\n\"")	
-					end
-					lastpoll = seconds
-					return 1
---]]
-				elseif debug == 1 then
-					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"no branch entered!\"")
 				end
 				
 			end
@@ -2654,14 +2614,16 @@ function forAll(_whom,_what)
 		_whom = 3
 	end
 
-	for i=0, maxclients, 1 do					
+for i=0, maxclients, 1 do					
 		if et.gentity_get(i,"classname") == "player" then
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
-			if _whom == nil or team == _whom then
-				_what(i)
-			end
+				if _whom == nil or team == _whom then
+					_what(i)
+				end
 		end
-	end
+end
+
+
 end
 
 -------------------------------------------------------------------------------
@@ -2856,7 +2818,6 @@ end
 function printTkStats(_myClient, _tkStats)
 	et.trap_SendServerCommand(_myClient, "print \"^w" .. string.format("%-4s", _tkStats["srvslot"]) .."|" ..string.format("%-15s", et.Q_CleanStr(_tkStats["name"])) .. "|"  ..string.format("%-10s",  class[_tkStats["class"]]) .. "|" ..string.format("%-5s",  _tkStats["teamkills"]) .. "|" ..string.format("%-10s",  _tkStats["teamdamage"])  ..  "\n\"")
 end
-
 
 -------------------------------------------------------------------------------
 -- Here does End, kthxbye 
