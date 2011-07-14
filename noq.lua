@@ -310,6 +310,169 @@ commands['cmd'][0]['noqban'] = "$LUA$ ban(<PART2ID>)" --TODO The BANFUNCTION...
 --
 --]]
 
+
+--[[
+	The Commands used in et_clientcommand.
+	use arg0, arg1, arg2 for arguments, callershrublvl as lvl, _cleintnum for clientNum
+--]]
+noq_clientcommands = {
+	
+	["register"] = function()
+		-- register command
+		local name = string.gsub(arg1,"\'", "\\\'")
+		if arg1 ~= "" and arg2 ~= "" then
+			local testreg = DBCon:GetPlayerbyReg(name)
+			if testreg ~= nil then
+				if testreg['pkey'] == slot[_clientNum]['pkey'] then
+					slot[_clientNum]["user"] = name
+					DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
+					et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Successfully reset password\n\"\n")
+					return 1
+				end
+			
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3This nick is already registered\n\"\n")
+			return 1
+			end
+		
+			slot[_clientNum]["user"] = name
+			DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
+			
+			et.trap_SendServerCommand( _clientNum, "print \"^3Successfully registered. To reset password just re-register. \n\"" ) 
+			return 1		
+		else
+			et.trap_SendServerCommand( _clientNum, "print \"^3Syntax for the register Command: /register username password  \n\"" ) 
+			et.trap_SendServerCommand( _clientNum, "print \"^3Username is your desired username (for web & offlinemessages)  \n\"" )
+			et.trap_SendServerCommand( _clientNum, "print \"^3Password will be your password for your webaccess  \n\"" ) 
+			return 1
+		end
+	end,
+	
+	["callvote"] = function()
+	-- Voting restriction
+	   
+		if polldist ~= -1 then
+		-- restriction is enabled	
+			milliseconds = et.trap_Milliseconds() 
+			seconds = milliseconds / 1000
+
+			-- checks for shrubbot flag "7" -> check shrubbot wiki for explanation 
+			if et.G_shrubbot_permission( _clientNum, "7" ) == 1 then
+				return 0
+
+			-- checks time betw. last vote and this one
+			elseif (seconds - lastpoll) < polldist then
+				et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(_clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll.\"" )
+				return 1
+			end
+			
+			-- handles nextmap vote restriction
+			if arg1 == "nextmap" then
+
+				--check the time that the map is running already
+				mapTime = et.trap_Milliseconds() - mapStartTime
+				
+				debugPrint("print","maptime = " .. mapTime)
+				debugPrint("print","maptime in seconds = " .. mapTime/1000 )
+				debugPrint("print","mapstarttime = " .. mapStartTime)
+				debugPrint("print","mapstarttime in seconds = " .. mapStartTime/1000)
+				
+				--compare to the value that is given in config where nextmap votes are allowed
+				if nextmapVoteTime == 0 then
+					debugPrint("print","Nextmap vote limiter is disabled!")
+					return 0
+				elseif mapTime / 1000 > nextmapVoteTime then
+					--if not allowed send error msg and return 1	
+					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime/1000 .. " seconds!\"")
+					return 1
+				end
+				
+			end
+				
+			lastpoll = seconds
+		end
+		-- return !!!
+	end ,
+	
+	["kill"] = function()	
+		-- /kill restriction
+		if maxSelfKills ~= -1 then
+			if slot[_clientNum]["selfkills"] > maxSelfKills then
+				et.trap_SendServerCommand( _clientNum, "cp \"^1You don't have any more selfkills left!") 
+				et.trap_SendServerCommand( _clientNum, "cpm \"^1You don't have any more selfkills left!")
+				return 1
+			end
+			et.trap_SendServerCommand( _clientNum, "cp \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
+			et.trap_SendServerCommand( _clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
+			return 0
+		end
+	end,	
+	
+	["mail"] = function()
+		-- check for OfflineMesgs
+		checkOffMesg (_clientNum)
+		return 1
+	end,
+	
+	["om"] = function()
+		-- send OfflineMesgs
+		sendOffMesg (_clientNum,arg1 , et.ConcatArgs( 2 ) )
+		return 1
+	end,
+	
+	["rmom"] = function()
+		--erase OfflineMesgs
+		arg1 = string.gsub(arg1,"\'", "\\\'")
+		DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
+		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
+		return 1
+	end,
+	
+	
+	["team"] = function()
+		-- lock to team
+		if slot[_clientNum]["locktoTeam"] ~= nil then
+			if arg1 ~= slot[_clientNum]["locktoTeam"] then
+				if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
+					slot[_clientNum]["locktoTeam"] = nil
+					slot[_clientNum]["lockedTeamTill"] = 0
+					-- TODO return!
+				else
+					et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+					et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+					return 1
+				end
+			end	
+		end
+	end,
+	
+	
+	["mirc"] = function()
+		msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
+		return 1
+	end,
+	
+	["name"] = function()
+		-- we also check here for the name
+		if namearray then
+			local cleanname = string.lower(et.Q_CleanStr(slot[_clientNum]["netname"]))
+			for i,v in ipairs(namearray) do
+				if string.find( cleanname,v) then
+					if string.find(slot[_clientNum]["clan"],v) then
+						-- luck you - you are in the clan/have the name reserved for you
+						et.G_Print("NOQ: Name for "..slot[_clientNum]["netname"].. " reserved and owned\n")
+					else
+						et.trap_SendServerCommand( _clientNum, "chat \"^1This tag/name is reserved or not allowed.\n\"")
+						return 1
+					end
+				end
+			end
+		end
+	end
+	
+	} -- end for our cmdarray
+	
+
+
 -- current map
 map = ""
 mapStartTime = 0
@@ -487,6 +650,7 @@ end
 
 -- called for every clientcommand
 -- return 1 if intercepted, 0 if passthrough
+-- see Table noq_clientcommands for the available cmds
 function et_ClientCommand( _clientNum, _command )
 	local arg0 = string.lower(et.trap_Argv(0))
 	local arg1 = string.lower(et.trap_Argv(1))
@@ -541,152 +705,9 @@ function et_ClientCommand( _clientNum, _command )
 		 
 	end
 
-
-	-- CMD chain ...
-	--
-	-- register command
-	if arg0 == "register" then
-		-- arg1 username - see start of et_ClientCommand
-		-- arg2 password - see start of et_ClientCommand
-		local name = string.gsub(arg1,"\'", "\\\'")
-		if arg1 ~= "" and arg2 ~= "" then
-			local testreg = DBCon:GetPlayerbyReg(name)
-			if testreg ~= nil then
-				if testreg['pkey'] == slot[_clientNum]['pkey'] then
-					slot[_clientNum]["user"] = name
-					DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
-					et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Successfully reset password\n\"\n")
-					return 1
-				end
-			
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3This nick is already registered\n\"\n")
-			return 1
-			end
-		
-			slot[_clientNum]["user"] = name
-			DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
-			
-			et.trap_SendServerCommand( _clientNum, "print \"^3Successfully registered. To reset password just re-register. \n\"" ) 
-			return 1
-		else
-			et.trap_SendServerCommand( _clientNum, "print \"^3Syntax for the register Command: /register username password  \n\"" ) 
-			et.trap_SendServerCommand( _clientNum, "print \"^3Username is your desired username (for web & offlinemessages)  \n\"" )
-			et.trap_SendServerCommand( _clientNum, "print \"^3Password will be your password for your webaccess  \n\"" ) 
-			return 1
-		end
-	
-	-- Voting restriction
-	elseif arg0 == "callvote" then
-	   -- restriction is enabled	
-		if polldist ~= -1 then
-
-			milliseconds = et.trap_Milliseconds() 
-			seconds = milliseconds / 1000
-
-			-- checks for shrubbot flag "7" -> check shrubbot wiki for explanation 
-			if et.G_shrubbot_permission( _clientNum, "7" ) == 1 then
-				return 0
-
-			-- checks time betw. last vote and this one
-			elseif (seconds - lastpoll) < polldist then
-				et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(_clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll.\"" )
-				return 1
-			end
-			
-			-- handles nextmap vote restriction
-			if arg1 == "nextmap" then
-
-				--check the time that the map is running already
-				mapTime = et.trap_Milliseconds() - mapStartTime
-				
-				debugPrint("print","maptime = " .. mapTime)
-				debugPrint("print","maptime in seconds = " .. mapTime/1000 )
-				debugPrint("print","mapstarttime = " .. mapStartTime)
-				debugPrint("print","mapstarttime in seconds = " .. mapStartTime/1000)
-				
-				--compare to the value that is given in config where nextmap votes are allowed
-				if nextmapVoteTime == 0 then
-					debugPrint("print","Nextmap vote limiter is disabled!")
-					return 0
-				elseif mapTime / 1000 > nextmapVoteTime then
-					--if not allowed send error msg and return 1	
-					et.trap_SendConsoleCommand (et.EXEC_APPEND, "chat \"Nextmap vote is only allowed during the first " .. nextmapVoteTime .." seconds of the map! Current maptime is ".. mapTime/1000 .. " seconds!\"")
-					return 1
-				end
-				
-			end
-				
-			lastpoll = seconds
-		end
-		-- return !!!
-		
-	-- /kill restriction
-	elseif arg0 == "kill" then	
-		if maxSelfKills ~= -1 then
-			if slot[_clientNum]["selfkills"] > maxSelfKills then
-				et.trap_SendServerCommand( _clientNum, "cp \"^1You don't have any more selfkills left!") 
-				et.trap_SendServerCommand( _clientNum, "cpm \"^1You don't have any more selfkills left!")
-				return 1
-			end
-			et.trap_SendServerCommand( _clientNum, "cp \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
-			et.trap_SendServerCommand( _clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
-			return 0
-		end
-		
-	-- check for OfflineMesgs
-	elseif arg0 == "mail" then
-		checkOffMesg (_clientNum)
-		return 1
-	
-	-- send OfflineMesgs
-	elseif arg0 == "om" then
-		sendOffMesg (_clientNum,arg1 , et.ConcatArgs( 2 ) )
-		return 1
-	
-	--erase OfflineMesgs
-	elseif arg0 == "rmom" then
-		arg1 = string.gsub(arg1,"\'", "\\\'")
-		DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
-		et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
-		return 1
-	
-	-- lock to team
-	elseif arg0 == "team" then
-		if slot[_clientNum]["locktoTeam"] ~= nil then
-			if arg1 ~= slot[_clientNum]["locktoTeam"] then
-				if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
-					slot[_clientNum]["locktoTeam"] = nil
-					slot[_clientNum]["lockedTeamTill"] = 0
-					-- TODO return!
-				else
-					et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-					et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-					return 1
-				end
-			end
-			
-		end
-	
-	elseif arg0 == "mirc" then
-		msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
-		return 1
-	elseif arg0 == "name" then
-		-- we also check here for the name
-		if namearray then
-			local cleanname = string.lower(et.Q_CleanStr(slot[_clientNum]["netname"]))
-			for i,v in ipairs(namearray) do
-				if string.find( cleanname,v) then
-					if string.find(slot[_clientNum]["clan"],v) then
-						-- luck you - you are in the clan/have the name reserved for you
-						et.G_Print("NOQ: Name for "..slot[_clientNum]["netname"].. " reserved and owned\n")
-					else
-						et.trap_SendServerCommand( _clientNum, "chat \"^1This tag/name is reserved or not allowed.\n\"")
-						return 1
-					end
-				end
-			end
-		end
-	end
+  if rcon_cmd[arg0] then
+    rcon_cmd[arg0]()
+  end
 	
 end
 
@@ -1012,7 +1033,18 @@ function updatePlayerInfo ( _clientNum )
 		slot[_clientNum]["regdate"] = DBCon.row.regdate
 		slot[_clientNum]["createdate"] = DBCon.row.createdate -- first seen
 		slot[_clientNum]["updatedate"] = DBCon.row.updatedate -- last seen
-		--slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) --TODO: REAL LEVEL/Who is more important, shrub or database? IRATA: noq - database; ailmanki: changed.. if the user is in db we get in from db, else from shrubbot.
+		--slot[_clientNum]["level"] = et.G_shrubbot_level( _clientNum ) 
+		--TODO: REAL LEVEL/Who is more important, shrub or database?
+		-- IRATA: noq - database;
+		-- ailmanki: changed.. if the user is in db we get in from db, else from shrubbot.
+		-- luborg: use nq_noq to determine:
+		if et.trap_Cvar_Get( "nq_noq" ) == 0 then
+			-- nq_noq is not set, shrub is active - we only save, but dont set.
+		else
+			slot[_clientNum]["level"] = DBCon.row.level
+			-- cmd only available in nq >= 129
+			et.G_shrubbot_setlevel(_clientnum, DBCon.row.level)
+		end 	
 		slot[_clientNum]["level"] = DBCon.row.level
 		slot[_clientNum]["flags"] = DBCon.row.flags -- TODO: pump it into game
 				
