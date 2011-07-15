@@ -141,6 +141,26 @@ DBCon = {
 	end,
 	
 	-------------------------------------------------------------------------------
+	-- GetPlayerAliases
+	-- Gives back a table with all aliases know from this player
+	-------------------------------------------------------------------------------
+	['GetPlayerAliases'] = function( self, _guid)
+	
+		local db = self:GetLogTypefor(3,_guid)
+		aliases = {}
+		if db ~= nil then
+			for i,v in ipairs(db) do
+				v = string.sub(v.textxml, 7, -8) -- <name>FOOBAR</name> cut the tag 
+				aliases[v] = v
+			end
+			return aliases
+		else
+			return nil
+		end
+	end,
+	
+	
+	-------------------------------------------------------------------------------
 	-- DelOM
 	-- Deletes a entry by its id and guid2(used for offlinemsgs)
 	-------------------------------------------------------------------------------

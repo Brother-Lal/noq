@@ -490,10 +490,10 @@ end
 -- return 1 if intercepted, 0 if passthrough
 -- see Table noq_clientcommands for the available cmds
 function et_ClientCommand( _clientNum, _command )
-	local arg0 = string.lower(et.trap_Argv(0))
-	local arg1 = string.lower(et.trap_Argv(1))
-	local arg2 = string.lower(et.trap_Argv(2))
-	local callershrublvl = et.G_shrubbot_level(_clientNum)
+	arg0 = string.lower(et.trap_Argv(0))
+	arg1 = string.lower(et.trap_Argv(1))
+	arg2 = string.lower(et.trap_Argv(2))
+	callershrublvl = et.G_shrubbot_level(_clientNum)
 
 	debugPrint("print","Got a Clientcommand: ".. arg0)
 	
@@ -550,6 +550,22 @@ function et_ClientCommand( _clientNum, _command )
 	use arg0, arg1, arg2 for arguments, callershrublvl as lvl, _clientnum for clientNum
 	--]]
 	noq_clientcommands = {
+		
+		["noq_alist"] = function(arg)
+			if arg1 == "" then
+				nPrint(_clientNum, "^3Usage: /noq_alist <partofplayername/slotnumber>")
+				nPrint(_clientNum, "^3noq_alist will print a list of all know aliases for a player")
+				return 1
+			else
+				local whom = getPlayerId(arg1)
+				if whom ~= nil then
+					listAliases(_clientNum, whom)
+					return 1
+				else
+					nPrint(_clientNum, "^3No matching player found :/")
+				end
+			end
+		end,
 		
 		["register"] = function(arg)
 			-- register command
@@ -2184,6 +2200,7 @@ end
 -- Note: Please dont use an table of tables - it will fail displaying strange numbers :)
 -------------------------------------------------------------------------------
 function nPrint(_whom, _what)
+
 local mytype = type(_what)
 	if _whom == -1 then
 		--console
@@ -2706,8 +2723,10 @@ function showTkTable(_myClient)
 	-- print the top ten table to the caller's console
 	nPrint(_myClient, "Slot|        Name          | Class    | Tks | TD given ")
     loopcount = 0	
-	for ind, val in ipairs(tkTable) do
-		printTkStats(_myClient, val)
+	for ind, _tkStats in ipairs(tkTable) do
+		
+		nPrint(_myClient, "^w" .. string.format("%-4s", _tkStats["srvslot"]) .."|" ..string.format("%-22s", et.Q_CleanStr(_tkStats["name"])) .. "|"  ..string.format("%-10s",  class[_tkStats["class"]]) .. "|" ..string.format("%-5s",  _tkStats["teamkills"]) .. "|" ..string.format("%-10s",  _tkStats["teamdamage"]))
+
 		loopcount = loopcount + 1
 		if loopcount >= 10 then 
 			break 
@@ -2850,16 +2869,25 @@ function getDamageStats(_clientNum)
 end
 
 -------------------------------------------------------------------------------
--- printTkStats(_myClient, _tkStats)
--- 
--- helper function to print tkTable entries in function showtkTable
---
--- _tkStats: is a table holding several values (td, tk etc)
--- _myClient: nomen est omen 
+-- listAliases(_whom , _from )
+-- list _froms aliases  to _whom
 -------------------------------------------------------------------------------
-
-function printTkStats(_myClient, _tkStats)
-	nPrint(_myClient, "^w" .. string.format("%-4s", _tkStats["srvslot"]) .."|" ..string.format("%-22s", et.Q_CleanStr(_tkStats["name"])) .. "|"  ..string.format("%-10s",  class[_tkStats["class"]]) .. "|" ..string.format("%-5s",  _tkStats["teamkills"]) .. "|" ..string.format("%-10s",  _tkStats["teamdamage"]))
+function listAliases(_whom, _from)
+	local aliases = DBCon:GetPlayerAliases(slot[_from]["pkey"])
+	local output = {}
+	if aliases ~= nil then
+		local nr = 0
+		for i, v in pairs(aliases) do -- holy schking sh*t dont ever use ipairs here :/
+		table.insert( output , "^3NOQ: Alias NR" ..string.format("%2i",nr)..": " .. string.format("%22s",et.Q_CleanStr(v)) .. "^7|" .. v )  
+		nr = nr + 1
+		end
+		
+		table.insert(output, 1,"^3Player ^7" .. slot[_from]["netname"] .. " ^3has ^7" .. nr .. " ^3different nicks." )
+	else
+		nPrint( _whom,  "^3Got no aliases recorded - is namelogging on?")
+		return
+	end
+	nPrint(_whom, output)
 end
 
 -------------------------------------------------------------------------------
