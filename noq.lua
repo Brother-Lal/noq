@@ -408,6 +408,11 @@ function et_ClientUserinfoChanged( _clientNum )
 			end
 		end
 	end
+	
+	if namearray ~= nil then
+	checkforResName(_clientNum)
+	end
+	
 end
 
 -- This function is called - after the connection is over, so when you first join the game world
@@ -490,11 +495,11 @@ end
 -- return 1 if intercepted, 0 if passthrough
 -- see Table noq_clientcommands for the available cmds
 function et_ClientCommand( _clientNum, _command )
-	arg0 = string.lower(et.trap_Argv(0))
-	arg1 = string.lower(et.trap_Argv(1))
-	arg2 = string.lower(et.trap_Argv(2))
+	local arg0 = string.lower(et.trap_Argv(0))
+	local arg1 = string.lower(et.trap_Argv(1))
+	local arg2 = string.lower(et.trap_Argv(2))
 	callershrublvl = et.G_shrubbot_level(_clientNum)
-
+	
 	debugPrint("print","Got a Clientcommand: ".. arg0)
 	
 	if vsaydisabled == true and arg0 == "vsay" then
@@ -547,62 +552,62 @@ function et_ClientCommand( _clientNum, _command )
 	if noq_clientcommands == nil then
 	--[[
 	The Commands used in et_clientcommand.
-	use arg0, arg1, arg2 for arguments, callershrublvl as lvl, _clientnum for clientNum
+	use arg0, arg1, arg2 for arguments, callershrublvl as lvl, clientNum for clientNum
 	--]]
 	noq_clientcommands = {
 		
-		["noq_alist"] = function(arg)
+		["noq_alist"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			if arg1 == "" then
-				nPrint(_clientNum, "^3Usage: /noq_alist <partofplayername/slotnumber>")
-				nPrint(_clientNum, "^3noq_alist will print a list of all know aliases for a player")
+				nPrint(clientNum, "^3Usage: /noq_alist <partofplayername/slotnumber>")
+				nPrint(clientNum, "^3noq_alist will print a list of all know aliases for a player")
 				return 1
 			else
 				local whom = getPlayerId(arg1)
 				if whom ~= nil then
-					listAliases(_clientNum, whom)
+					listAliases(clientNum, whom)
 					return 1
 				else
-					nPrint(_clientNum, "^3No matching player found :/")
+					nPrint(clientNum, "^3No matching player found :/")
 				end
 			end
 		end,
 		
-		["register"] = function(arg)
+		["register"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			-- register command
 			local name = string.gsub(arg1,"\'", "\\\'")
 			if arg1 ~= "" and arg2 ~= "" then
 				local testreg = DBCon:GetPlayerbyReg(name)
 				if testreg ~= nil then
-					if testreg['pkey'] == slot[_clientNum]['pkey'] then
-						slot[_clientNum]["user"] = name
-						DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
-						et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Successfully reset password\n\"\n")
+					if testreg['pkey'] == slot[clientNum]['pkey'] then
+						slot[clientNum]["user"] = name
+						DBCon:DoRegisterUser(name, arg2,slot[clientNum]["pkey"])
+						et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. clientNum .. "\"^3Successfully reset password\n\"\n")
 						return 1
 					end
 				
-				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3This nick is already registered\n\"\n")
+				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. clientNum .. "\"^3This nick is already registered\n\"\n")
 				return 1
 				end
 			
-				slot[_clientNum]["user"] = name
-				DBCon:DoRegisterUser(name, arg2,slot[_clientNum]["pkey"])
+				slot[clientNum]["user"] = name
+				DBCon:DoRegisterUser(name, arg2,slot[clientNum]["pkey"])
 				
-				et.trap_SendServerCommand( _clientNum, "print \"^3Successfully registered. To reset password just re-register. \n\"" ) 
+				et.trap_SendServerCommand( clientNum, "print \"^3Successfully registered. To reset password just re-register. \n\"" ) 
 				return 1		
 			else
 				
-				if slot[_clientNum]["user"] ~= "" then
-					et.trap_SendServerCommand( _clientNum, "print \"^1You are already registered, under the name '".. slot[_clientNum]["user"] ..  "'\n\"" ) 	
+				if slot[clientNum]["user"] ~= "" then
+					et.trap_SendServerCommand( clientNum, "print \"^1You are already registered, under the name '".. slot[clientNum]["user"] ..  "'\n\"" ) 	
 				end
-				et.trap_SendServerCommand( _clientNum, "print \"^3Syntax for the register Command: /register username password  \n\"" ) 
-				et.trap_SendServerCommand( _clientNum, "print \"^3Username is your desired username (for web & offlinemessages)  \n\"" )
-				et.trap_SendServerCommand( _clientNum, "print \"^3Password will be your password for your webaccess  \n\"" ) 
+				et.trap_SendServerCommand( clientNum, "print \"^3Syntax for the register Command: /register username password  \n\"" ) 
+				et.trap_SendServerCommand( clientNum, "print \"^3Username is your desired username (for web & offlinemessages)  \n\"" )
+				et.trap_SendServerCommand( clientNum, "print \"^3Password will be your password for your webaccess  \n\"" ) 
 
 				return 1
 			end
 		end,
 		
-		["callvote"] = function()
+		["callvote"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 		-- Voting restriction
 		   
 			if polldist ~= -1 then
@@ -611,12 +616,12 @@ function et_ClientCommand( _clientNum, _command )
 				seconds = milliseconds / 1000
 
 				-- checks for shrubbot flag "7" -> check shrubbot wiki for explanation 
-				if et.G_shrubbot_permission( _clientNum, "7" ) == 1 then
+				if et.G_shrubbot_permission( clientNum, "7" ) == 1 then
 					return 0
 
 				-- checks time betw. last vote and this one
 				elseif (seconds - lastpoll) < polldist then
-					et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(_clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll.\"" )
+					et.trap_SendConsoleCommand (et.EXEC_APPEND , "chat \"".. et.gentity_get(clientNum, "pers.netname") .."^7, please wait ^1".. string.format("%.0f", polldist - (seconds - lastpoll) ) .." ^7seconds for your next poll.\"" )
 					return 1
 				end
 				
@@ -648,84 +653,60 @@ function et_ClientCommand( _clientNum, _command )
 			-- return !!!
 		end ,
 		
-		["kill"] = function()	
+		["kill"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			-- /kill restriction
 			if maxSelfKills ~= -1 then
-				if slot[_clientNum]["selfkills"] > maxSelfKills then
-					et.trap_SendServerCommand( _clientNum, "cp \"^1You don't have any more selfkills left!") 
-					et.trap_SendServerCommand( _clientNum, "cpm \"^1You don't have any more selfkills left!")
+				if slot[clientNum]["selfkills"] > maxSelfKills then
+					et.trap_SendServerCommand( clientNum, "cp \"^1You don't have any more selfkills left!") 
+					et.trap_SendServerCommand( clientNum, "cpm \"^1You don't have any more selfkills left!")
 					return 1
 				end
-				et.trap_SendServerCommand( _clientNum, "cp \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
-				et.trap_SendServerCommand( _clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[_clientNum]["selfkills"])  .."^1 selfkills left!")
+				et.trap_SendServerCommand( clientNum, "cp \"^1You have ^2".. (maxSelfKills - slot[clientNum]["selfkills"])  .."^1 selfkills left!")
+				et.trap_SendServerCommand( clientNum, "cpm \"^1You have ^2".. (maxSelfKills - slot[clientNum]["selfkills"])  .."^1 selfkills left!")
 				return 0
 			end
 		end,	
 		
-		["mail"] = function()
+		["mail"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			-- check for OfflineMesgs
-			checkOffMesg (_clientNum)
+			checkOffMesg (clientNum)
 			return 1
 		end,
 		
-		["om"] = function()
+		["om"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			-- send OfflineMesgs
-			sendOffMesg (_clientNum,arg1 , et.ConcatArgs( 2 ) )
+			sendOffMesg (clientNum,arg1 , et.ConcatArgs( 2 ) )
 			return 1
 		end,
 		
-		["rmom"] = function()
+		["rmom"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			--erase OfflineMesgs
 			arg1 = string.gsub(arg1,"\'", "\\\'")
-			DBCon:DelOM(arg1, slot[_clientNum]['pkey'])
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
+			DBCon:DelOM(arg1, slot[clientNum]['pkey'])
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
 			return 1
 		end,
-		
-		
-		["team"] = function()
+			
+		["team"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			-- lock to team
-			if slot[_clientNum]["locktoTeam"] ~= nil then
-				if arg1 ~= slot[_clientNum]["locktoTeam"] then
-					if slot[_clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
-						slot[_clientNum]["locktoTeam"] = nil
-						slot[_clientNum]["lockedTeamTill"] = 0
+			if slot[clientNum]["locktoTeam"] ~= nil then
+				if arg1 ~= slot[clientNum]["locktoTeam"] then
+					if slot[clientNum]["lockedTeamTill"] <= (et.trap_Milliseconds() /1000 ) then
+						slot[clientNum]["locktoTeam"] = nil
+						slot[clientNum]["lockedTeamTill"] = 0
 						-- TODO return!
 					else
-						et.trap_SendServerCommand( _clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
-						et.trap_SendServerCommand( _clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[_clientNum]["locktoTeam"]].. " ^3team by an admin")
+						et.trap_SendServerCommand( clientNum, "cp \"^3You are locked to the ^1"..teamchars[slot[clientNum]["locktoTeam"]].. " ^3team by an admin")
+						et.trap_SendServerCommand( clientNum, "chat \"^3You are locked to the ^1"..teamchars[slot[clientNum]["locktoTeam"]].. " ^3team by an admin")
 						return 1
 					end
 				end	
 			end
 		end,
 		
-		
-		["mirc"] = function()
-			msgtoIRC(_clientNum,et.ConcatArgs( 1 ))
+		["mirc"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
+			msgtoIRC(clientNum,et.ConcatArgs( 1 ))
 			return 1
-		end,
-		
-		["name"] = function()
-			-- we also check here for the name
-			if namearray then
-				local cleanname = string.lower(et.Q_CleanStr(slot[_clientNum]["netname"]))
-				for i,v in ipairs(namearray) do
-					if string.find( cleanname,v) then
-						if string.find(slot[_clientNum]["clan"],v) then
-							-- luck you - you are in the clan/have the name reserved for you
-							et.G_Print("NOQ: Name for "..slot[_clientNum]["netname"].. " reserved and owned\n")
-						else
-							et.trap_SendServerCommand( _clientNum, "chat \"^1This tag/name is reserved or not allowed.\n\"")
-							return 1
-						end
-					end
-				end
-				-- name seems to be clear:
-				slot[_clientNum]["netname"] = et.gentity_get( _clientNum ,"pers.netname")
-				slot[_clientNum]["cleanname"] = et.Q_CleanStr(slot[_clientNum]["netname"])	
-				
-			end
 		end
 		
 		} -- end for our cmdarray
@@ -733,7 +714,7 @@ function et_ClientCommand( _clientNum, _command )
 	end
 
   if noq_clientcommands[arg0] then
-    return(noq_clientcommands[arg0]())
+    return(noq_clientcommands[arg0](arg0,arg1,arg2,_clientNum,callershrublvl))
   end
 	
 end
@@ -1711,7 +1692,7 @@ function getPlayerId( _name )
     -- if it's a number, interpret as slot number
     local clientnum = tonumber(_name)
     if clientnum then
-        if (clientnum <= maxclients) and et.gentity_get(clientnum,"inuse") then
+        if (clientnum <= maxclients) and tonumber (et.gentity_get(clientnum,"inuse")) == 1 then
             return clientnum
         else
             return nil
@@ -2095,6 +2076,7 @@ end
 -- check if the name is reserved
 -------------------------------------------------------------------------------
 function checkforResName(_clientNum)
+	if not slot[_clientNum]["netname"] then return end 
 	local cleanname = string.lower(et.Q_CleanStr(slot[_clientNum]["netname"]))
 	for i,v in ipairs(namearray) do
 		if string.find( cleanname,v) then
@@ -2870,14 +2852,19 @@ end
 
 -------------------------------------------------------------------------------
 -- listAliases(_whom , _from )
--- list _froms aliases  to _whom
+-- list _froms aliases to _whom
 -------------------------------------------------------------------------------
 function listAliases(_whom, _from)
+	if slot[_from]["pkey"] == nil then
+		nPrint(_whom, "^3Slot not in use? - try the playername.")
+		return
+	end
+	
 	local aliases = DBCon:GetPlayerAliases(slot[_from]["pkey"])
 	local output = {}
 	if aliases ~= nil then
 		local nr = 0
-		for i, v in pairs(aliases) do -- holy schking sh*t dont ever use ipairs here :/
+		for i, v in pairs(aliases) do -- holy fcking sh*t dont ever use ipairs here :/
 		table.insert( output , "^3NOQ: Alias NR" ..string.format("%2i",nr)..": " .. string.format("%22s",et.Q_CleanStr(v)) .. "^7|" .. v )  
 		nr = nr + 1
 		end
