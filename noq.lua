@@ -2045,6 +2045,7 @@ function getresNames()
 		local NMs = DBCon:GetLogTypefor("6", nil, nil)
 		
 		if NMs ~= nil then
+			namearray = {}
 			for num = 1, #NMs, 1 do
 				namearray[num] = NMs[num].textxml
 			end
