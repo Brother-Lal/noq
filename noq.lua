@@ -16,7 +16,7 @@
 -- Webpage: http://dev.kernwaffe.de/projects/noq/
 -- Wiki: 	http://dev.kernwaffe.de/projects/noq/wiki/
 --
--- Please don't do any posts related to this script to the NQ forums (http://forums.shitstorm.org/index.php)
+-- Please don't do any posts related to this script to the NQ forums
 
 -- Setup:
 -- - Make sure all required Lua SQL libs are on server and run properly. 
@@ -1664,7 +1664,7 @@ function execCmd(_clientNum , _cmd, _argw)
 		tokall()
 		return	
 	elseif  string.sub(str, 1,5) == "$SHL$" then
-	-- This allows Shell commands. WARNING: As long as lua waits for the command to complete, NQ+ET arent responding to anything, they are HALTED!
+	-- This allows Shell commands. WARNING: As long as lua waits for the command to complete, NQ+ET aren't responding to anything, they are HALTED!
 	-- Response of the Script is piped into NQ-Console(via print, so no commands)
 			execthis = io.popen(string.sub(str,6))
 			myreturn = execthis:read("*a")
@@ -1692,7 +1692,7 @@ function getPlayerId( _name )
     -- if it's a number, interpret as slot number
     local clientnum = tonumber(_name)
     if clientnum then
-        if (clientnum <= maxclients) and tonumber (et.gentity_get(clientnum,"inuse")) == 1 then
+        if (clientnum <= maxclients) and tonumber(et.gentity_get(clientnum,"inuse")) == 1 then
             return clientnum
         else
             return nil
@@ -1763,7 +1763,7 @@ function parseconf()
 	end
 
 	datei:close()
-	et.G_LogPrint("Parsed " ..nmr .." commands from "..nmr2.." lines. \n")
+	et.G_LogPrint("NOQ: Parsed " ..nmr .." commands from "..nmr2.." lines. \n")
 end
 
 -------------------------------------------------------------------------------
@@ -1786,9 +1786,9 @@ function getDBVersion()
 	
 	if versiondb == version then
 		databasecheck = 1
-		et.G_LogPrint("^1Database "..DBCon.dbname.." is up to date. Script version is ".. version .."\n")
+		et.G_LogPrint("NOQ: Database "..DBCon.dbname.." is up to date. Script version is ".. version .."\n")
 	else
-		et.G_LogPrint("^1Database "..DBCon.dbname.." is not up to date: DBMS support disabled! Requested version is ".. version .."\n")
+		et.G_LogPrint("NOQ: Database "..DBCon.dbname.." is not up to date: DBMS support disabled! Requested version is ".. version .."\n")
 		-- We don't need to keep the connection with the database open
 		DBCon:DoDisconnect()
 	end
@@ -1964,13 +1964,15 @@ end
 function checkOffMesg (_clientNum)
 	if slot[_clientNum]["user"] ~= "" then
 	-- he is registered
-		local OM = DBCon:GetLogTypefor("5", nil, slot[_clientNum]["pkey"])
+		local OM = DBCon:GetLogTypefor("5", slot[_clientNum]["pkey"])
 		
 		if OM ~= nil then
 			-- he has OMs!!!!!!!!1!!!!
 			et.trap_SendServerCommand(_clientNum, "print \"\n^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
 			et.trap_SendServerCommand(_clientNum, "cpm \"^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
 			et.trap_SendServerCommand(_clientNum, "chat \"^3*** ^1NEW OFFLINEMESSAGES ^3***\"")
+			
+			--TODO: fix sound  to be only heard by this client.
 			local sndin = et.G_SoundIndex( "sound/misc/pm.wav" )
 			et.G_Sound( _clientNum, sndin )
 			
@@ -2016,8 +2018,8 @@ function sendOffMesg (_sender,_receiver, _msg)
 			if player ~= nil then
 				-- Reveiver is existing
 				message = "<OfM><from>"..slot[_sender]["user"].."</from><to>".. player["user"] .."</to><figure></figure><msg>".._msg.."</msg></OfM>"
-				--                	type	sent					receiver		text
-				DBCon:SetLogEntry(	"5",	slot[_sender]['pkey'],	player['pkey'],	message)
+				--                	type	sent					receiver					text
+				DBCon:SetLogEntry(	"5",	player['pkey'],			slot[_sender]['pkey'],		message)
 				
 				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\"\n")
 				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 '".. _msg .."'\n\"\n")
@@ -2027,7 +2029,7 @@ function sendOffMesg (_sender,_receiver, _msg)
 			end
 		
 		else
-			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/command receiver message'.\"\n")
+			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3Check your syntax: ^R'/om receiver message'.\"\n")
 		end
 		
 	else
@@ -2087,7 +2089,7 @@ function checkforResName(_clientNum)
 			else
 				-- oops - rename him
 				et.trap_SendConsoleCommand(et.EXEC_APPEND, "!rename ".._clientNum.. " ".. string.gsub(cleanname,v, "X") )
-				-- Todo: Kick?
+				-- TODO: Kick?
 				et.trap_SendServerCommand( _clientNum, "chat \"^1Your tag/name is reserved or not allowed.\"")
 			end
 		end
@@ -2149,7 +2151,9 @@ end
 -------------------------------------------------------------------------------
 function checkTKPoints(_clientNum)
 
-
+	--[[  
+			TODO
+	--]]
 
 end
 
@@ -2240,6 +2244,7 @@ end
 -------------------------------------------------------------------------------
 -- printPlyrInfo(_whom, _about)
 -- will print Info about player _about to player _whom
+-- mimics !finger command if called from a silent !cmd
 -------------------------------------------------------------------------------
 function printPlyrInfo(_whom, _about)
 
