@@ -686,6 +686,13 @@ function et_ClientCommand( _clientNum, _command )
 			et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. clientNum .. "\"^3Erased MessageID ".. arg1 .."\n\"\n")
 			return 1
 		end,
+		
+		["rmmail"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
+			--erase all OfflineMesgs
+			DBCon:DelMail(slot[clientNum]['pkey'])
+			nPrint(clientNum, "^3Cleared your Inbox. ")
+			return 1
+		end,
 			
 		["team"] = function(arg0,arg1,arg2,clientNum,callershrublvl)
 			-- lock to team
@@ -1620,6 +1627,7 @@ function execCmd(_clientNum , _cmd, _argw)
 	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_NAME>", et.Q_CleanStr( nlastkilled ))
 	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_CNAME>", nlastkilled )
 	local str = string.gsub(str, "<PLAYER_LAST_VICTIM_WEAPON>", slot[_clientNum]["killwep"])
+	local str = string.gsub(str, "<SERVID>", serverid )
 
 	--TODO Implement them (Most of them are from Kmod/EtAdmin)
 	--  Other possible Variables: <CVAR_XXX> <????>
@@ -2018,7 +2026,7 @@ function sendOffMesg (_sender,_receiver, _msg)
 			if player ~= nil then
 				-- Reveiver is existing
 				message = "<OfM><from>"..slot[_sender]["user"].."</from><to>".. player["user"] .."</to><figure></figure><msg>".._msg.."</msg></OfM>"
-				--                	type	sent					receiver					text
+				--                	type	receiver				sender					text
 				DBCon:SetLogEntry(	"5",	player['pkey'],			slot[_sender]['pkey'],		message)
 				
 				et.trap_SendConsoleCommand(et.EXEC_NOW, "csay " .. _sender .. "\"^3 Following message was sent to '".._receiver.."("..player['cleanname']..")'\"\n")

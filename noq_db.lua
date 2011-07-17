@@ -166,7 +166,17 @@ DBCon = {
 	-------------------------------------------------------------------------------
 	['DelOM'] = function( self, thisid, thisguid)
 	
-	self.cur = assert (self.con:execute("DELETE FROM log WHERE id='"..thisid.."' AND guid2='"..thisguid.."'"))
+	self.cur = assert (self.con:execute("DELETE FROM log WHERE id='"..thisid.."' AND guid1='"..thisguid.."'"))
+		
+	end,
+	
+	-------------------------------------------------------------------------------
+	-- DelMail
+	-- Deletes all entrys for guid with id 5(used for offlinemsgs)
+	-------------------------------------------------------------------------------
+	['DelMail'] = function( self, thisguid)
+	
+	self.cur = assert (self.con:execute("DELETE FROM log WHERE type=5 and guid1='"..thisguid.."'"))
 		
 	end,
 	
