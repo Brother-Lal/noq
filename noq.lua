@@ -151,6 +151,18 @@ function debugPrint( target, msg )
 	end
 end
 
+-- at first we need to check for the modversion
+
+modname = et.trap_Cvar_Get( "gamename" ) 
+
+if modname == "nq" then
+-- TODO: check for version incompatibilities...
+--version = et.trap_Cvar_Get( cvarname ) 
+elseif modname == "etpro" then
+--TODO:
+-- only commands may work - no loadlib:/
+end
+
 et.G_LogPrint("Loading NOQ config from ".. scriptpath.."\n")
 noqvartable		= assert(table.load( scriptpath .. "noq_config.cfg"))
 -- TODO: check if we can do this in 2 tables 
@@ -263,6 +275,7 @@ debug_getInfoFromTable(noqvartable)
 -- ["tkilled"] = 0 the amount you got teamkilled
 -- ["death"] = 0
 -- ["uci"] = 0
+-- ["inuse"] = false/true
 -- Added Fields during ingame session in slot[clientNum]
 --
 -- slot[clientNum]["victim"] = last victim of clientNum(ID)
@@ -282,7 +295,8 @@ maxclients = tonumber(et.trap_Cvar_Get("sv_maxclients"))-1 	-- add 1 again if us
 
 -- We do this for accessing the table with [][] syntax, dirty but it works
 for i=0, maxclients, 1 do				
-	slot[i] = {}	
+	slot[i] = {}
+	slot[i]["inuse"] = false	
 end
 
 -- command table, initialised in parseconf
@@ -387,6 +401,7 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 		return ban
 	end
 	-- valid client
+	slot[_clientNum]["inuse"] = true
 	
 	-- personal game start message / server greetings	
 	if firstTime == 0 or isBot == 1 or getConfig("persgamestartmessage") == "" then 
@@ -394,7 +409,7 @@ function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	end
 	userInfo = et.trap_GetUserinfo( _clientNum ) 
 	et.trap_SendServerCommand(_clientNum, string.format("%s \"%s %s", getConfig("persgamestartmessagelocation") , getConfig("persgamestartmessage") , et.Info_ValueForKey( userInfo, "name" )))
-
+	
 	return nil
 end
 
@@ -489,6 +504,7 @@ function et_ClientDisconnect( _clientNum )
 		WriteClientDisconnect( _clientNum , endtime, timediff )
 	end
 	slot[_clientNum] = {}
+	slot[_clientNum]["inuse"] = false 
 end
 
 -- called for every clientcommand
@@ -956,7 +972,9 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 	--'static' clientfields
 	slot[_clientNum]["pkey"] 	= string.upper( et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "cl_guid" ))
 	slot[_clientNum]["ip"] 		= et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "ip" )
-	slot[_clientNum]["ip"] 		= string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
+	local a
+	local b
+	a, b, slot[_clientNum]["ip"]= string.find(slot[_clientNum]["ip"],"(%d+%.%d+%.%d+%.%d+)")
 	slot[_clientNum]["isBot"] 	= _isBot
 	slot[_clientNum]["conname"] = et.Info_ValueForKey( et.trap_GetUserinfo( _clientNum ), "name" )
 	slot[_clientNum]["level"]	= et.G_shrubbot_level(_clientNum)
@@ -1892,7 +1910,7 @@ function checkBalance( _force )
 	local numclients = 0
 
 	for i=0, et.trap_Cvar_Get( "sv_maxclients" ) -1, 1 do					
-		if et.gentity_get(i,"classname") == "player" then
+		if slot[i]["inuse"] then
 			local team = tonumber(et.gentity_get(i,"sess.sessionTeam"))
 			if team == 1 then
 				table.insert(axis,i)
