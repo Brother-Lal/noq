@@ -2296,9 +2296,9 @@ function printPlyrInfo(_whom, _about)
 		table.insert( mit , "^dSpree:      ^r" .. slot[_about]["kspree"] )
 		
 		if slot[_about]["locktoTeam"] ~= nil then
-		table.insert( mit , "^dTeamlock:   ^r" .. teamchars[slot[_about]["locktotTeam"]]  )
+		table.insert( mit , "^dTeamlock:   ^r" .. teamchars[slot[_about]["locktoTeam"]]  )
 			if slot[_about]["lockedTeamTill"] ~= 0 then
-		table.insert( mit , "^dSecs remain:^r" .. (slot[_clientNum]["lockedTeamTill"] - (et.trap_Milliseconds() /1000 )) )		
+		table.insert( mit , "^dSecs remain:^r" .. (slot[_about]["lockedTeamTill"] - (et.trap_Milliseconds() /1000 )) )		
 			end
 		end
 		
