@@ -953,7 +953,10 @@ function et_ClientSpawn( _clientNum, _revived )
 	-- _revived == 1 means he was revived
 	if _revived ~= 1 then
 		updateTeam(_clientNum)
+	else
+		et.trap_SendServerCommand(et.gentity_get(_clientNum,"pers.lastrevive_client"),"cpm \"^1You revived ^7" .. slot[_clientNum]  .. " \"" );
 	end
+	
 end
 
 -------------------------------------------------------------------------------
@@ -2237,10 +2240,10 @@ local mytype = type(_what)
 	else
 		--everybody
 		if mytype == "string" then
-				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. _what .."\"\n " ) 
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \"".. _what .."\"\n " ) 
 		elseif mytype == "table" then
 			for i,v in ipairs(_what) do
-				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay ".. _whom .. " \"".. v .."\"\n " ) 
+				et.trap_SendConsoleCommand(et.EXEC_APPEND,"qsay \"".. v .."\"\n " ) 
 			end
 		end
 	
