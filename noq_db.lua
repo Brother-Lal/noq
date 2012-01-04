@@ -40,6 +40,11 @@ DBCon = {
 	['cur'] = {},
 	['row'] = {},
 	
+	['DoClean'] = function (self, toClean)
+		local thisClean = string.gsub(toClean,"\'", "\\\'")
+		return thisClean
+	end,
+	
 	['DoConnect']	= function( self )
 		-- Handle different dbms
 		if self.dbms == "mySQL" then
@@ -88,7 +93,7 @@ DBCon = {
 	-------------------------------------------------------------------------------
 	['SetPlayerAlias'] = function( self, thisName, thisGuid )
 		-- search alias based on guid and name
-		local thisName = string.gsub(thisName,"\'", "\\\'")
+		local thisName = self.DoClean(thisName)
 		self.cur = assert (self.con:execute("SELECT * FROM log WHERE guid1='".. thisGuid .."' AND type='3' AND textxml='<name>".. thisName .."</name>' LIMIT 1"))
 		self.row = self.cur:fetch ({}, "a")
 		self.cur:close()
@@ -186,6 +191,7 @@ DBCon = {
 	-- Searches Player by registered Name 
 	-------------------------------------------------------------------------------
 	['GetPlayerbyReg'] = function( self, name )
+		name = self.DoClean(name)
 		self.cur = assert (self.con:execute("SELECT * FROM player WHERE user='".. name .."' LIMIT 1"))
 		player = self.cur:fetch ({}, "a")
 		self.cur:close()
@@ -198,6 +204,9 @@ DBCon = {
 	-- maybe could also be used to reset Player, as pkey is unique
 	-------------------------------------------------------------------------------
 	['DoCreateNewPlayer'] = function( self, pkey, isBot, netname, updatedate, createdate, conname )
+		netname = self.DoClean(netname)
+		conname = self.DoClean(conname)
+		
 		self.cur = assert( self.con:execute("INSERT INTO player (pkey, isBot, netname, cleanname, updatedate, createdate, conname) VALUES ('"
 			..pkey.."', "
 			..isBot..", '"
@@ -224,8 +233,8 @@ DBCon = {
 			..slot.."', '"
 			..map.."', '"
 			..player["ip"].."', '"
-			..name.."', '"
-			..et.Q_CleanStr(name).."', "
+			..self.DoClean(name).."', '"
+			..self.DoClean(et.Q_CleanStr(name)).."', "
 			.."1"..", '"
 			..player["start"].."','"
 			..timehandle('N').. "', '"
@@ -281,7 +290,7 @@ DBCon = {
 	-- Sets PlayerInfos
 	-------------------------------------------------------------------------------
 	['SetPlayerInfo'] = function (self, player)
-		local name = string.gsub(player["netname"],"\'", "\\\'")
+		local name = self.DoClean(player["netname"])
 		self.cur = assert (self.con:execute("UPDATE player SET clan='".. player["clan"] .."',           \
 			 netname='".. name  .."',\
 			 cleanname='"..et.Q_CleanStr(name).."',\
@@ -318,6 +327,8 @@ DBCon = {
 	end,
 	
 	['DoRegisterUser'] = function ( self, user, password, pkey )
+		user = self.DoClean(user)
+		password = self.DoClean(password)
 		self.cur = assert (self.con:execute("UPDATE player SET user='"..user.."', password=MD5('"..password.."') WHERE pkey='"..pkey.."'"))
 	end,
 	
