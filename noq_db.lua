@@ -41,6 +41,10 @@ DBCon = {
 	['row'] = {},
 	
 	['DoClean'] = function (self, toClean)
+		if toClean == nil then
+		return ""
+		end
+	
 		local thisClean = string.gsub(toClean,"\'", "\\\'")
 		return thisClean
 	end,
@@ -191,7 +195,7 @@ DBCon = {
 	-- Searches Player by registered Name 
 	-------------------------------------------------------------------------------
 	['GetPlayerbyReg'] = function( self, name )
-		name = self.DoClean(name)
+		name = self:DoClean(name)
 		self.cur = assert (self.con:execute("SELECT * FROM player WHERE user='".. name .."' LIMIT 1"))
 		player = self.cur:fetch ({}, "a")
 		self.cur:close()
@@ -204,8 +208,8 @@ DBCon = {
 	-- maybe could also be used to reset Player, as pkey is unique
 	-------------------------------------------------------------------------------
 	['DoCreateNewPlayer'] = function( self, pkey, isBot, netname, updatedate, createdate, conname )
-		netname = self.DoClean(netname)
-		conname = self.DoClean(conname)
+		netname = self:DoClean(netname)
+		conname = self:DoClean(conname)
 		
 		self.cur = assert( self.con:execute("INSERT INTO player (pkey, isBot, netname, cleanname, updatedate, createdate, conname) VALUES ('"
 			..pkey.."', "
@@ -233,8 +237,8 @@ DBCon = {
 			..slot.."', '"
 			..map.."', '"
 			..player["ip"].."', '"
-			..self.DoClean(name).."', '"
-			..self.DoClean(et.Q_CleanStr(name)).."', "
+			..self:DoClean(name).."', '"
+			..self:DoClean(et.Q_CleanStr(name)).."', "
 			.."1"..", '"
 			..player["start"].."','"
 			..timehandle('N').. "', '"
@@ -290,7 +294,7 @@ DBCon = {
 	-- Sets PlayerInfos
 	-------------------------------------------------------------------------------
 	['SetPlayerInfo'] = function (self, player)
-		local name = self.DoClean(player["netname"])
+		local name = self:DoClean(player["netname"])
 		self.cur = assert (self.con:execute("UPDATE player SET clan='".. player["clan"] .."',           \
 			 netname='".. name  .."',\
 			 cleanname='"..et.Q_CleanStr(name).."',\
@@ -327,8 +331,8 @@ DBCon = {
 	end,
 	
 	['DoRegisterUser'] = function ( self, user, password, pkey )
-		user = self.DoClean(user)
-		password = self.DoClean(password)
+		user = self:DoClean(user)
+		password = self:DoClean(password)
 		self.cur = assert (self.con:execute("UPDATE player SET user='"..user.."', password=MD5('"..password.."') WHERE pkey='"..pkey.."'"))
 	end,
 	
