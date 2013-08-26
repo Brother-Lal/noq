@@ -2217,7 +2217,7 @@ end
 --					String
 --					Array of Strings
 --					
--- Note: Please dont use an table of tables - it will fail displaying strange numbers :)
+-- Note: Please don't use a table of tables - it will fail displaying strange numbers :)
 -------------------------------------------------------------------------------
 function nPrint(_whom, _what)
 
@@ -2964,6 +2964,26 @@ function drunkenPlayer(_caller , _drunken)
 		nPrint(_caller,"^3You already voted against ".. slot[_drunken]["netname"])
 	end
 
+
+end
+
+
+-------------------------------------------------------------------------------
+-- cvar_cmd(_cvarname, _cvar , _part2  )
+-- Set _cvar to one of the options from _optionlist - _cvarname will be used to refernce the setting in prints
+-- _part2 contains argument to the !command, empty to list setting, 
+-------------------------------------------------------------------------------
+function cvar_cmd(_cvarname, _cvar , _part2  )
+	
+	if _part2 == "" then
+		nPrint(65,  "^1".. _cvarname .." ^7is currently ^3" .. et.trap_Cvar_Get( _cvar ) )
+		return
+	end
+	
+	et.trap_Cvar_Set( _cvar, _part2 ) 
+
+	nPrint(65,  "^3Set ^1".. _cvarname .."^7 to ^3" .. et.trap_Cvar_Get( _cvar ) )
+		
 
 end
 
