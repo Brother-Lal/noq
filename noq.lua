@@ -390,15 +390,17 @@ function et_InitGame( _levelTime, _randomSeed, _restart )
 	lastpoll = (et.trap_Milliseconds() / 1000) - 	(polldist / 2)
 	
 	-- IlDuca: TEST for mail function
-	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo è un test, speriamo funzioni!!")
+	-- sendMail("<mymail@myprovider.com>", "Test smtp", "Questo Ã¨ un test, speriamo funzioni!!")
 end
 
 function et_ClientConnect( _clientNum, _firstTime, _isBot )
 	initClient( _clientNum, _firstTime, _isBot )
 	
-	local ban = checkBan( _clientNum )
-	if ban ~= nil then
-		return ban
+	if databasecheck == 1 then
+		local ban = checkBan( _clientNum )
+		if ban ~= nil then
+			return ban
+		end
 	end
 	-- valid client
 	slot[_clientNum]["inuse"] = true
@@ -454,9 +456,6 @@ function et_ClientBegin( _clientNum )
 		greetClient(_clientNum)
 	end
 	
-	-- Moved the mute check here
-	checkMute( _clientNum )
-	
 	
 	if databasecheck == 1 then
 		-- If we have db access, then we will create new Playerentry if necessary
@@ -475,10 +474,10 @@ function et_ClientBegin( _clientNum )
 				end
 				slot[_clientNum]["setxp"] = nil
 			end
+			checkOffMesg(_clientNum)
+			-- Moved the mute check here
+			checkMute( _clientNum )
 		end
-		
-		checkOffMesg(_clientNum)
-	   
 	   -- Reserved Name/Clantag support
 		if namearray then
 			checkforResName(_clientNum)
@@ -954,7 +953,7 @@ function et_ClientSpawn( _clientNum, _revived )
 	if _revived ~= 1 then
 		updateTeam(_clientNum)
 	else
-		et.trap_SendServerCommand(et.gentity_get(_clientNum,"pers.lastrevive_client"),"cpm \"^1You revived ^7" .. slot[_clientNum]  .. " \"" );
+		--et.trap_SendServerCommand(et.gentity_get(_clientNum,"pers.lastrevive_client"),"cpm \"^1You revived ^7" .. slot[_clientNum]["netname"]  .. " \"" );
 	end
 	
 end
@@ -1013,6 +1012,8 @@ function initClient ( _clientNum, _FirstTime, _isBot)
 
 	-- non db client fields
 	slot[_clientNum]["tkilled"] = 0
+	slot[_clientNum]["drunkvote"] = {}
+	slot[_clientNum]["drunkcounter"] = 0
 
 	
 	if _FirstTime == 1 then 
@@ -1427,8 +1428,6 @@ function savePlayer ( _clientNum )
 	-- slot[_clientNum]["email"] 
 	-- slot[_clientNum]["netname"] ????
 
-	local name = string.gsub(slot[_clientNum]["netname"],"\'", "\\\'")
-
 	if slot[_clientNum]["muteexpire"] ~= "1000-01-01 00:00:00" and timehandle( 'DS', 'N', slot[_clientNum]["muteexpire"] ) > 0 then
 		slot[_clientNum]["mutedby"] = ""
 		slot[_clientNum]["mutedreason"] = ""
@@ -1518,6 +1517,11 @@ function gotCmd( _clientNum, _command, _vsay)
 		argw[1] = et.trap_Argv(3)
 		argw[2] = et.trap_Argv(4)
 		argw[3] = et.ConcatArgs( 5 )
+	end
+
+
+	if et.gentity_get(_clientNum, "sess.muted") == 1 and silent == false then
+		return -- no cmds if you are muted
 	end
 
 	-- thats a hack to clearly get the second parameter.
@@ -2269,6 +2273,7 @@ end
 -- msgtoIRC
 -- forAll
 -- showTkTable
+-- drunkenPlayer 
 
 -------------------------------------------------------------------------------
 -- printPlyrInfo(_whom, _about)
@@ -2834,7 +2839,7 @@ function force(_clientNum, _what , _arg2)
 					forAll(  tonumber(et.gentity_get(_clientNum,"sess.sessionTeam")) ,  giveammo)
 				elseif _arg2 == "heal" then
 					forAll(  tonumber(et.gentity_get(_clientNum,"sess.sessionTeam")) ,  heal)
-				end	
+			end	
 			et.trap_SendConsoleCommand(et.EXEC_APPEND,"chat\""..slot[_clientNum]['netname'].."^3 uses the force to help his team with a ^2".._arg2..".\n\"")
 		end	
 		else
@@ -2912,6 +2917,57 @@ function listAliases(_whom, _from)
 	nPrint(_whom, output)
 end
 
+
+-------------------------------------------------------------------------------
+-- drunkenPlayer(_caller , _drunken )
+-- will punish _drunken if to many ppl vote him out
+-------------------------------------------------------------------------------
+function drunkenPlayer(_caller , _drunken)
+
+	if et.G_shrubbot_permission( _drunken, "m" ) == 1 then
+
+		nPrint(65, slot[_drunken]["netname"] .. " is immune")
+		return	
+
+	end
+
+	if slot[_drunken]["drunkvote"][_caller] == nil then
+
+		slot[_drunken]["drunkvote"][_caller] = true
+		slot[_drunken]["drunkcounter"] = slot[_drunken]["drunkcounter"] + 1
+
+		nPrint(65,"^3 Added your complaint against ^7"..slot[_drunken]["netname"].."^3 to the list, ^7" .. slot[_caller]["netname"] .. " ^3(^1 " .. slot[_drunken]["drunkcounter"] .."^3 complaints until now) " ) 
+
+		if  slot[_drunken]["drunkcounter"] > 10 then
+			
+		  	--slot[_drunken]["bannedby"] = "Alcoholics Anonymous"
+			--slot[_drunken]["banreason"] = "Have a nice sleep, and get sober!"
+			--slot[_drunken]["banexpire"] = (os.time() +( 4 * 60 * 60 * 1000 )) -- 4 h ban
+
+
+			nPrint(65 , "^3Player^7 " .. slot[_drunken]["netname"] .. " ^3 got banned for 4 hours to get sober")
+
+			et.trap_DropClient( _drunken, "get sober", 4 * 60 * 60 ) 
+		end
+		if	slot[_drunken]["drunkcounter"] >= 5 and et.gentity_get(_drunken,"sess.muted") ~= 1 then
+		
+		    	et.MutePlayer( _drunken, 20*60, "^7More than 5 people thought you should ^1SHUT THE FUCK UP" )
+				
+		  	--slot[_drunken]["mutedby"] = "Alcoholics Anonymous"
+			--slot[_drunken]["mutedreason"] = "Calm down a little bit"
+			--slot[_drunken]["muteexpire"] = (os.time() +( 20 * 60 * 1000 ))
+
+				
+		end
+	
+	else
+		nPrint(_caller,"^3You already voted against ".. slot[_drunken]["netname"])
+	end
+
+
+end
+
 -------------------------------------------------------------------------------
 -- Here does End, kthxbye 
 -------------------------------------------------------------------------------
+
